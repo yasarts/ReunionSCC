@@ -1,0 +1,701 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>2025-06-05 - Conseil National</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 3px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+	margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-block;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1.25em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Display", "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(50, 48, 44, 1);
+}
+.highlight-gray {
+	color: rgba(115, 114, 110, 1);
+	fill: rgba(115, 114, 110, 1);
+}
+.highlight-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.highlight-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.highlight-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.highlight-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.highlight-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(205, 60, 58, 1);
+	fill: rgba(205, 60, 58, 1);
+}
+.highlight-default_background {
+	color: rgba(50, 48, 44, 1);
+}
+.highlight-gray_background {
+	background: rgba(248, 248, 247, 1);
+}
+.highlight-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.highlight-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.highlight-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.highlight-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.highlight-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.highlight-purple_background {
+	background: rgba(248, 243, 252, 1);
+}
+.highlight-pink_background {
+	background: rgba(252, 241, 246, 1);
+}
+.highlight-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(115, 114, 110, 1);
+	fill: rgba(115, 114, 110, 1);
+}
+.block-color-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.block-color-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.block-color-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.block-color-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.block-color-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(205, 60, 58, 1);
+	fill: rgba(205, 60, 58, 1);
+}
+.block-color-default_background {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray_background {
+	background: rgba(248, 248, 247, 1);
+}
+.block-color-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.block-color-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.block-color-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.block-color-purple_background {
+	background: rgba(248, 243, 252, 1);
+}
+.block-color-pink_background {
+	background: rgba(252, 241, 246, 1);
+}
+.block-color-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.select-value-color-uiBlue { background-color: undefined; }
+.select-value-color-pink { background-color: rgba(225, 136, 179, 0.27); }
+.select-value-color-purple { background-color: rgba(168, 129, 197, 0.27); }
+.select-value-color-green { background-color: rgba(123, 183, 129, 0.27); }
+.select-value-color-gray { background-color: rgba(84, 72, 49, 0.15); }
+.select-value-color-translucentGray { background-color: undefined; }
+.select-value-color-orange { background-color: rgba(224, 124, 57, 0.27); }
+.select-value-color-brown { background-color: rgba(210, 162, 141, 0.35); }
+.select-value-color-red { background-color: rgba(244, 171, 159, 0.4); }
+.select-value-color-yellow { background-color: rgba(236, 191, 66, 0.39); }
+.select-value-color-blue { background-color: rgba(93, 165, 206, 0.27); }
+.select-value-color-pageGlass { background-color: undefined; }
+.select-value-color-washGlass { background-color: undefined; }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="1a8a5f76-8e7e-80ad-b45f-ec3667c6eb1c" class="page sans"><header><h1 class="page-title">2025-06-05 - Conseil National</h1><p class="page-description"></p><table class="properties"><tbody><tr class="property-row property-row-select"><th><span class="icon property-icon"><svg aria-hidden="true" role="graphics-symbol" viewBox="0 0 16 16" style="width:14px;height:14px;display:block;fill:rgba(71, 70, 68, 0.6);flex-shrink:0" class="typesSelect"><path d="M8 15.126C11.8623 15.126 15.0615 11.9336 15.0615 8.06445C15.0615 4.20215 11.8623 1.00293 7.99316 1.00293C4.13086 1.00293 0.938477 4.20215 0.938477 8.06445C0.938477 11.9336 4.1377 15.126 8 15.126ZM8 13.7383C4.85547 13.7383 2.33301 11.209 2.33301 8.06445C2.33301 4.91992 4.84863 2.39746 7.99316 2.39746C11.1377 2.39746 13.6738 4.91992 13.6738 8.06445C13.6738 11.209 11.1445 13.7383 8 13.7383ZM7.62402 10.6348C7.79492 10.915 8.20508 10.9287 8.37598 10.6348L10.666 6.73145C10.8574 6.41016 10.7002 6.04102 10.3652 6.04102H5.62793C5.29297 6.04102 5.14941 6.43066 5.32031 6.73145L7.62402 10.6348Z"></path></svg></span>Type de réunion</th><td><span class="selected-value select-value-color-red">Conseil National</span></td></tr><tr class="property-row property-row-last_edited_time"><th><span class="icon property-icon"><svg aria-hidden="true" role="graphics-symbol" viewBox="0 0 16 16" style="width:14px;height:14px;display:block;fill:rgba(71, 70, 68, 0.6);flex-shrink:0" class="typesCreatedAt"><path d="M8 15.126C11.8623 15.126 15.0615 11.9336 15.0615 8.06445C15.0615 4.20215 11.8623 1.00293 7.99316 1.00293C4.13086 1.00293 0.938477 4.20215 0.938477 8.06445C0.938477 11.9336 4.1377 15.126 8 15.126ZM8 13.7383C4.85547 13.7383 2.33301 11.209 2.33301 8.06445C2.33301 4.91992 4.84863 2.39746 7.99316 2.39746C11.1377 2.39746 13.6738 4.91992 13.6738 8.06445C13.6738 11.209 11.1445 13.7383 8 13.7383ZM4.54102 8.91211H7.99316C8.30078 8.91211 8.54004 8.67285 8.54004 8.37207V3.8877C8.54004 3.58691 8.30078 3.34766 7.99316 3.34766C7.69238 3.34766 7.45312 3.58691 7.45312 3.8877V7.83203H4.54102C4.2334 7.83203 4.00098 8.06445 4.00098 8.37207C4.00098 8.67285 4.2334 8.91211 4.54102 8.91211Z"></path></svg></span>Dernière édition</th><td><time>@3 juin 2025 20:26</time></td></tr><tr class="property-row property-row-relation"><th><span class="icon property-icon"><svg aria-hidden="true" role="graphics-symbol" viewBox="0 0 16 16" style="width:14px;height:14px;display:block;fill:rgba(71, 70, 68, 0.6);flex-shrink:0" class="typesRelation"><path d="M13.1475 10.5869V3.72363C13.1475 3.25195 12.833 2.93066 12.3477 2.93066H5.48438C5.02637 2.93066 4.70508 3.27246 4.70508 3.67578C4.70508 4.07227 5.05371 4.40039 5.46387 4.40039H7.89746L10.8438 4.30469L9.59961 5.39844L3.08496 11.9199C2.92773 12.0771 2.8457 12.2686 2.8457 12.46C2.8457 12.8564 3.20801 13.2256 3.61816 13.2256C3.80957 13.2256 3.99414 13.1504 4.15137 12.9932L10.6729 6.47168L11.7803 5.22754L11.6641 8.05762V10.6074C11.6641 11.0176 11.9922 11.373 12.4023 11.373C12.8057 11.373 13.1475 11.0312 13.1475 10.5869Z"></path></svg></span>Participants (CN 2024)</th><td><a href="https://www.notion.so/Christine-Nissim-85c35add09704e079532b464dab2312c?pvs=21">Christine Nissim</a>, <a href="https://www.notion.so/Valeria-Vukadin-fff6222e96274b239f6f1ab777ac5471?pvs=21">Valeria Vukadin</a>, <a href="https://www.notion.so/Pauline-BARBOUX-46b532235ff9470bb77defbf01ba6081?pvs=21">Pauline BARBOUX</a>, <a href="https://www.notion.so/Sabrina-SOW-ceb5b4cf777c44cfa7b8ebb53f3bafb6?pvs=21">Sabrina SOW</a>, <a href="https://www.notion.so/Alexandrine-BIANCO-6f80a8cb65f3464c975f1796af3399d8?pvs=21">Alexandrine BIANCO</a></td></tr><tr class="property-row property-row-date"><th><span class="icon property-icon"><svg aria-hidden="true" role="graphics-symbol" viewBox="0 0 16 16" style="width:14px;height:14px;display:block;fill:rgba(71, 70, 68, 0.6);flex-shrink:0" class="typesDate"><path d="M3.29688 14.4561H12.7031C14.1797 14.4561 14.9453 13.6904 14.9453 12.2344V3.91504C14.9453 2.45215 14.1797 1.69336 12.7031 1.69336H3.29688C1.82031 1.69336 1.05469 2.45215 1.05469 3.91504V12.2344C1.05469 13.6973 1.82031 14.4561 3.29688 14.4561ZM3.27637 13.1162C2.70898 13.1162 2.39453 12.8154 2.39453 12.2207V5.9043C2.39453 5.30273 2.70898 5.00879 3.27637 5.00879H12.71C13.2842 5.00879 13.6055 5.30273 13.6055 5.9043V12.2207C13.6055 12.8154 13.2842 13.1162 12.71 13.1162H3.27637ZM6.68066 7.38086H7.08398C7.33008 7.38086 7.41211 7.30566 7.41211 7.05957V6.66309C7.41211 6.41699 7.33008 6.3418 7.08398 6.3418H6.68066C6.44141 6.3418 6.35938 6.41699 6.35938 6.66309V7.05957C6.35938 7.30566 6.44141 7.38086 6.68066 7.38086ZM8.92285 7.38086H9.31934C9.56543 7.38086 9.64746 7.30566 9.64746 7.05957V6.66309C9.64746 6.41699 9.56543 6.3418 9.31934 6.3418H8.92285C8.67676 6.3418 8.59473 6.41699 8.59473 6.66309V7.05957C8.59473 7.30566 8.67676 7.38086 8.92285 7.38086ZM11.1582 7.38086H11.5547C11.8008 7.38086 11.8828 7.30566 11.8828 7.05957V6.66309C11.8828 6.41699 11.8008 6.3418 11.5547 6.3418H11.1582C10.9121 6.3418 10.8301 6.41699 10.8301 6.66309V7.05957C10.8301 7.30566 10.9121 7.38086 11.1582 7.38086ZM4.44531 9.58203H4.84863C5.09473 9.58203 5.17676 9.50684 5.17676 9.26074V8.86426C5.17676 8.61816 5.09473 8.54297 4.84863 8.54297H4.44531C4.20605 8.54297 4.12402 8.61816 4.12402 8.86426V9.26074C4.12402 9.50684 4.20605 9.58203 4.44531 9.58203ZM6.68066 9.58203H7.08398C7.33008 9.58203 7.41211 9.50684 7.41211 9.26074V8.86426C7.41211 8.61816 7.33008 8.54297 7.08398 8.54297H6.68066C6.44141 8.54297 6.35938 8.61816 6.35938 8.86426V9.26074C6.35938 9.50684 6.44141 9.58203 6.68066 9.58203ZM8.92285 9.58203H9.31934C9.56543 9.58203 9.64746 9.50684 9.64746 9.26074V8.86426C9.64746 8.61816 9.56543 8.54297 9.31934 8.54297H8.92285C8.67676 8.54297 8.59473 8.61816 8.59473 8.86426V9.26074C8.59473 9.50684 8.67676 9.58203 8.92285 9.58203ZM11.1582 9.58203H11.5547C11.8008 9.58203 11.8828 9.50684 11.8828 9.26074V8.86426C11.8828 8.61816 11.8008 8.54297 11.5547 8.54297H11.1582C10.9121 8.54297 10.8301 8.61816 10.8301 8.86426V9.26074C10.8301 9.50684 10.9121 9.58203 11.1582 9.58203ZM4.44531 11.7832H4.84863C5.09473 11.7832 5.17676 11.708 5.17676 11.4619V11.0654C5.17676 10.8193 5.09473 10.7441 4.84863 10.7441H4.44531C4.20605 10.7441 4.12402 10.8193 4.12402 11.0654V11.4619C4.12402 11.708 4.20605 11.7832 4.44531 11.7832ZM6.68066 11.7832H7.08398C7.33008 11.7832 7.41211 11.708 7.41211 11.4619V11.0654C7.41211 10.8193 7.33008 10.7441 7.08398 10.7441H6.68066C6.44141 10.7441 6.35938 10.8193 6.35938 11.0654V11.4619C6.35938 11.708 6.44141 11.7832 6.68066 11.7832ZM8.92285 11.7832H9.31934C9.56543 11.7832 9.64746 11.708 9.64746 11.4619V11.0654C9.64746 10.8193 9.56543 10.7441 9.31934 10.7441H8.92285C8.67676 10.7441 8.59473 10.8193 8.59473 11.0654V11.4619C8.59473 11.708 8.67676 11.7832 8.92285 11.7832Z"></path></svg></span>Date de la réunion</th><td><time>@07/03/2025 16:00 → 05/06/2025 10:00</time></td></tr><tr class="property-row property-row-text"><th><span class="icon property-icon"><svg aria-hidden="true" role="graphics-symbol" viewBox="0 0 16 16" style="width:14px;height:14px;display:block;fill:rgba(71, 70, 68, 0.6);flex-shrink:0" class="typesText"><path d="M1.56738 3.25879H14.4258C14.7676 3.25879 15.0479 2.97852 15.0479 2.63672C15.0479 2.29492 14.7744 2.02148 14.4258 2.02148H1.56738C1.21875 2.02148 0.952148 2.29492 0.952148 2.63672C0.952148 2.97852 1.22559 3.25879 1.56738 3.25879ZM1.56738 6.84082H14.4258C14.7676 6.84082 15.0479 6.56055 15.0479 6.21875C15.0479 5.87695 14.7744 5.60352 14.4258 5.60352H1.56738C1.21875 5.60352 0.952148 5.87695 0.952148 6.21875C0.952148 6.56055 1.22559 6.84082 1.56738 6.84082ZM1.56738 10.4229H14.4258C14.7676 10.4229 15.0479 10.1426 15.0479 9.80078C15.0479 9.45898 14.7744 9.18555 14.4258 9.18555H1.56738C1.21875 9.18555 0.952148 9.45898 0.952148 9.80078C0.952148 10.1426 1.22559 10.4229 1.56738 10.4229ZM1.56738 14.0049H8.75879C9.10059 14.0049 9.38086 13.7246 9.38086 13.3828C9.38086 13.041 9.10742 12.7676 8.75879 12.7676H1.56738C1.21875 12.7676 0.952148 13.041 0.952148 13.3828C0.952148 13.7246 1.22559 14.0049 1.56738 14.0049Z"></path></svg></span>Pouvoir</th><td><strong>POUVOIRS : Galapiat à la Volte.</strong></td></tr></tbody></table></header><div class="page-body"><p id="1a8a5f76-8e7e-806a-84e8-d8535baf5ee9" class="">Ordre du jour :</p><nav id="1a8a5f76-8e7e-809a-b8ee-c1f064e5b559" class="block-color-gray table_of_contents"><div class="table_of_contents-item table_of_contents-indent-0"><a class="table_of_contents-link" href="#1aca5f76-8e7e-801e-932b-dc2c11179b5b">0. AGE : </a></div><div class="table_of_contents-item table_of_contents-indent-0"><a class="table_of_contents-link" href="#1a8a5f76-8e7e-8044-98ff-e831812c29b4">1. Piste Politiques publiques </a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#1a8a5f76-8e7e-8094-945a-d765de1bbf98">1.1 Retour rdv réunion filière </a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#1a8a5f76-8e7e-8012-a4e3-f0fe2bcffaa7">1.2 Politiques décentralisées  - DRAC</a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#1aea5f76-8e7e-80da-ba30-d65aa7a426f7">1.3. Municipales - Collaboration FFEC / SCC </a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-800d-82ed-e340c4f965cc">1.4 Intersyndicale </a></div><div class="table_of_contents-item table_of_contents-indent-0"><a class="table_of_contents-link" href="#207a5f76-8e7e-80a7-aa69-d2e11b184d33">2. Production</a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-8022-8ea2-f69b9cffce4a">2.1. Interpellation Syndeac / Charte TDC / Production/ Résidence</a></div><div class="table_of_contents-item table_of_contents-indent-0"><a class="table_of_contents-link" href="#207a5f76-8e7e-8040-aa4f-d62b01e6d238">3. FSICPA - Point d’information</a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-8081-b094-c477f0a43036">Changements de gouvernance au sein du SYNAVI</a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-806d-951c-d8f1083d0403">Décision concernant l&#x27;intérim de la vice-présidence de la CPPNI</a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-800c-8be0-ecc43659739f">Représentation au CNPS (Conseil National des Professions du Spectacle)</a></div><div class="table_of_contents-item table_of_contents-indent-2"><a class="table_of_contents-link" href="#207a5f76-8e7e-806c-8fd1-f11bb7ea1952">Bureau du CNPS</a></div><div class="table_of_contents-item table_of_contents-indent-2"><a class="table_of_contents-link" href="#207a5f76-8e7e-8011-9947-c9a24ffacdec">Stratégie vis-à-vis du SMA (Syndicat des Musiques Actuelles)</a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-80fb-97db-c62c518c88cb">Coordination FSICPA</a></div><div class="table_of_contents-item table_of_contents-indent-0"><a class="table_of_contents-link" href="#1a8a5f76-8e7e-80de-b2a2-c004617d1f4f">4. Point Formation professionnelle</a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#206a5f76-8e7e-8009-b327-c2221fb79163">4.1 AFDAS </a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-8049-99ed-c68c3e2b4451">3.2 Écoles </a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-8051-a1d2-daf001158c2a">3.3 CNPS </a></div><div class="table_of_contents-item table_of_contents-indent-0"><a class="table_of_contents-link" href="#207a5f76-8e7e-8022-b1f0-caca6d137870">5. Régions</a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-809e-a56f-c261088af229">5.1. SODAC</a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-8015-8fdb-cf86822697e3">5.2. Intervention compagnies nantaises</a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-8066-b41c-f66b0532eb4c">5.3 COREPS</a></div><div class="table_of_contents-item table_of_contents-indent-0"><a class="table_of_contents-link" href="#206a5f76-8e7e-8095-907b-e70b4718f266"><strong>6. Conventions collectives</strong></a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-80ff-8e2f-c24d24a5dbfd"><strong>6.1. Point étape CCNEAC - Classification</strong></a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-809a-a634-dd698b364fc8"><strong>6.2. Point d’étape CCNSVP - FCAP</strong></a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#207a5f76-8e7e-8063-a582-d8aae668a740"><strong>6.3. FNAS / CASC : modifications</strong></a></div><div class="table_of_contents-item table_of_contents-indent-0"><a class="table_of_contents-link" href="#206a5f76-8e7e-807d-8f83-f01b0a3d3e1d">7. Divers</a></div><div class="table_of_contents-item table_of_contents-indent-1"><a class="table_of_contents-link" href="#206a5f76-8e7e-8087-bb23-fcddc7335eff">7.1. Validation d’un texte sur les règles de conciliation réalisée par le SCC</a></div></nav><p id="1a8a5f76-8e7e-8061-8c49-da138e540fec" class="">
+</p><p id="1a8a5f76-8e7e-803b-b99f-e5c512f6ac02" class="">Lien vers le compte rendu du CN de mars : </p><p id="1a8a5f76-8e7e-8009-8184-d7d6a49590ea" class="">
+</p><p id="206a5f76-8e7e-80e5-afb1-e1f418c71a2e" class="">
+</p><h1 id="1aca5f76-8e7e-801e-932b-dc2c11179b5b" class="">0. AGE : </h1><p id="206a5f76-8e7e-8094-9e43-c1d74bd8e3f8" class=""><em><strong>Proposition de dates pour la visio préparatoire aux AGE : </strong></em></p><ul id="206a5f76-8e7e-808b-8f6e-ca437479b909" class="bulleted-list"><li style="list-style-type:disc">8 septembre matin </li></ul><ul id="206a5f76-8e7e-80a5-af09-d201c3db347c" class="bulleted-list"><li style="list-style-type:disc">8 septembre après midi </li></ul><ul id="206a5f76-8e7e-801c-8a78-f0b3668f289e" class="bulleted-list"><li style="list-style-type:disc">9 septembre matin </li></ul><ul id="206a5f76-8e7e-80ec-93ca-ea29af76a8ff" class="bulleted-list"><li style="list-style-type:disc">9 septembre après midi</li></ul><ul id="206a5f76-8e7e-80f7-8c01-f283b579afad" class="bulleted-list"><li style="list-style-type:disc">10 septembre matin </li></ul><ul id="206a5f76-8e7e-807c-ab61-fb0e44ab3cc4" class="bulleted-list"><li style="list-style-type:disc">10 septembre après midi</li></ul><h1 id="1a8a5f76-8e7e-8044-98ff-e831812c29b4" class="">1. Piste Politiques publiques </h1><h2 id="1a8a5f76-8e7e-8094-945a-d765de1bbf98" class="">1.1 Retour rdv réunion filière </h2><p id="206a5f76-8e7e-8023-a20c-f578d3a2174d" class="">Proposition TdC d’une rencontre :</p><figure class="block-color-blue_background callout" style="white-space:pre-wrap;display:flex" id="207a5f76-8e7e-803a-b004-db451b400453"><div style="font-size:1.5em"><img class="icon" src="https://www.notion.so/icons/arrow-right_gray.svg"/></div><div style="width:100%"><p id="207a5f76-8e7e-80d7-9c9a-e7aed4cc19fe" class="block-color-blue_background">Delphine Pouydaminet a appelé Yannis afin de faire un point sur la dernière réunion avec la DGCA, à laquelle elle n’avait pas pu assister, mais dont elle avait reçu des retours très critiques. Yannis, qui n’y avait pas assisté non plus, a confirmé que, de son côté, les réactions avaient été scandalisées. Tous deux ont convenu qu’il ne s’agissait pas d’un simple incident isolé, mais bien de la répétition d’un mode de relation devenu inacceptable.<br/>Delphine a évoqué l’impression générale d’un dialogue rendu impossible avec la déléguée Théâtre et Arts Associés, Géraldine Mercier, en charge du dossier, et une posture qu’elle a qualifiée de méprisante, non seulement envers le secteur du cirque, mais également envers l’ensemble des acteurs présents. Elle a noté que les autres réseaux artistiques avaient eux aussi exprimé la même frustration, en soulignant l’impossibilité d’obtenir des réponses concrètes, le manque de communication, et le refus de tout travail collaboratif. Ce constat lui a semblé d’autant plus préoccupant que le discours tenu récemment par Christophe Miles en Auvergne-Rhône-Alpes, devant les labels, lui est apparu sensiblement différent.<br/>Yannis a souligné, pour sa part, que le SCC avait fait l’effort de jouer le jeu, de se rendre disponible, et d’avancer des propositions, mais que l’attitude rencontrée rendait tout travail impossible. Il lui a semblé qu’il n’était plus envisageable de poursuivre les échanges dans de telles conditions.<br/>Territoires de Cirque a alors proposé l’organisation d’un rendez-vous de débriefing collectif, non seulement pour permettre la circulation des témoignages directs de celles et ceux qui avaient assisté à la réunion, mais aussi pour envisager une réponse coordonnée face à l’impasse actuelle.<br/>Yannis a indiqué qu’il proposerait des dates à l’issue du Conseil National.<br/></p></div></figure><p id="206a5f76-8e7e-80f5-a1ac-f1f9b56c2ebc" class="">
+</p><p id="206a5f76-8e7e-8023-9352-d46ada651442" class="">Réunion filière du 28 mai : </p><p id="207a5f76-8e7e-8041-9dee-e288637480a6" class="">
+</p><h2 id="1a8a5f76-8e7e-8012-a4e3-f0fe2bcffaa7" class="">1.2 Politiques décentralisées  - DRAC</h2><p id="207a5f76-8e7e-80ba-895b-ee803bd1431b" class="">Conventionnements</p><h2 id="1aea5f76-8e7e-80da-ba30-d65aa7a426f7" class="">1.3. Municipales - Collaboration FFEC / SCC </h2><p id="207a5f76-8e7e-80ea-9979-c69faa48cfcb" class="">Une visio de présentation des propositions en cours de rédaction et de la démarche est proposée aux adhérents le 13 juin </p><p id="207a5f76-8e7e-809c-8722-eee0b219eaff" class="">Propositions en cours : </p><p id="207a5f76-8e7e-801c-a8fb-d1a92743d4e9" class=""><a href="https://docs.google.com/document/d/1W2uriRENz7tMaUwW17aeLssNe4rkGvniQ3c0OxXrkOA/edit?usp=sharing">https://docs.google.com/document/d/1W2uriRENz7tMaUwW17aeLssNe4rkGvniQ3c0OxXrkOA/edit?usp=sharing</a></p><p id="207a5f76-8e7e-8032-9004-e782ac3a1db8" class="">
+</p><h2 id="207a5f76-8e7e-800d-82ed-e340c4f965cc" class="">1.4 Intersyndicale </h2><h1 id="207a5f76-8e7e-80a7-aa69-d2e11b184d33" class="">2. Production</h1><h2 id="207a5f76-8e7e-8022-8ea2-f69b9cffce4a" class="">2.1. Interpellation Syndeac / Charte TDC / Production/ Résidence</h2><p id="207a5f76-8e7e-80b7-923f-f01b71aead5d" class="">
+</p><h1 id="207a5f76-8e7e-8040-aa4f-d62b01e6d238" class="">3. FSICPA - Point d’information</h1><p id="207a5f76-8e7e-80df-bb25-e4b4d20bc29b" class="">Le résumé visuel : </p><p id="207a5f76-8e7e-8027-9a89-f323dd1a78ec" class=""><a href="https://claude.ai/public/artifacts/f066c318-b5c5-408c-ab4c-0402cc687dcf">https://claude.ai/public/artifacts/f066c318-b5c5-408c-ab4c-0402cc687dcf</a></p><h2 id="207a5f76-8e7e-8081-b094-c477f0a43036" class="">Changements de gouvernance au sein du SYNAVI</h2><p id="207a5f76-8e7e-802b-a734-d55e82ac705a" class="">Emmanuelle Gourvitch a informé les participants des changements de gouvernance en cours au SYNAVI. Elle a annoncé qu&#x27;elle assurera l&#x27;intérim de la délégation générale suite au <mark class="highlight-yellow_background">départ de Claire Moreau</mark>, notamment sur les relations institutionnelles, politiques, intersyndicales et sur la CPPNI (Commission Paritaire Permanente de Négociation et d&#x27;Interprétation).</p><p id="207a5f76-8e7e-80ec-90b3-c7219ff7d978" class="">L&#x27;organisation du SYNAVI est actuellement en restructuration :</p><ul id="207a5f76-8e7e-800c-bf55-cc4236254fb5" class="bulleted-list"><li style="list-style-type:disc">Emmanuelle Gourvitch avait déjà annoncé qu&#x27;elle quitterait la présidence lors de la prochaine AG (son troisième et dernier mandat)</li></ul><ul id="207a5f76-8e7e-8063-a528-d143afe7195f" class="bulleted-list"><li style="list-style-type:disc">Un nouveau président devrait être élu, probablement Eric Vanelle (sauf si d&#x27;autres candidatures se présentent)</li></ul><ul id="207a5f76-8e7e-80e6-af65-db198c4e54e7" class="bulleted-list"><li style="list-style-type:disc">Un poste a été créé pour la coordination des équipes régionales et des délégations, qui sera occupé par Élodie Ducéré (anciennement aux Raviv Occitanie)</li></ul><ul id="207a5f76-8e7e-8007-bf88-cd9432fcce3f" class="bulleted-list"><li style="list-style-type:disc"><mark class="highlight-yellow_background">Emmanuelle assurera la transition à temps partiel (3 jours/semaine) en attendant un nouveau recrutement</mark></li></ul><p id="207a5f76-8e7e-80b2-b3a4-e0a2f1845058" class="">Le SYNAVI prévoit un recrutement pour le poste de délégation générale, sachant que le précédent recrutement avait pris environ six mois.</p><h2 id="207a5f76-8e7e-806d-951c-d8f1083d0403" class="">Décision concernant l&#x27;intérim de la vice-présidence de la CPPNI</h2><p id="207a5f76-8e7e-80e7-9d2c-c42ef7f854a0" class="">Il a été convenu qu&#x27;Emmanuelle Gourvitch prendra la <mark class="highlight-yellow_background">vice-présidence de la CPPNI à partir de septembre 2025</mark>, représentant la FSICPA, avec l&#x27;appui technique de Marielle Pautonnier pour les aspects juridiques. Cette vice-présidence implique également la présidence du collège employeur.</p><h2 id="207a5f76-8e7e-800c-8be0-ecc43659739f" class="">Représentation au CNPS (Conseil National des Professions du Spectacle)</h2><h3 id="207a5f76-8e7e-806c-8fd1-f11bb7ea1952" class="">Bureau du CNPS</h3><p id="207a5f76-8e7e-8005-80c8-ff8308799828" class="">Nous avons échangé sur les possibilités de représentation au bureau du CNPS si nous obtenons une place.<br/>Le SCC avait proposé que le mandat (4 ans) soit séparé en 2, en alternance Synavi - SCC. Le premier tour aurait pu être pris par Claire Moreau.<br/>Nous avons maintenu cette proposition si Emmanuelle Gourvitch pouvait assurer cette représentation sur les deux premières années.<br/>Il sera nécessaire sur ce sujet qu’il y ait des échanges au sein des instances du SYNAVI après son AG.<br/></p><h3 id="207a5f76-8e7e-8011-9947-c9a24ffacdec" class="">Stratégie vis-à-vis du SMA (Syndicat des Musiques Actuelles)</h3><p id="207a5f76-8e7e-80db-b795-f0f2a5f0cc80" class="">Une discussion a eu lieu concernant une potentielle collaboration avec le SMA pour renforcer la légitimité de la FSICPA à obtenir une place au bureau du CNPS.</p><p id="207a5f76-8e7e-8015-b1f4-ccddfa921018" class="">Il a été validé la volonté d’une rencontre avec le SMA avant l&#x27;été. Yannis proposera un projet d&#x27;accord de collaboration sur le bureau du CNPS à proposer au SMA, même si celui-ci risque de ne pas être signé.</p><h2 id="207a5f76-8e7e-80fb-97db-c62c518c88cb" class="">Coordination FSICPA</h2><p id="207a5f76-8e7e-80b8-96bb-f0156a9735ae" class="">La coordination de la FSICPA va basculer du SYNAVI au SCC début juillet 2025.</p><h1 id="1a8a5f76-8e7e-80de-b2a2-c004617d1f4f" class="">4. Point Formation professionnelle</h1><h2 id="206a5f76-8e7e-8009-b327-c2221fb79163" class="">4.1 AFDAS </h2><p id="207a5f76-8e7e-8048-b09a-e54229e04893" class="">Point sur l’évolution des prises en charge pour les formations de l’AFDAS. </p><p id="207a5f76-8e7e-8030-97b8-c6ea3062160d" class="">Situation de forte tension budgétaire à l’AFDAS qui implique d’importantes révisions dans les modalités de prise en charge des formations. </p><h2 id="207a5f76-8e7e-8049-99ed-c68c3e2b4451" class="">3.2 Écoles </h2><p id="207a5f76-8e7e-80bf-b982-e4cd1d933fdf" class="">
+</p><p id="207a5f76-8e7e-8007-a91b-c57e2c51927a" class=""><strong>Demande rendez-vous CNAC (en cours) : </strong></p><p id="207a5f76-8e7e-8004-98a7-f92042623ef4" class="">
+</p><p id="207a5f76-8e7e-801b-a549-f8933afdd872" class=""><strong>Situation Fratellini : </strong></p><p id="207a5f76-8e7e-80fa-a7ae-fecfa0866d28" class="">
+</p><p id="207a5f76-8e7e-803f-b218-f13dcb6aa752" class="">
+</p><h2 id="207a5f76-8e7e-8051-a1d2-daf001158c2a" class="">3.3 CNPS </h2><p id="207a5f76-8e7e-80ab-9a3b-c2eb5a6ac82b" class="">Préconisations en matière d’apprentissage. </p><p id="207a5f76-8e7e-8094-9def-ef08b5b966ff" class="">
+</p><h1 id="207a5f76-8e7e-8022-b1f0-caca6d137870" class="">5. Régions</h1><h2 id="207a5f76-8e7e-809e-a56f-c261088af229" class="">5.1. SODAC</h2><p id="207a5f76-8e7e-805f-96aa-ddc5876ca47b" class="">
+</p><p id="207a5f76-8e7e-80bc-ac6e-e724168d0da3" class="">
+</p><h2 id="207a5f76-8e7e-8015-8fdb-cf86822697e3" class="">5.2. Intervention compagnies nantaises</h2><p id="207a5f76-8e7e-802a-869d-f0805f786720" class="">
+</p><h2 id="207a5f76-8e7e-8066-b41c-f66b0532eb4c" class="">5.3 COREPS</h2><p id="207a5f76-8e7e-80a1-8756-fa7e6c3358d0" class="">
+</p><h1 id="206a5f76-8e7e-8095-907b-e70b4718f266" class=""><strong>6. Conventions collectives</strong></h1><h2 id="207a5f76-8e7e-80ff-8e2f-c24d24a5dbfd" class=""><strong>6.1. Point étape CCNEAC - Classification</strong></h2><h2 id="207a5f76-8e7e-809a-a634-dd698b364fc8" class=""><strong>6.2. Point d’étape CCNSVP - FCAP</strong></h2><h2 id="207a5f76-8e7e-8063-a582-d8aae668a740" class=""><strong>6.3. FNAS / CASC : modifications</strong></h2><p id="207a5f76-8e7e-80dc-b154-c8bc4ec747b7" class="">Le résumé visuel : <a href="https://claude.ai/public/artifacts/b500f243-a1bf-461d-b5f2-18c0fc77a267">https://claude.ai/public/artifacts/b500f243-a1bf-461d-b5f2-18c0fc77a267</a></p><p id="207a5f76-8e7e-8051-9e23-d42ad09153e9" class="">
+</p><figure class="block-color-blue_background callout" style="white-space:pre-wrap;display:flex" id="207a5f76-8e7e-809b-8050-fe39baab9d8a"><div style="font-size:1.5em"><img class="icon" src="https://www.notion.so/icons/note-sixteenth-beamed_yellow.svg"/></div><div style="width:100%"><p id="207a5f76-8e7e-80a8-9eea-f500780d6dfe" class=""><strong>Compte-rendu des problématiques légales du FNAS et du CASC-SVP</strong></p><p id="207a5f76-8e7e-8036-bd60-ffc5ea063d7a" class=""><strong>I - Le contexte et l&#x27;origine du problème</strong></p><p id="207a5f76-8e7e-80e1-8cd5-f9891578a7e9" class="">Le FNAS (Fonds National d&#x27;Activité Sociale) et le CASC-SVP (Comité d&#x27;Action Sociale et Culturelle du Spectacle Vivant Privé) sont deux associations qui gèrent les activités sociales et culturelles pour les salariés du secteur du spectacle vivant. Ces organismes ont été créés pour répondre aux spécificités de ces branches professionnelles, caractérisée par une forte proportion de salariés intermittents travaillant sur de très courtes durées dans différentes entreprises.Pour tenir compte de cette réalité, ces associations ont mis en place un système particulier : elles permettent aux salariés de bénéficier d&#x27;avantages sociaux et culturels même lorsqu&#x27;ils ne sont plus en contrat, à condition qu&#x27;ils aient effectué un nombre minimum d&#x27;heures de travail ou de cachets sur une période donnée. Cette approche visait à assurer une équité de traitement entre tous les professionnels du secteur, qu&#x27;ils soient en CDI, CDD ou intermittents.</p><p id="207a5f76-8e7e-80fd-8f77-c6f8f0753acb" class=""><strong>II - L&#x27;évolution jurisprudentielle qui change la donne</strong></p><p id="207a5f76-8e7e-802c-be3a-cd9ae1c9ee63" class="">Traditionnellement, la Cour de cassation considérait que toutes les sommes versées par un employeur ou un comité social et économique au titre des activités sociales et culturelles constituaient du salaire et devaient être soumises à cotisations sociales. Cette position était fondée sur le principe que ces avantages étaient accordés en contrepartie du travail. Parallèlement, l&#x27;administration fiscale (URSSAF) avait développé une doctrine plus souple, acceptant que le bénéfice des activités sociales et culturelles <strong>puisse être conditionné à une ancienneté maximale de six mois</strong>, sans remettre en cause l&#x27;exonération de cotisations sociales.</p><p id="207a5f76-8e7e-807d-8ebd-d75991cd1730" class="">Cette divergence de vue s&#x27;est cristallisée autour d&#x27;une question fondamentale : <strong>peut-on subordonner l&#x27;accès aux activités sociales et culturelles à une condition d&#x27;ancienneté ?</strong></p><p id="207a5f76-8e7e-808f-91f7-e361004ec928" class="">Le 3 avril 2024, la Cour de cassation a tranché définitivement cette question en considérant que l&#x27;ouverture du droit aux activités sociales et culturelles ne peut être subordonnée à une condition d&#x27;ancienneté. Cette décision s&#x27;appuie sur l&#x27;article L. 2312-78 du Code du travail, qui prévoit que ces activités bénéficient prioritairement aux salariés, à leur famille et aux stagiaires, sans distinction.Cette position a été renforcée par un arrêt du 12 mars 2025, dans lequel la Cour de cassation a qualifié de discriminatoire toute condition d&#x27;ancienneté et a semblé indiquer que même la modulation du montant des avantages en fonction de l&#x27;ancienneté était prohibée.</p><p id="207a5f76-8e7e-8025-b98c-e6069b79e4c1" class=""><strong>III - Les conséquences pour le FNAS et le CASC-SVP</strong></p><p id="207a5f76-8e7e-8004-ab54-fbfa212ca0c8" class="">Cette évolution jurisprudentielle place ces deux associations dans une situation délicate. Leurs règlements intérieurs, qui exigent un nombre minimum d&#x27;heures travaillées ou de cachets pour ouvrir les droits aux activités sociales et culturelles, sont désormais considérés comme contraires au droit.Le maintien de ces conditions expose les associations à plusieurs risques. D&#x27;un point de vue juridique, des adhérents, des syndicats ou des élus du personnel pourraient contester ces critères devant les tribunaux. Enfin, bien que le risque soit plus faible, les URSSAF pourraient théoriquement redresser les entreprises du secteur en réintégrant les cotisations versées aux associations dans l&#x27;assiette des charges sociales.</p><p id="207a5f76-8e7e-80de-b665-ee5a7a56c222" class="">La suppression pure et simple du critère d&#x27;ancienneté créerait par ailleurs un déséquilibre budgétaire pour ces associations, puisqu&#x27;elle augmenterait significativement le nombre de bénéficiaires sans modification des ressources.</p><p id="207a5f76-8e7e-8094-922c-f30583c57e06" class=""><strong>IV - Les solutions envisageables</strong></p><p id="207a5f76-8e7e-80fd-a5b1-eca3ddc2772b" class="">Face à cette situation, plusieurs stratégies peuvent être mises en œuvre, chacune présentant ses avantages et ses inconvénients.</p><p id="207a5f76-8e7e-807f-86c7-f38be66cd334" class=""><strong>1. Attendre un changement extérieur</strong></p><p id="207a5f76-8e7e-80c9-bb5b-d7e850a23861" class="">La première option consiste à espérer une évolution législative ou réglementaire. Des amendements ont d&#x27;ailleurs été déposés au Parlement pour permettre de nouveau une condition d&#x27;ancienneté maximale de six mois. Cependant, cette approche présente une forte incertitude quant à son issue et laisse les associations dans une position fragile en attendant.</p><p id="207a5f76-8e7e-8095-834d-f1fbb31bea55" class=""><strong>2. Faire reconnaître le statut particulier des associations</strong></p><p id="207a5f76-8e7e-804f-baa5-d378a36607a7" class="">Une stratégie plus proactive consisterait à faire valider par l&#x27;ACOSS (l&#x27;organisme de tutelle des URSSAF) que ces associations ne sont pas des comités sociaux et économiques classiques, mais des organes mutualistes de branche. Cette reconnaissance leur permettrait d&#x27;échapper partiellement aux règles du Code du travail et de conserver une certaine souplesse dans l&#x27;attribution des avantages.L&#x27;argumentaire repose sur plusieurs éléments : ces associations ne sont pas les employeurs de leurs adhérents, elles ne correspondent pas exactement aux définitions légales des comités sociaux et économiques interentreprises, et leur système de mutualisation permet à des personnes qui ne pourraient normalement pas bénéficier d&#x27;activités sociales et culturelles d&#x27;en profiter.</p><p id="207a5f76-8e7e-80d4-9ca6-f6a8b135c844" class=""><strong>3. Distinguer les salariés en poste des autres</strong></p><p id="207a5f76-8e7e-80af-bb9a-c6b575736711" class="">Une variante de cette approche consisterait à appliquer les nouvelles règles uniquement aux salariés actuellement en poste, tout en maintenant des conditions spécifiques pour ceux qui ne sont plus en contrat au moment où ils demandent une prise en charge. Cette distinction s&#x27;appuierait sur le fait que la jurisprudence de la Cour de cassation a déjà validé la possibilité d&#x27;exclure les anciens salariés du bénéfice des activités sociales et culturelles.</p><p id="207a5f76-8e7e-804f-a3e7-ca11e9819192" class=""><strong>4. Mettre en place une logique acquisitive</strong></p><p id="207a5f76-8e7e-8068-871e-c288e4a82e60" class="">Au lieu de conditionner l&#x27;accès aux avantages à un seuil d&#x27;ancienneté, les associations pourraient adopter un système où chaque période travaillée ouvre des droits progressifs. Par exemple, un salarié qui travaille au moins un jour dans un mois donné acquerrait automatiquement un crédit au titre des activités sociales et culturelles, modulé uniquement en fonction de son quotient familial. Cette approche éviterait la référence directe à l&#x27;ancienneté tout en préservant une certaine proportionnalité.</p><p id="207a5f76-8e7e-80ac-b038-c1f84ac7cb51" class=""><strong>5. Application stricte des nouvelles règles</strong></p><p id="207a5f76-8e7e-8018-af4d-ebb438e9a9df" class="">Enfin, l&#x27;option la plus sûre juridiquement consisterait à supprimer totalement les conditions d&#x27;ancienneté et à accorder les mêmes droits à tous les salariés dès leur premier jour de travail. Pour maintenir l&#x27;équilibre économique, il faudrait alors réduire la période pendant laquelle les adhérents peuvent utiliser leurs droits en l&#x27;absence de contrat de travail, ou modifier d&#x27;autres paramètres comme les plafonds de prise en charge.</p><p id="207a5f76-8e7e-80c0-9efa-e39bfc6cba7b" class=""><strong>6. La stratégie de sécurisation recommandée par les avocats</strong></p><p id="207a5f76-8e7e-808e-8c3d-df88d35c8cba" class="">Pour sécuriser leur situation, il est conseillé aux deux associations de procéder par étapes. Dans un premier temps, elles doivent adapter leur communication pour rendre moins visibles les références à l&#x27;ancienneté, tout en préparant une modification en profondeur de leurs règlements.</p><p id="207a5f76-8e7e-804d-a312-d23bc15b9c6b" class="">Ensuite, il serait judicieux d&#x27;engager un dialogue avec l&#x27;ACOSS pour faire valider l&#x27;une des solutions alternatives, en privilégiant l&#x27;argumentaire sur leur statut d&#x27;organisme mutualiste. Cette démarche pourrait s&#x27;appuyer sur une procédure de rescrit social général, qui permettrait d&#x27;obtenir une position officielle et opposable de l&#x27;administration.</p><p id="207a5f76-8e7e-805b-89f8-e5a20c48a471" class="">La démarche recommandée comprend trois phases : d&#x27;abord évaluer officieusement la position de l&#x27;ACOSS sur le statut particulier de ces associations, puis discuter des modalités spécifiques d&#x27;attribution envisagées, et enfin solliciter un rescrit formel si les premières approches s&#x27;avèrent positives.</p><p id="207a5f76-8e7e-80cd-8a31-d270c6aa6bff" class="">Si l&#x27;ACOSS refuse de valider les dispositifs alternatifs proposés, les associations devront alors se résoudre à appliquer strictement la nouvelle jurisprudence, tout en militant pour une adaptation législative ou réglementaire qui tiendrait compte des spécificités du secteur.</p></div></figure><h1 id="206a5f76-8e7e-807d-8f83-f01b0a3d3e1d" class="">7. Divers</h1><h2 id="206a5f76-8e7e-8087-bb23-fcddc7335eff" class="">7.1. Validation d’un texte sur les règles de conciliation réalisée par le SCC</h2><p id="206a5f76-8e7e-80f0-b660-e9374cac3282" class="">Nous vous proposons un texte informatif pour fixer les principes et les modalités des conciliations.</p><p id="206a5f76-8e7e-8071-a2ef-d0452c48851f" class="">Ce texte, une fois validé par le CN, sera intégré sous forme d’article au règlement intérieur du SCC.</p><figure id="206a5f76-8e7e-80ca-9780-e9d5e2f61498"><div class="source"><a href="2024-04-11_Information_sur_la_conciliation_du_Syndicat_des_Cirques_et_Compagnies_de_cration.docx">2024-04-11 Information sur la conciliation du Syndicat des Cirques et Compagnies de création.docx</a></div></figure><p id="206a5f76-8e7e-80a4-846d-da0f6957da46" class="">
+</p></div></article><span class="sans" style="font-size:14px;padding-top:2em"></span></body></html>
