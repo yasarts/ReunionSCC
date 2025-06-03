@@ -1,12 +1,16 @@
 export interface AgendaItem {
   id: string;
   title: string;
-  duration?: number;
-  type: 'opening' | 'discussion' | 'decision' | 'information' | 'closing';
+  duration: number;
+  type: 'opening' | 'discussion' | 'decision' | 'information' | 'closing' | 'break';
   level: number;
   completed: boolean;
   notes?: string;
   presenter?: string;
+  content?: string;
+  visualLink?: string;
+  isSubsection?: boolean;
+  startTime?: string;
 }
 
 export const meetingInfo = {
@@ -31,7 +35,9 @@ export const agendaItems: AgendaItem[] = [
     type: "opening",
     level: 0,
     completed: false,
-    presenter: "Président(e)"
+    presenter: "Président(e)",
+    content: "Assemblée Générale Extraordinaire - Ouverture de la séance",
+    visualLink: ""
   },
   {
     id: "1",
@@ -39,7 +45,9 @@ export const agendaItems: AgendaItem[] = [
     duration: 45,
     type: "discussion",
     level: 0,
-    completed: false
+    completed: false,
+    content: "Discussion sur les orientations stratégiques en matière de politiques publiques culturelles",
+    visualLink: ""
   },
   {
     id: "1.1",
@@ -47,7 +55,9 @@ export const agendaItems: AgendaItem[] = [
     duration: 10,
     type: "information",
     level: 1,
-    completed: false
+    completed: false,
+    content: "Compte-rendu de la réunion filière avec les institutions partenaires",
+    visualLink: ""
   },
   {
     id: "1.2",
@@ -55,7 +65,9 @@ export const agendaItems: AgendaItem[] = [
     duration: 10,
     type: "discussion",
     level: 1,
-    completed: false
+    completed: false,
+    content: "Relations avec les Directions Régionales des Affaires Culturelles et politiques territoriales",
+    visualLink: ""
   },
   {
     id: "1.3",
@@ -63,7 +75,9 @@ export const agendaItems: AgendaItem[] = [
     duration: 15,
     type: "discussion",
     level: 1,
-    completed: false
+    completed: false,
+    content: "Partenariat avec la Fédération Française des Écoles de Cirque dans le cadre des élections municipales",
+    visualLink: ""
   },
   {
     id: "1.4",
@@ -71,7 +85,9 @@ export const agendaItems: AgendaItem[] = [
     duration: 10,
     type: "information",
     level: 1,
-    completed: false
+    completed: false,
+    content: "Point sur les actions intersyndicales en cours",
+    visualLink: ""
   },
   {
     id: "2",
