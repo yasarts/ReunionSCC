@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +35,7 @@ export default function Dashboard() {
   });
 
   const handleLogout = async () => {
+    console.log("Logout button clicked");
     try {
       await logout();
     } catch (error) {
@@ -187,7 +188,10 @@ export default function Dashboard() {
           <div className="flex space-x-3">
             {user?.permissions.canCreateMeetings && (
               <Button 
-                onClick={() => setShowCreateMeeting(true)}
+                onClick={() => {
+                  console.log("Nouvelle réunion button clicked");
+                  setShowCreateMeeting(true);
+                }}
                 className="bg-indigo-600 hover:bg-indigo-700"
               >
                 <Plus className="h-4 w-4 mr-2" />
