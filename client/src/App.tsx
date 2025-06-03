@@ -11,7 +11,10 @@ import MeetingView from "@/pages/meeting";
 import NotFound from "@/pages/not-found";
 
 function AppRouter() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  // Debug logs
+  console.log("AppRouter render - isAuthenticated:", isAuthenticated, "user:", user, "isLoading:", isLoading);
 
   if (isLoading) {
     return (
