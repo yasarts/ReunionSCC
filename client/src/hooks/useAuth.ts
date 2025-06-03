@@ -15,11 +15,18 @@ export function useAuth() {
 
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
+      console.log("Attempting login...");
       const response = await apiRequest("POST", "/api/auth/login", { email, password });
-      return response.json();
+      const userData = await response.json();
+      console.log("Login response:", userData);
+      return userData;
     },
     onSuccess: (userData) => {
+      console.log("Login successful, setting user:", userData);
       setUser(userData);
+    },
+    onError: (error) => {
+      console.error("Login error:", error);
     },
   });
 
