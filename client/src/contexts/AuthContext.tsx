@@ -1,18 +1,24 @@
-import { useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import type { User } from "@/types";
 
-export function useAuth() {
+interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  login: ({ email, password }: { email: string; password: string }) => Promise<void>;
+  logout: () => Promise<void>;
+  isLoggingIn: boolean;
+  isLoggingOut: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [forceUpdate, setForceUpdate] = useState(0);
-
-  // Initialize with no user and not loading - user must login manually
-  useEffect(() => {
-    setIsLoading(false);
-  }, []);
+  const [isLoading, setIsLoading] = useState(false);
 
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
@@ -25,7 +31,6 @@ export function useAuth() {
     onSuccess: (userData) => {
       console.log("Login successful, setting user:", userData);
       setUser(userData);
-      setForceUpdate(prev => prev + 1); // Force re-render
     },
     onError: (error) => {
       console.error("Login error:", error);
@@ -42,7 +47,7 @@ export function useAuth() {
     },
   });
 
-  return {
+  const value: AuthContextType = {
     user,
     isLoading,
     isAuthenticated: !!user,
@@ -51,4 +56,14 @@ export function useAuth() {
     isLoggingIn: loginMutation.isPending,
     isLoggingOut: logoutMutation.isPending,
   };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 }
