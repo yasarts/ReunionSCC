@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'wouter';
-import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home } from 'lucide-react';
+import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -51,6 +51,61 @@ export default function SimpleMeetingPresenter() {
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Fonction d'export PDF
+  const exportToPDF = async () => {
+    const { jsPDF } = await import('jspdf');
+    const doc = new jsPDF();
+    
+    // Configuration PDF
+    doc.setFont("helvetica");
+    
+    // En-tête
+    doc.setFontSize(20);
+    doc.text(meetingInfo.title, 20, 30);
+    doc.setFontSize(12);
+    doc.text(`Date: ${meetingInfo.date} à ${meetingInfo.time}`, 20, 45);
+    doc.text(`Participants: ${meetingInfo.participants.length}`, 20, 55);
+    
+    // Ordre du jour
+    doc.setFontSize(16);
+    doc.text("ORDRE DU JOUR", 20, 75);
+    
+    let yPosition = 90;
+    const totalDuration = agenda.reduce((sum, item) => sum + item.duration, 0);
+    
+    doc.setFontSize(10);
+    doc.text(`Durée totale prévue: ${Math.floor(totalDuration / 60)}h${(totalDuration % 60).toString().padStart(2, '0')}`, 20, yPosition);
+    yPosition += 15;
+    
+    agenda.forEach((item, index) => {
+      if (yPosition > 270) {
+        doc.addPage();
+        yPosition = 30;
+      }
+      
+      doc.setFontSize(12);
+      doc.text(`${index + 1}. ${item.title}`, 20, yPosition);
+      yPosition += 7;
+      
+      doc.setFontSize(10);
+      doc.text(`   Durée: ${item.duration}min | Type: ${getTypeLabel(item.type)}`, 25, yPosition);
+      if (item.presenter) {
+        yPosition += 7;
+        doc.text(`   Intervenant: ${item.presenter}`, 25, yPosition);
+      }
+      if (item.content) {
+        yPosition += 7;
+        const lines = doc.splitTextToSize(`   ${item.content}`, 160);
+        doc.text(lines, 25, yPosition);
+        yPosition += lines.length * 5;
+      }
+      yPosition += 10;
+    });
+    
+    // Sauvegarde
+    doc.save(`ordre-du-jour-${meetingInfo.title.replace(/\s+/g, '-')}.pdf`);
   };
 
   const getMeetingDuration = () => {
@@ -252,7 +307,21 @@ export default function SimpleMeetingPresenter() {
       <div className="bg-white border-b p-3 flex-shrink-0">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold text-blue-800">{meetingInfo.title}</h1>
+            <div>
+              <h1 className="text-xl font-bold text-blue-800">{meetingInfo.title}</h1>
+              {/* Barre de progression colorée */}
+              <div className="mt-1">
+                <div className="flex items-center gap-2">
+                  <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-blue-500 via-green-500 to-blue-600 transition-all duration-300"
+                      style={{ width: `${progress}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-xs text-gray-600">{completedItems}/{totalItems}</span>
+                </div>
+              </div>
+            </div>
             <span className="text-sm text-gray-600">{meetingInfo.date} - {formatTime(currentTime)}</span>
             <span className="text-sm text-gray-600">Durée: {getMeetingDuration()}</span>
           </div>
@@ -265,6 +334,15 @@ export default function SimpleMeetingPresenter() {
             >
               <Home className="w-4 h-4" />
               Accueil
+            </Button>
+
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={exportToPDF}
+            >
+              <FileDown className="w-4 h-4" />
+              Export PDF
             </Button>
             
             <Button 
@@ -430,8 +508,94 @@ export default function SimpleMeetingPresenter() {
                 </div>
               )}
 
+              {/* Timeline complète pour le premier point d'ordre du jour */}
+              {currentItem.id === "timeline" && (
+                <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border">
+                  <h4 className="font-medium mb-4 text-blue-800 text-center text-lg">Timeline complète de la réunion</h4>
+                  
+                  <div className="grid grid-cols-1 gap-3 max-h-64 overflow-y-auto">
+                    {agenda.map((item, index) => {
+                      const isCompleted = itemStates[item.id]?.completed;
+                      const isCurrent = index === currentItemIndex;
+                      
+                      return (
+                        <div 
+                          key={item.id} 
+                          className={`p-3 rounded-lg border-l-4 ${
+                            isCurrent ? 'bg-blue-100 border-l-blue-500' :
+                            isCompleted ? 'bg-green-50 border-l-green-500' :
+                            'bg-white border-l-gray-300'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                {isCompleted ? (
+                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                ) : isCurrent ? (
+                                  <Play className="w-4 h-4 text-blue-600" />
+                                ) : (
+                                  <Circle className="w-4 h-4 text-gray-400" />
+                                )}
+                                <span className={`font-medium text-sm ${
+                                  isCurrent ? 'text-blue-800' : 
+                                  isCompleted ? 'text-green-800' : 
+                                  'text-gray-800'
+                                }`}>
+                                  {item.title}
+                                </span>
+                              </div>
+                              
+                              <div className="flex items-center gap-2 ml-6">
+                                <Badge variant="outline" className={`text-xs ${getTypeColor(item.type)}`}>
+                                  {getTypeLabel(item.type)}
+                                </Badge>
+                                
+                                {item.presenter && (
+                                  <span className="text-xs text-gray-600">
+                                    {item.presenter}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="text-right">
+                              <div className={`text-sm font-mono ${
+                                isCurrent ? 'text-blue-600 font-bold' : 'text-gray-600'
+                              }`}>
+                                {item.duration}min
+                              </div>
+                              {scheduledAgenda[index] && (
+                                <div className="text-xs text-gray-500">
+                                  {scheduledAgenda[index].startTime}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  <div className="mt-4 p-3 bg-blue-100 rounded-lg">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="font-medium text-blue-800">Durée totale prévue:</span>
+                      <span className="font-mono font-bold text-blue-800">
+                        {Math.floor(agenda.reduce((sum, item) => sum + item.duration, 0) / 60)}h{(agenda.reduce((sum, item) => sum + item.duration, 0) % 60).toString().padStart(2, '0')}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm mt-1">
+                      <span className="font-medium text-blue-800">Progression:</span>
+                      <span className="font-mono font-bold text-blue-800">
+                        {completedItems}/{totalItems} points ({Math.round(progress)}%)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Contenu détaillé */}
-              {currentItem.content && (
+              {currentItem.content && currentItem.id !== "timeline" && (
                 <div className="p-3 bg-gray-50 rounded-lg">
                   <h4 className="font-medium mb-2">Contenu détaillé</h4>
                   <div className="text-sm whitespace-pre-wrap">{currentItem.content}</div>

@@ -29,6 +29,17 @@ export const meetingInfo = {
 
 export const agendaItems: AgendaItem[] = [
   {
+    id: "timeline",
+    title: "Ordre du jour complet - Timeline de la réunion",
+    duration: 5,
+    type: "opening",
+    level: 0,
+    completed: false,
+    presenter: "Secrétaire général",
+    content: "Présentation de l'ordre du jour complet avec chronométrage prévisionnel",
+    visualLink: ""
+  },
+  {
     id: "0",
     title: "0. AGE",
     duration: 5,
