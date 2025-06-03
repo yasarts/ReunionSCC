@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2 } from 'lucide-react';
+import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,6 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { agendaItems as initialAgenda, meetingInfo as initialMeetingInfo, type AgendaItem } from '@/data/agenda';
 
 interface MeetingInfo {
@@ -70,13 +71,37 @@ export default function SimpleMeetingPresenter() {
     
     return agenda.map(item => {
       const itemStartTime = new Date(currentScheduleTime);
-      currentScheduleTime.setMinutes(currentScheduleTime.getMinutes() + item.duration);
+      
+      // Calculer la durée effective (cumul des sous-points si applicable)
+      let effectiveDuration = item.duration;
+      if (item.level === 0) {
+        // Pour les points principaux, calculer le total des sous-points
+        const subItems = agenda.filter(subItem => 
+          subItem.level > 0 && 
+          agenda.indexOf(subItem) > agenda.indexOf(item) &&
+          (agenda.findIndex((nextMain, idx) => idx > agenda.indexOf(item) && nextMain.level === 0) === -1 ||
+           agenda.indexOf(subItem) < agenda.findIndex((nextMain, idx) => idx > agenda.indexOf(item) && nextMain.level === 0))
+        );
+        
+        if (subItems.length > 0) {
+          effectiveDuration = subItems.reduce((total, subItem) => total + subItem.duration, 0);
+        }
+      }
+      
+      currentScheduleTime.setMinutes(currentScheduleTime.getMinutes() + (item.level === 0 ? effectiveDuration : item.duration));
       const itemEndTime = new Date(currentScheduleTime);
       
       return {
         ...item,
         startTime: formatTime(itemStartTime),
-        endTime: formatTime(itemEndTime)
+        endTime: formatTime(itemEndTime),
+        effectiveDuration,
+        subItems: item.level === 0 ? agenda.filter(subItem => 
+          subItem.level > 0 && 
+          agenda.indexOf(subItem) > agenda.indexOf(item) &&
+          (agenda.findIndex((nextMain, idx) => idx > agenda.indexOf(item) && nextMain.level === 0) === -1 ||
+           agenda.indexOf(subItem) < agenda.findIndex((nextMain, idx) => idx > agenda.indexOf(item) && nextMain.level === 0))
+        ) : []
       };
     });
   };
@@ -126,7 +151,7 @@ export default function SimpleMeetingPresenter() {
     const newId = Date.now().toString();
     const newItem: AgendaItem = {
       id: newId,
-      title: 'Nouveau point',
+      title: level === 0 ? 'Nouveau point principal' : 'Nouveau sous-point',
       duration: 10,
       type: 'discussion',
       level,
@@ -138,6 +163,10 @@ export default function SimpleMeetingPresenter() {
     const newAgenda = [...agenda];
     newAgenda.splice(afterIndex + 1, 0, newItem);
     setAgenda(newAgenda);
+  };
+
+  const addSubItem = (parentIndex: number) => {
+    addNewItem(parentIndex, 1);
   };
 
   const addBreak = (afterIndex: number) => {
@@ -357,6 +386,31 @@ export default function SimpleMeetingPresenter() {
                 </div>
               )}
 
+              {/* Affichage des sous-points pour les points principaux */}
+              {currentItem.level === 0 && scheduledAgenda[currentItemIndex].subItems.length > 0 && (
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <h4 className="font-medium mb-3 text-blue-800">Sous-points de ce point principal</h4>
+                  <div className="space-y-2">
+                    {scheduledAgenda[currentItemIndex].subItems.map((subItem, idx) => (
+                      <div key={subItem.id} className="flex items-center justify-between p-2 bg-white rounded border">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{subItem.title}</div>
+                          <Badge variant="outline" className={`text-xs mt-1 ${getTypeColor(subItem.type)}`}>
+                            {getTypeLabel(subItem.type)}
+                          </Badge>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {subItem.duration}min
+                        </div>
+                      </div>
+                    ))}
+                    <div className="mt-2 p-2 bg-blue-100 rounded text-sm font-medium text-blue-800">
+                      Durée totale: {scheduledAgenda[currentItemIndex].effectiveDuration}min
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Contenu détaillé */}
               {currentItem.content && (
                 <div className="p-3 bg-gray-50 rounded-lg">
@@ -394,6 +448,7 @@ export default function SimpleMeetingPresenter() {
                 size="sm" 
                 variant="outline"
                 onClick={() => addNewItem(currentItemIndex)}
+                title="Ajouter un point principal"
               >
                 <Plus className="w-3 h-3" />
               </Button>
@@ -401,6 +456,7 @@ export default function SimpleMeetingPresenter() {
                 size="sm" 
                 variant="outline"
                 onClick={() => addBreak(currentItemIndex)}
+                title="Ajouter une pause"
               >
                 <Coffee className="w-3 h-3" />
               </Button>
@@ -417,7 +473,7 @@ export default function SimpleMeetingPresenter() {
                     : 'border-gray-200 hover:bg-gray-50'
                 }`}
                 onClick={() => goToItem(index)}
-                style={{ marginLeft: `${item.level * 8}px` }}
+                style={{ marginLeft: `${item.level * 12}px` }}
               >
                 <div className="flex items-start gap-2">
                   {itemStates[item.id]?.completed ? (
@@ -435,18 +491,35 @@ export default function SimpleMeetingPresenter() {
                         {getTypeLabel(item.type)}
                       </Badge>
                       <div className="text-xs text-gray-500">
-                        {item.startTime} ({item.duration}min)
+                        {item.startTime} ({item.level === 0 && item.subItems?.length > 0 ? item.effectiveDuration : item.duration}min)
                       </div>
                     </div>
-                    <div className="flex justify-end mt-1">
+                    <div className="flex justify-between items-center mt-1">
+                      <div className="flex gap-1">
+                        {item.level === 0 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-4 w-4 p-0"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              addSubItem(index);
+                            }}
+                            title="Ajouter un sous-point"
+                          >
+                            <ChevronDown className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-5 w-5 p-0"
+                        className="h-4 w-4 p-0"
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteItem(item.id);
                         }}
+                        title="Supprimer"
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>
@@ -474,7 +547,7 @@ export default function SimpleMeetingPresenter() {
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label htmlFor="duration">Durée (minutes)</Label>
                   <Input
@@ -483,6 +556,26 @@ export default function SimpleMeetingPresenter() {
                     value={editingItem.duration}
                     onChange={(e) => setEditingItem({...editingItem, duration: parseInt(e.target.value) || 0})}
                   />
+                </div>
+                
+                <div>
+                  <Label htmlFor="type">Type de point</Label>
+                  <Select
+                    value={editingItem.type}
+                    onValueChange={(value) => setEditingItem({...editingItem, type: value as AgendaItem['type']})}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="opening">Ouverture</SelectItem>
+                      <SelectItem value="discussion">Discussion</SelectItem>
+                      <SelectItem value="decision">Décision</SelectItem>
+                      <SelectItem value="information">Information</SelectItem>
+                      <SelectItem value="break">Pause</SelectItem>
+                      <SelectItem value="closing">Clôture</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div>
@@ -532,9 +625,39 @@ export default function SimpleMeetingPresenter() {
       {/* Modal participants */}
       {showParticipantsModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Gérer les participants</h3>
+          <div className="bg-white p-6 rounded-lg max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Configuration de la réunion</h3>
             <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="meetingDate">Date de la réunion</Label>
+                  <Input
+                    id="meetingDate"
+                    type="date"
+                    value={meetingInfo.date}
+                    onChange={(e) => setMeetingInfo({...meetingInfo, date: e.target.value})}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="meetingTime">Heure de début</Label>
+                  <Input
+                    id="meetingTime"
+                    type="time"
+                    value={meetingInfo.time}
+                    onChange={(e) => setMeetingInfo({...meetingInfo, time: e.target.value})}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="meetingTitle">Titre de la réunion</Label>
+                <Input
+                  id="meetingTitle"
+                  value={meetingInfo.title}
+                  onChange={(e) => setMeetingInfo({...meetingInfo, title: e.target.value})}
+                />
+              </div>
+              
               <div>
                 <Label htmlFor="pouvoir">Pouvoirs</Label>
                 <Textarea
