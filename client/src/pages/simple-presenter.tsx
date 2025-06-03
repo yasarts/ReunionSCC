@@ -20,6 +20,10 @@ interface MeetingInfo {
 }
 
 export default function SimpleMeetingPresenter() {
+  const params = useParams();
+  const [, setLocation] = useLocation();
+  const meetingId = params.meetingId;
+  
   const [currentItemIndex, setCurrentItemIndex] = useState(0);
   const [agenda, setAgenda] = useState<AgendaItem[]>(initialAgenda);
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo>(initialMeetingInfo);
