@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'wouter';
-import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown } from 'lucide-react';
+import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown, Move, Save, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +36,8 @@ export default function SimpleMeetingPresenter() {
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
   const [editingItem, setEditingItem] = useState<AgendaItem | null>(null);
   const [newParticipant, setNewParticipant] = useState('');
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -260,6 +262,63 @@ export default function SimpleMeetingPresenter() {
     setShowEditModal(false);
   };
 
+  // Fonctions de glisser-déplacer et re-numérotation
+  const renumberAgenda = (newAgenda: AgendaItem[]) => {
+    let sectionCount = 0;
+    const renumbered = newAgenda.map((item, index) => {
+      if (index === 0 && item.id === "timeline") {
+        return item; // Ne pas modifier la timeline
+      }
+      
+      if (item.level === 0) {
+        sectionCount++;
+        return {
+          ...item,
+          title: item.title.replace(/^\d+\.?\s*/, `${sectionCount}. `)
+        };
+      } else if (item.level === 1) {
+        // Trouver la section parente
+        let subSectionCount = 0;
+        for (let i = index - 1; i >= 0; i--) {
+          if (newAgenda[i].level === 0) break;
+          if (newAgenda[i].level === 1) subSectionCount++;
+        }
+        return {
+          ...item,
+          title: item.title.replace(/^\d+\.\d+\.?\s*/, `${sectionCount}.${subSectionCount + 1} `)
+        };
+      }
+      return item;
+    });
+    return renumbered;
+  };
+
+  const handleDragStart = (e: React.DragEvent, itemId: string) => {
+    setDraggedItem(itemId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (!draggedItem || !isEditMode) return;
+
+    const draggedIndex = agenda.findIndex(item => item.id === draggedItem);
+    if (draggedIndex === -1 || draggedIndex === targetIndex) return;
+
+    const newAgenda = [...agenda];
+    const draggedElement = newAgenda.splice(draggedIndex, 1)[0];
+    newAgenda.splice(targetIndex, 0, draggedElement);
+
+    const renumberedAgenda = renumberAgenda(newAgenda);
+    setAgenda(renumberedAgenda);
+    setDraggedItem(null);
+  };
+
   const addParticipant = () => {
     if (newParticipant.trim()) {
       setMeetingInfo({
@@ -343,6 +402,17 @@ export default function SimpleMeetingPresenter() {
             >
               <FileDown className="w-4 h-4" />
               Export PDF
+            </Button>
+
+            {/* Bouton Mode Édition - visible seulement pour les salariés */}
+            <Button 
+              variant={isEditMode ? "default" : "outline"}
+              size="sm" 
+              onClick={() => setIsEditMode(!isEditMode)}
+              className={isEditMode ? "bg-orange-600 hover:bg-orange-700" : ""}
+            >
+              {isEditMode ? <Save className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
+              {isEditMode ? "Sauvegarder" : "Modifier l'ordre"}
             </Button>
             
             <Button 
@@ -651,37 +721,52 @@ export default function SimpleMeetingPresenter() {
         <div className="w-80 border-l bg-white p-3 flex flex-col overflow-hidden">
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-semibold">Ordre du jour</h3>
-            <div className="flex gap-1">
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => addNewItem(currentItemIndex)}
-                title="Ajouter un point principal"
-              >
-                <Plus className="w-3 h-3" />
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => addBreak(currentItemIndex)}
-                title="Ajouter une pause"
-              >
-                <Coffee className="w-3 h-3" />
-              </Button>
-            </div>
+            {isEditMode && (
+              <div className="flex gap-1">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => addNewItem(currentItemIndex)}
+                  title="Ajouter un point principal"
+                >
+                  <Plus className="w-3 h-3" />
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => addBreak(currentItemIndex)}
+                  title="Ajouter une pause"
+                >
+                  <Coffee className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
           </div>
+          
+          {isEditMode && (
+            <div className="mb-3 p-2 bg-orange-50 border border-orange-200 rounded text-xs text-orange-800">
+              <div className="flex items-center gap-1">
+                <Move className="w-3 h-3" />
+                Mode édition activé - Glissez les éléments pour les réorganiser
+              </div>
+            </div>
+          )}
           
           <div className="flex-1 overflow-y-auto space-y-1">
             {scheduledAgenda.map((item, index) => (
               <div
                 key={item.id}
-                className={`p-2 rounded border cursor-pointer transition-colors text-xs ${
+                className={`p-2 rounded border transition-colors text-xs ${
                   index === currentItemIndex
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 hover:bg-gray-50'
-                }`}
-                onClick={() => goToItem(index)}
+                } ${isEditMode ? 'cursor-move' : 'cursor-pointer'} ${draggedItem === item.id ? 'opacity-50' : ''}`}
+                onClick={() => !isEditMode && goToItem(index)}
                 style={{ marginLeft: `${item.level * 12}px` }}
+                draggable={isEditMode}
+                onDragStart={(e) => handleDragStart(e, item.id)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, index)}
               >
                 <div className="flex items-start gap-2">
                   {itemStates[item.id]?.completed ? (
@@ -702,36 +787,51 @@ export default function SimpleMeetingPresenter() {
                         {item.startTime} ({item.level === 0 && item.subItems?.length > 0 ? item.effectiveDuration : item.duration}min)
                       </div>
                     </div>
-                    <div className="flex justify-between items-center mt-1">
-                      <div className="flex gap-1">
-                        {item.level === 0 && (
+                    {isEditMode && (
+                      <div className="flex justify-between items-center mt-1">
+                        <div className="flex gap-1">
+                          {item.level === 0 && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-4 w-4 p-0"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addSubItem(index);
+                              }}
+                              title="Ajouter un sous-point"
+                            >
+                              <ChevronDown className="w-3 h-3" />
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="ghost"
                             className="h-4 w-4 p-0"
                             onClick={(e) => {
                               e.stopPropagation();
-                              addSubItem(index);
+                              setEditingItem(item);
+                              setShowEditModal(true);
                             }}
-                            title="Ajouter un sous-point"
+                            title="Modifier"
                           >
-                            <ChevronDown className="w-3 h-3" />
+                            <Edit3 className="w-3 h-3" />
                           </Button>
-                        )}
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-4 w-4 p-0"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteItem(item.id);
+                          }}
+                          title="Supprimer"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-4 w-4 p-0"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteItem(item.id);
-                        }}
-                        title="Supprimer"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
