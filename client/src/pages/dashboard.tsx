@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { Plus, Calendar, Users, Clock, Play, Edit3, Trash2, Copy, LogOut, FileDown, Settings } from 'lucide-react';
+import { Plus, Calendar, Users, Clock, Play, Edit3, Trash2, Copy, LogOut, FileDown, Settings, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +26,7 @@ interface Meeting {
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { user, logout, requirePermission } = useAuth();
+  const [viewAsElu, setViewAsElu] = useState(false);
   const [meetings, setMeetings] = useState<Meeting[]>([
     {
       id: 'conseil-national-2025',
@@ -157,10 +158,75 @@ export default function Dashboard() {
             <h1 className="text-3xl font-bold text-gray-900">Gestionnaire de Réunions</h1>
             <p className="text-gray-600 mt-2">Organisez et animez vos réunions efficacement</p>
           </div>
-          <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Nouvelle Réunion
-          </Button>
+          
+          <div className="flex items-center gap-4">
+            {/* Informations utilisateur */}
+            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-lg border">
+              <div className="text-right">
+                <p className="text-sm font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
+                <p className="text-xs text-gray-600">{user?.role}</p>
+              </div>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 font-medium text-sm">
+                  {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                </span>
+              </div>
+            </div>
+
+            {/* Boutons d'action */}
+            <div className="flex items-center gap-2">
+              {/* Mode visualisation pour les salariés */}
+              {user?.role === 'Salarié·es SCC' && (
+                <Button
+                  variant={viewAsElu ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewAsElu(!viewAsElu)}
+                  className="flex items-center gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  {viewAsElu ? "Mode Salarié" : "Voir comme Élu"}
+                </Button>
+              )}
+
+              {/* Administration pour les salariés */}
+              {(user?.role === 'Salarié·es SCC' && !viewAsElu) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setLocation('/admin')}
+                  className="flex items-center gap-2"
+                >
+                  <Settings className="w-4 h-4" />
+                  Administration
+                </Button>
+              )}
+
+              {/* Nouvelle réunion - uniquement pour les salariés ou mode salarié */}
+              {(user?.role === 'Salarié·es SCC' && !viewAsElu) && (
+                <Button 
+                  onClick={() => setShowCreateModal(true)} 
+                  className="flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Nouvelle Réunion
+                </Button>
+              )}
+
+              {/* Bouton de déconnexion */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  logout();
+                  setLocation('/login');
+                }}
+                className="flex items-center gap-2 text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+              >
+                <LogOut className="w-4 h-4" />
+                Déconnexion
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Statistiques */}
@@ -259,21 +325,26 @@ export default function Dashboard() {
                     Présenter
                   </Button>
                   
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => duplicateMeeting(meeting)}
-                  >
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={() => deleteMeeting(meeting.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {/* Boutons d'édition - cachés en mode "Voir comme Élu" */}
+                  {(user?.role === 'Salarié·es SCC' && !viewAsElu) && (
+                    <>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => duplicateMeeting(meeting)}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                      
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => deleteMeeting(meeting.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
