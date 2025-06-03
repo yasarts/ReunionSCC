@@ -1,321 +1,385 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@/contexts/AuthContext";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { CreateMeetingModal } from "@/components/CreateMeetingModal";
-import type { Meeting } from "@/types";
-import { 
-  Users, 
-  Calendar, 
-  CheckCircle, 
-  Vote, 
-  Clock, 
-  Plus, 
-  Settings, 
-  LogOut,
-  Play,
-  Edit,
-  Trash2,
-  Download,
-  Eye
-} from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { useState } from 'react';
+import { useLocation } from 'wouter';
+import { Plus, Calendar, Users, Clock, Play, Edit3, Trash2, Copy } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+
+interface Meeting {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  description: string;
+  participants: string[];
+  pouvoir: string;
+  status: 'draft' | 'scheduled' | 'in_progress' | 'completed';
+  agendaItemsCount: number;
+  totalDuration: number;
+  createdAt: string;
+}
 
 export default function Dashboard() {
-  const { user, logout } = useAuth();
-  const [showCreateMeeting, setShowCreateMeeting] = useState(false);
-
-  const { data: meetings, isLoading } = useQuery<Meeting[]>({
-    queryKey: ["/api/meetings"],
+  const [, setLocation] = useLocation();
+  const [meetings, setMeetings] = useState<Meeting[]>([
+    {
+      id: 'conseil-national-2025',
+      title: 'Conseil National SCC 2025-06-05',
+      date: '2025-06-05',
+      time: '14:00',
+      description: 'Assemblée Générale Extraordinaire du Conseil National',
+      participants: [
+        'Président du Conseil',
+        'Vice-Président',
+        'Secrétaire Général',
+        'Trésorier',
+        'Responsable Pôle Formation',
+        'Responsable Pôle Production'
+      ],
+      pouvoir: 'Pouvoir donné par Mme Martin à M. Dupont pour représentation aux votes',
+      status: 'scheduled',
+      agendaItemsCount: 12,
+      totalDuration: 180,
+      createdAt: '2024-12-01'
+    }
+  ]);
+  
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newMeeting, setNewMeeting] = useState<Partial<Meeting>>({
+    title: '',
+    date: '',
+    time: '',
+    description: '',
+    participants: [],
+    pouvoir: '',
+    status: 'draft'
   });
+  const [newParticipant, setNewParticipant] = useState('');
 
-  const handleLogout = async () => {
-    console.log("Logout button clicked");
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Logout failed:", error);
+  const createMeeting = () => {
+    const meeting: Meeting = {
+      id: Date.now().toString(),
+      title: newMeeting.title || 'Nouvelle réunion',
+      date: newMeeting.date || new Date().toISOString().split('T')[0],
+      time: newMeeting.time || '14:00',
+      description: newMeeting.description || '',
+      participants: newMeeting.participants || [],
+      pouvoir: newMeeting.pouvoir || '',
+      status: 'draft',
+      agendaItemsCount: 0,
+      totalDuration: 0,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    
+    setMeetings([...meetings, meeting]);
+    setShowCreateModal(false);
+    setNewMeeting({
+      title: '',
+      date: '',
+      time: '',
+      description: '',
+      participants: [],
+      pouvoir: '',
+      status: 'draft'
+    });
+  };
+
+  const deleteMeeting = (id: string) => {
+    setMeetings(meetings.filter(m => m.id !== id));
+  };
+
+  const duplicateMeeting = (meeting: Meeting) => {
+    const duplicated: Meeting = {
+      ...meeting,
+      id: Date.now().toString(),
+      title: meeting.title + ' (Copie)',
+      status: 'draft',
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+    setMeetings([...meetings, duplicated]);
+  };
+
+  const addParticipant = () => {
+    if (newParticipant.trim()) {
+      setNewMeeting({
+        ...newMeeting,
+        participants: [...(newMeeting.participants || []), newParticipant.trim()]
+      });
+      setNewParticipant('');
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const removeParticipant = (index: number) => {
+    const participants = newMeeting.participants || [];
+    setNewMeeting({
+      ...newMeeting,
+      participants: participants.filter((_, i) => i !== index)
+    });
+  };
+
+  const getStatusColor = (status: Meeting['status']) => {
     switch (status) {
-      case "scheduled":
-        return <Badge className="bg-green-100 text-green-800">Prêt</Badge>;
-      case "completed":
-        return <Badge variant="secondary">Terminé</Badge>;
-      case "in_progress":
-        return <Badge className="bg-blue-100 text-blue-800">En cours</Badge>;
-      default:
-        return <Badge className="bg-yellow-100 text-yellow-800">Brouillon</Badge>;
+      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'scheduled': return 'bg-blue-100 text-blue-800';
+      case 'in_progress': return 'bg-orange-100 text-orange-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  const getStatusLabel = (status: Meeting['status']) => {
+    switch (status) {
+      case 'draft': return 'Brouillon';
+      case 'scheduled': return 'Planifiée';
+      case 'in_progress': return 'En cours';
+      case 'completed': return 'Terminée';
+      default: return 'Inconnu';
+    }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-8 w-32" />
-            </div>
-          </div>
-        </header>
-        <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-24" />
-            ))}
-          </div>
-        </main>
-      </div>
-    );
-  }
+  const formatDuration = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return hours > 0 ? `${hours}h${mins.toString().padStart(2, '0')}` : `${mins}min`;
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Users className="h-8 w-8 text-indigo-600" />
-              <h1 className="text-xl font-semibold text-gray-900">
-                Conseil National SCC
-              </h1>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className="bg-indigo-100 text-indigo-600">
-                    {user && getInitials(user.firstName, user.lastName)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="text-sm">
-                  <p className="font-medium text-gray-900">
-                    {user?.firstName} {user?.lastName}
-                  </p>
-                  <p className="text-gray-500 capitalize">
-                    {user?.role === "salaried" ? "Salarié" : "Membre"}
-                  </p>
-                </div>
-              </div>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4" />
-              </Button>
-            </div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* En-tête */}
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Gestionnaire de Réunions</h1>
+            <p className="text-gray-600 mt-2">Organisez et animez vos réunions efficacement</p>
           </div>
+          <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Nouvelle Réunion
+          </Button>
         </div>
-      </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        {/* Statistiques */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Calendar className="h-8 w-8 text-indigo-600" />
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Réunions</p>
+                  <p className="text-2xl font-bold">{meetings.length}</p>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Réunions ce mois</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {meetings?.length || 0}
-                  </p>
-                </div>
+                <Calendar className="w-8 h-8 text-blue-600" />
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Users className="h-8 w-8 text-green-600" />
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Planifiées</p>
+                  <p className="text-2xl font-bold">{meetings.filter(m => m.status === 'scheduled').length}</p>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Participants actifs</p>
-                  <p className="text-2xl font-semibold text-gray-900">15</p>
-                </div>
+                <Clock className="w-8 h-8 text-orange-600" />
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Vote className="h-8 w-8 text-amber-600" />
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">En Cours</p>
+                  <p className="text-2xl font-bold">{meetings.filter(m => m.status === 'in_progress').length}</p>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Votes en cours</p>
-                  <p className="text-2xl font-semibold text-gray-900">2</p>
-                </div>
+                <Play className="w-8 h-8 text-green-600" />
               </div>
             </CardContent>
           </Card>
           
           <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center">
-                <div className="flex-shrink-0">
-                  <Clock className="h-8 w-8 text-red-600" />
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Terminées</p>
+                  <p className="text-2xl font-bold">{meetings.filter(m => m.status === 'completed').length}</p>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-500">Temps moyen</p>
-                  <p className="text-2xl font-semibold text-gray-900">2h 15m</p>
-                </div>
+                <Users className="w-8 h-8 text-purple-600" />
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Meeting Actions */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Réunions</h2>
-          <div className="flex space-x-3">
-            {user?.permissions.canCreateMeetings && (
-              <Button 
-                onClick={() => {
-                  console.log("Nouvelle réunion button clicked");
-                  setShowCreateMeeting(true);
-                }}
-                className="bg-indigo-600 hover:bg-indigo-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Nouvelle réunion
-              </Button>
-            )}
-            <Button variant="outline">
-              <Settings className="h-4 w-4 mr-2" />
-              Administration
-            </Button>
-          </div>
-        </div>
-
-        {/* Meetings Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {meetings?.map((meeting) => (
-            <Card key={meeting.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {meeting.title}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      <Calendar className="inline h-4 w-4 mr-1" />
-                      {format(new Date(meeting.date), "d MMMM yyyy", { locale: fr })}
-                    </p>
+        {/* Liste des réunions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {meetings.map((meeting) => (
+            <Card key={meeting.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <CardTitle className="text-lg mb-2">{meeting.title}</CardTitle>
+                    <Badge className={getStatusColor(meeting.status)}>
+                      {getStatusLabel(meeting.status)}
+                    </Badge>
                   </div>
-                  {getStatusBadge(meeting.status)}
+                </div>
+              </CardHeader>
+              
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Calendar className="w-4 h-4" />
+                  <span>{meeting.date} à {meeting.time}</span>
                 </div>
                 
-                <div className="space-y-3 mb-4">
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Users className="h-4 w-4 mr-2" />
-                    <span>{meeting.participants?.length || 0} participants</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    <span>{meeting.agendaItems?.length || 0} sujets à l'agenda</span>
-                  </div>
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>
-                      Durée estimée: {
-                        meeting.agendaItems?.reduce((total, item) => total + item.duration, 0) || 0
-                      } min
-                    </span>
-                  </div>
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Users className="w-4 h-4" />
+                  <span>{meeting.participants.length} participants</span>
                 </div>
                 
-                <div className="flex space-x-2">
-                  {meeting.status === "scheduled" && (
-                    <Button 
-                      className="flex-1 bg-indigo-600 hover:bg-indigo-700"
-                      size="sm"
-                    >
-                      <Play className="h-4 w-4 mr-1" />
-                      Démarrer
-                    </Button>
-                  )}
-                  {meeting.status === "completed" && (
-                    <Button 
-                      className="flex-1 bg-blue-600 hover:bg-blue-700"
-                      size="sm"
-                    >
-                      <Download className="h-4 w-4 mr-1" />
-                      Rapport
-                    </Button>
-                  )}
-                  {meeting.status === "draft" && (
-                    <Button 
-                      variant="secondary"
-                      className="flex-1"
-                      size="sm"
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Modifier
-                    </Button>
-                  )}
-                  
-                  <Button variant="ghost" size="sm">
-                    {meeting.status === "completed" ? (
-                      <Eye className="h-4 w-4" />
-                    ) : (
-                      <Edit className="h-4 w-4" />
-                    )}
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <Clock className="w-4 h-4" />
+                  <span>{meeting.agendaItemsCount} points - {formatDuration(meeting.totalDuration)}</span>
+                </div>
+                
+                {meeting.description && (
+                  <p className="text-sm text-gray-600 line-clamp-2">{meeting.description}</p>
+                )}
+                
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    size="sm" 
+                    onClick={() => setLocation(`/presenter/${meeting.id}`)}
+                    className="flex-1"
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Présenter
                   </Button>
                   
-                  {user?.permissions.canCreateMeetings && (
-                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => duplicateMeeting(meeting)}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => deleteMeeting(meeting.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Empty State */}
-        {meetings?.length === 0 && (
-          <Card className="p-12 text-center">
-            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Aucune réunion
-            </h3>
-            <p className="text-gray-500 mb-4">
-              Commencez par créer votre première réunion.
-            </p>
-            {user?.permissions.canCreateMeetings && (
-              <Button onClick={() => setShowCreateMeeting(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Créer une réunion
-              </Button>
-            )}
-          </Card>
+        {/* Modal de création */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+              <h3 className="text-lg font-semibold mb-4">Créer une nouvelle réunion</h3>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Titre de la réunion</Label>
+                  <Input
+                    id="title"
+                    value={newMeeting.title}
+                    onChange={(e) => setNewMeeting({...newMeeting, title: e.target.value})}
+                    placeholder="Ex: Conseil d'Administration Q4 2024"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="date">Date</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={newMeeting.date}
+                      onChange={(e) => setNewMeeting({...newMeeting, date: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="time">Heure</Label>
+                    <Input
+                      id="time"
+                      type="time"
+                      value={newMeeting.time}
+                      onChange={(e) => setNewMeeting({...newMeeting, time: e.target.value})}
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={newMeeting.description}
+                    onChange={(e) => setNewMeeting({...newMeeting, description: e.target.value})}
+                    placeholder="Description de la réunion..."
+                    className="min-h-20"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="pouvoir">Pouvoirs</Label>
+                  <Textarea
+                    id="pouvoir"
+                    value={newMeeting.pouvoir}
+                    onChange={(e) => setNewMeeting({...newMeeting, pouvoir: e.target.value})}
+                    placeholder="Pouvoirs délégués..."
+                    className="min-h-16"
+                  />
+                </div>
+                
+                <div>
+                  <Label>Participants</Label>
+                  <div className="space-y-2">
+                    {(newMeeting.participants || []).map((participant, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <Input value={participant} readOnly className="flex-1" />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => removeParticipant(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    <div className="flex gap-2">
+                      <Input
+                        value={newParticipant}
+                        onChange={(e) => setNewParticipant(e.target.value)}
+                        placeholder="Nom du participant"
+                        onKeyPress={(e) => e.key === 'Enter' && addParticipant()}
+                      />
+                      <Button onClick={addParticipant}>
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+                    Annuler
+                  </Button>
+                  <Button onClick={createMeeting}>
+                    Créer la réunion
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
-      </main>
-
-      {/* Create Meeting Modal */}
-      <CreateMeetingModal 
-        isOpen={showCreateMeeting} 
-        onClose={() => setShowCreateMeeting(false)} 
-      />
+      </div>
     </div>
   );
 }

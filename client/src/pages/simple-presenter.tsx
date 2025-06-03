@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp } from 'lucide-react';
+import { useParams, useLocation } from 'wouter';
+import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -113,16 +114,19 @@ export default function SimpleMeetingPresenter() {
     setItemStartTime(new Date());
   };
 
-  const completeItem = () => {
+  const toggleItemCompletion = () => {
+    const isCurrentlyCompleted = itemStates[currentItem.id]?.completed;
     setItemStates(prev => ({
       ...prev,
       [currentItem.id]: {
         ...prev[currentItem.id],
-        completed: true
+        completed: !isCurrentlyCompleted
       }
     }));
-    setIsTimerRunning(false);
-    setItemStartTime(null);
+    if (!isCurrentlyCompleted) {
+      setIsTimerRunning(false);
+      setItemStartTime(null);
+    }
   };
 
   const nextItem = () => {
@@ -327,14 +331,16 @@ export default function SimpleMeetingPresenter() {
                 )}
                 
                 <Button 
-                  onClick={completeItem}
-                  variant="default"
+                  onClick={toggleItemCompletion}
+                  variant={itemStates[currentItem.id]?.completed ? "outline" : "default"}
                   size="sm"
-                  className="bg-green-600 hover:bg-green-700"
-                  disabled={itemStates[currentItem.id]?.completed}
+                  className={itemStates[currentItem.id]?.completed ? 
+                    "border-green-600 text-green-600 hover:bg-green-50" : 
+                    "bg-green-600 hover:bg-green-700"
+                  }
                 >
                   <CheckCircle className="w-4 h-4" />
-                  {itemStates[currentItem.id]?.completed ? 'Terminé' : 'Terminer'}
+                  {itemStates[currentItem.id]?.completed ? 'Marquer non terminé' : 'Terminer'}
                 </Button>
                 
                 <Button 
