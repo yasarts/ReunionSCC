@@ -186,6 +186,10 @@ export const insertMeetingSchema = createInsertSchema(meetings).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  date: z.string().or(z.date()).transform((val) => {
+    return typeof val === 'string' ? new Date(val) : val;
+  }),
 });
 
 export const insertAgendaItemSchema = createInsertSchema(agendaItems).omit({
