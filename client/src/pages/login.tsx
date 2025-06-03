@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [, setLocation] = useLocation();
   const { login, isLoggingIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,8 +21,10 @@ export default function Login() {
 
     try {
       await login({ email, password });
+      // Redirect to dashboard after successful login
+      setLocation("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      setError(err instanceof Error ? err.message : "Connexion échouée");
     }
   };
 
