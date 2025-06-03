@@ -39,7 +39,8 @@ export default function Login() {
           title: "Connexion réussie",
           description: "Bienvenue Marie",
         });
-        setLocation('/');
+        // Forcer le rechargement de la page pour actualiser l'état d'authentification
+        window.location.href = '/';
       } else if (email === 'elu@scc.fr' && password === 'password') {
         localStorage.setItem('user', JSON.stringify({
           id: 2,
@@ -59,7 +60,8 @@ export default function Login() {
           title: "Connexion réussie",
           description: "Bienvenue Jean",
         });
-        setLocation('/');
+        // Forcer le rechargement de la page pour actualiser l'état d'authentification
+        window.location.href = '/';
       } else {
         toast({
           title: "Erreur de connexion",
