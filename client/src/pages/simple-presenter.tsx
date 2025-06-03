@@ -510,86 +510,109 @@ export default function SimpleMeetingPresenter() {
 
               {/* Timeline complète pour le premier point d'ordre du jour */}
               {currentItem.id === "timeline" && (
-                <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border">
-                  <h4 className="font-medium mb-4 text-blue-800 text-center text-lg">Timeline complète de la réunion</h4>
+                <div className="h-full flex flex-col">
+                  <div className="text-center mb-6">
+                    <h2 className="text-2xl font-bold text-blue-800 mb-2">Timeline complète de la réunion</h2>
+                    <div className="flex justify-center gap-8 text-sm text-gray-600">
+                      <span>Durée totale: <strong className="text-blue-800">{Math.floor(agenda.reduce((sum, item) => sum + item.duration, 0) / 60)}h{(agenda.reduce((sum, item) => sum + item.duration, 0) % 60).toString().padStart(2, '0')}</strong></span>
+                      <span>Progression: <strong className="text-blue-800">{completedItems}/{totalItems} points ({Math.round(progress)}%)</strong></span>
+                    </div>
+                  </div>
                   
-                  <div className="grid grid-cols-1 gap-3 max-h-64 overflow-y-auto">
-                    {agenda.map((item, index) => {
+                  <div className="flex-1 grid grid-cols-1 gap-2">
+                    {agenda.slice(1).map((item, index) => {
+                      const actualIndex = index + 1; // +1 car on skip le premier item (timeline)
                       const isCompleted = itemStates[item.id]?.completed;
-                      const isCurrent = index === currentItemIndex;
+                      const isCurrent = actualIndex === currentItemIndex;
+                      
+                      // Génération de la numérotation automatique
+                      let sectionNumber = '';
+                      if (item.level === 0) {
+                        // Compter les sections principales précédentes
+                        const previousMainSections = agenda.slice(1, actualIndex).filter(i => i.level === 0).length;
+                        sectionNumber = `${previousMainSections + 1}.`;
+                      } else if (item.level === 1) {
+                        // Trouver la section principale parente
+                        let parentSectionNum = 0;
+                        let subSectionNum = 0;
+                        for (let i = 1; i < actualIndex; i++) {
+                          if (agenda[i].level === 0) {
+                            parentSectionNum++;
+                            subSectionNum = 0;
+                          } else if (agenda[i].level === 1) {
+                            subSectionNum++;
+                          }
+                        }
+                        sectionNumber = `${parentSectionNum}.${subSectionNum + 1}`;
+                      }
                       
                       return (
                         <div 
                           key={item.id} 
-                          className={`p-3 rounded-lg border-l-4 ${
-                            isCurrent ? 'bg-blue-100 border-l-blue-500' :
+                          className={`p-3 rounded-lg border-l-4 transition-all ${
+                            isCurrent ? 'bg-blue-100 border-l-blue-500 shadow-md' :
                             isCompleted ? 'bg-green-50 border-l-green-500' :
-                            'bg-white border-l-gray-300'
-                          }`}
+                            'bg-white border-l-gray-300 hover:bg-gray-50'
+                          } ${item.level === 1 ? 'ml-6' : ''}`}
                         >
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="flex items-center gap-3 mb-1">
                                 {isCompleted ? (
-                                  <CheckCircle className="w-4 h-4 text-green-600" />
+                                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
                                 ) : isCurrent ? (
-                                  <Play className="w-4 h-4 text-blue-600" />
+                                  <Play className="w-4 h-4 text-blue-600 flex-shrink-0" />
                                 ) : (
-                                  <Circle className="w-4 h-4 text-gray-400" />
+                                  <Circle className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                 )}
-                                <span className={`font-medium text-sm ${
+                                
+                                <span className={`font-bold text-sm ${
+                                  isCurrent ? 'text-blue-800' : 'text-gray-600'
+                                }`}>
+                                  {sectionNumber}
+                                </span>
+                                
+                                <span className={`font-medium ${
+                                  item.level === 0 ? 'text-base' : 'text-sm'
+                                } ${
                                   isCurrent ? 'text-blue-800' : 
                                   isCompleted ? 'text-green-800' : 
                                   'text-gray-800'
                                 }`}>
-                                  {item.title}
+                                  {item.title.replace(/^\d+\.\s*/, '')}
                                 </span>
                               </div>
                               
-                              <div className="flex items-center gap-2 ml-6">
+                              <div className="flex items-center gap-3 ml-7">
                                 <Badge variant="outline" className={`text-xs ${getTypeColor(item.type)}`}>
                                   {getTypeLabel(item.type)}
                                 </Badge>
                                 
                                 {item.presenter && (
-                                  <span className="text-xs text-gray-600">
+                                  <span className="text-xs text-gray-600 bg-gray-100 px-2 py-1 rounded">
                                     {item.presenter}
+                                  </span>
+                                )}
+                                
+                                {scheduledAgenda[actualIndex] && (
+                                  <span className="text-xs text-blue-600 font-mono bg-blue-50 px-2 py-1 rounded">
+                                    {scheduledAgenda[actualIndex].startTime}
                                   </span>
                                 )}
                               </div>
                             </div>
                             
-                            <div className="text-right">
-                              <div className={`text-sm font-mono ${
-                                isCurrent ? 'text-blue-600 font-bold' : 'text-gray-600'
+                            <div className="text-right flex-shrink-0 ml-4">
+                              <div className={`text-sm font-mono font-bold ${
+                                isCurrent ? 'text-blue-600' : 'text-gray-600'
                               }`}>
                                 {item.duration}min
                               </div>
-                              {scheduledAgenda[index] && (
-                                <div className="text-xs text-gray-500">
-                                  {scheduledAgenda[index].startTime}
-                                </div>
-                              )}
                             </div>
                           </div>
                         </div>
                       );
                     })}
-                  </div>
-                  
-                  <div className="mt-4 p-3 bg-blue-100 rounded-lg">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="font-medium text-blue-800">Durée totale prévue:</span>
-                      <span className="font-mono font-bold text-blue-800">
-                        {Math.floor(agenda.reduce((sum, item) => sum + item.duration, 0) / 60)}h{(agenda.reduce((sum, item) => sum + item.duration, 0) % 60).toString().padStart(2, '0')}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center text-sm mt-1">
-                      <span className="font-medium text-blue-800">Progression:</span>
-                      <span className="font-mono font-bold text-blue-800">
-                        {completedItems}/{totalItems} points ({Math.round(progress)}%)
-                      </span>
-                    </div>
                   </div>
                 </div>
               )}
@@ -602,22 +625,24 @@ export default function SimpleMeetingPresenter() {
                 </div>
               )}
 
-              {/* Zone de notes */}
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Notes du point</Label>
-                <Textarea
-                  className="mt-1 min-h-24"
-                  placeholder="Ajoutez vos notes..."
-                  value={itemStates[currentItem.id]?.notes || ''}
-                  onChange={(e) => setItemStates(prev => ({
-                    ...prev,
-                    [currentItem.id]: {
-                      ...prev[currentItem.id],
-                      notes: e.target.value
-                    }
-                  }))}
-                />
-              </div>
+              {/* Zone de notes - masquée pour la timeline */}
+              {currentItem.id !== "timeline" && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Notes du point</Label>
+                  <Textarea
+                    className="mt-1 min-h-24"
+                    placeholder="Ajoutez vos notes..."
+                    value={itemStates[currentItem.id]?.notes || ''}
+                    onChange={(e) => setItemStates(prev => ({
+                      ...prev,
+                      [currentItem.id]: {
+                        ...prev[currentItem.id],
+                        notes: e.target.value
+                      }
+                    }))}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
