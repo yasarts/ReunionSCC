@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { Plus, Calendar, Users, Clock, Play, Edit3, Trash2, Copy } from 'lucide-react';
+import { Plus, Calendar, Users, Clock, Play, Edit3, Trash2, Copy, LogOut, FileDown, Settings } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +25,7 @@ interface Meeting {
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+  const { user, logout, requirePermission } = useAuth();
   const [meetings, setMeetings] = useState<Meeting[]>([
     {
       id: 'conseil-national-2025',

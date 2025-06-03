@@ -1,64 +1,109 @@
-import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Users } from "lucide-react";
+import { useState } from 'react';
+import { useLocation } from 'wouter';
+import { LogIn, Users } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [, setLocation] = useLocation();
-  const { login, isLoggingIn } = useAuth();
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setIsLoading(true);
 
     try {
-      await login({ email, password });
-      // Redirect to dashboard after successful login
-      setLocation("/");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Connexion échouée");
+      // Simulation de connexion avec utilisateurs prédéfinis
+      if (email === 'salarie@scc.fr' && password === 'password') {
+        localStorage.setItem('user', JSON.stringify({
+          id: 1,
+          email: 'salarie@scc.fr',
+          firstName: 'Marie',
+          lastName: 'Dupont',
+          role: 'Salarié·es SCC',
+          permissions: {
+            canEdit: true,
+            canManageAgenda: true,
+            canManageUsers: true,
+            canCreateMeetings: true,
+            canExport: true
+          }
+        }));
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue Marie",
+        });
+        setLocation('/');
+      } else if (email === 'elu@scc.fr' && password === 'password') {
+        localStorage.setItem('user', JSON.stringify({
+          id: 2,
+          email: 'elu@scc.fr',
+          firstName: 'Jean',
+          lastName: 'Martin',
+          role: 'Elu·es',
+          permissions: {
+            canEdit: false,
+            canManageAgenda: false,
+            canManageUsers: false,
+            canCreateMeetings: false,
+            canExport: false
+          }
+        }));
+        toast({
+          title: "Connexion réussie",
+          description: "Bienvenue Jean",
+        });
+        setLocation('/');
+      } else {
+        toast({
+          title: "Erreur de connexion",
+          description: "Email ou mot de passe incorrect",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la connexion",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center">
-            <Users className="h-8 w-8 text-indigo-600" />
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+            <Users className="w-6 h-6 text-white" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-800">
-            🎪 Conseil National SCC
-          </CardTitle>
-          <CardDescription>
-            Connexion à l'application de réunion
-          </CardDescription>
+          <CardTitle className="text-2xl">Connexion SCC</CardTitle>
+          <p className="text-gray-600">Gestion des réunions du Conseil National</p>
         </CardHeader>
         
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="votre@email.com"
+                placeholder="votre@email.fr"
                 required
-                disabled={isLoggingIn}
               />
             </div>
             
-            <div className="space-y-2">
+            <div>
               <Label htmlFor="password">Mot de passe</Label>
               <Input
                 id="password"
@@ -67,29 +112,31 @@ export default function Login() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                disabled={isLoggingIn}
               />
             </div>
             
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            
             <Button 
               type="submit" 
-              className="w-full bg-indigo-600 hover:bg-indigo-700" 
-              disabled={isLoggingIn}
+              className="w-full" 
+              disabled={isLoading}
             >
-              {isLoggingIn ? "Connexion..." : "Se connecter"}
+              {isLoading ? (
+                "Connexion..."
+              ) : (
+                <>
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Se connecter
+                </>
+              )}
             </Button>
           </form>
           
-          <div className="mt-6 text-center text-sm text-gray-500 space-y-1">
-            <p>Comptes de test :</p>
-            <p className="text-xs">Admin: admin@scc-cirque.org / admin123</p>
-            <p className="text-xs">Membre: christine.nissim@scc-cirque.org / membre123</p>
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold text-sm mb-2">Comptes de démonstration :</h4>
+            <div className="text-sm space-y-1">
+              <p><strong>Salarié·es SCC:</strong> salarie@scc.fr / password</p>
+              <p><strong>Elu·es:</strong> elu@scc.fr / password</p>
+            </div>
           </div>
         </CardContent>
       </Card>

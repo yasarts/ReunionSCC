@@ -1,54 +1,53 @@
-import { useState, useEffect, useCallback } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import type { User } from "@/types";
+import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
+
+interface User {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  permissions: {
+    canEdit: boolean;
+    canManageAgenda: boolean;
+    canManageUsers: boolean;
+    canCreateMeetings: boolean;
+    canExport: boolean;
+  };
+}
 
 export function useAuth() {
-  const queryClient = useQueryClient();
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [forceUpdate, setForceUpdate] = useState(0);
+  const [, setLocation] = useLocation();
 
-  // Initialize with no user and not loading - user must login manually
   useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        localStorage.removeItem('user');
+      }
+    }
     setIsLoading(false);
   }, []);
 
-  const loginMutation = useMutation({
-    mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      console.log("Attempting login...");
-      const response = await apiRequest("POST", "/api/auth/login", { email, password });
-      const userData = await response.json();
-      console.log("Login response:", userData);
-      return userData;
-    },
-    onSuccess: (userData) => {
-      console.log("Login successful, setting user:", userData);
-      setUser(userData);
-      setForceUpdate(prev => prev + 1); // Force re-render
-    },
-    onError: (error) => {
-      console.error("Login error:", error);
-    },
-  });
+  const logout = () => {
+    localStorage.removeItem('user');
+    setUser(null);
+    setLocation('/login');
+  };
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("POST", "/api/auth/logout");
-    },
-    onSuccess: () => {
-      setUser(null);
-      queryClient.clear();
-    },
-  });
+  const requirePermission = (permission: keyof User['permissions']) => {
+    return user?.permissions[permission] || false;
+  };
 
   return {
     user,
     isLoading,
     isAuthenticated: !!user,
-    login: loginMutation.mutateAsync,
-    logout: logoutMutation.mutateAsync,
-    isLoggingIn: loginMutation.isPending,
-    isLoggingOut: logoutMutation.isPending,
+    logout,
+    requirePermission
   };
 }
