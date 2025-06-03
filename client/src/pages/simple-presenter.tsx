@@ -311,8 +311,40 @@ export default function SimpleMeetingPresenter() {
     if (draggedIndex === -1 || draggedIndex === targetIndex) return;
 
     const newAgenda = [...agenda];
-    const draggedElement = newAgenda.splice(draggedIndex, 1)[0];
-    newAgenda.splice(targetIndex, 0, draggedElement);
+    const draggedElement = newAgenda[draggedIndex];
+    
+    // Si on déplace une section (level 0), on doit déplacer toutes ses sous-sections aussi
+    if (draggedElement.level === 0) {
+      // Trouver toutes les sous-sections qui suivent cette section
+      const elementsToMove = [draggedElement];
+      for (let i = draggedIndex + 1; i < newAgenda.length; i++) {
+        if (newAgenda[i].level === 0) break; // On s'arrête à la prochaine section
+        if (newAgenda[i].level === 1) {
+          elementsToMove.push(newAgenda[i]);
+        }
+      }
+      
+      // Supprimer tous les éléments à déplacer
+      elementsToMove.forEach(() => {
+        const index = newAgenda.findIndex(item => item.id === elementsToMove[0].id);
+        if (index !== -1) newAgenda.splice(index, 1);
+      });
+      
+      // Ajuster l'index cible si nécessaire
+      let adjustedTargetIndex = targetIndex;
+      if (targetIndex > draggedIndex) {
+        adjustedTargetIndex -= elementsToMove.length;
+      }
+      
+      // Insérer tous les éléments à la nouvelle position
+      elementsToMove.forEach((element, idx) => {
+        newAgenda.splice(adjustedTargetIndex + idx, 0, element);
+      });
+    } else {
+      // Déplacement simple pour les sous-sections
+      const draggedElement = newAgenda.splice(draggedIndex, 1)[0];
+      newAgenda.splice(targetIndex, 0, draggedElement);
+    }
 
     const renumberedAgenda = renumberAgenda(newAgenda);
     setAgenda(renumberedAgenda);
@@ -404,16 +436,7 @@ export default function SimpleMeetingPresenter() {
               Export PDF
             </Button>
 
-            {/* Bouton Mode Édition - visible seulement pour les salariés */}
-            <Button 
-              variant={isEditMode ? "default" : "outline"}
-              size="sm" 
-              onClick={() => setIsEditMode(!isEditMode)}
-              className={isEditMode ? "bg-orange-600 hover:bg-orange-700" : ""}
-            >
-              {isEditMode ? <Save className="w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
-              {isEditMode ? "Sauvegarder" : "Modifier l'ordre"}
-            </Button>
+
             
             <Button 
               variant="outline" 
@@ -721,26 +744,40 @@ export default function SimpleMeetingPresenter() {
         <div className="w-80 border-l bg-white p-3 flex flex-col overflow-hidden">
           <div className="flex justify-between items-center mb-3">
             <h3 className="font-semibold">Ordre du jour</h3>
-            {isEditMode && (
-              <div className="flex gap-1">
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => addNewItem(currentItemIndex)}
-                  title="Ajouter un point principal"
-                >
-                  <Plus className="w-3 h-3" />
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="outline"
-                  onClick={() => addBreak(currentItemIndex)}
-                  title="Ajouter une pause"
-                >
-                  <Coffee className="w-3 h-3" />
-                </Button>
-              </div>
-            )}
+            <div className="flex gap-1">
+              {/* Bouton Mode Édition */}
+              <Button 
+                variant={isEditMode ? "default" : "outline"}
+                size="sm" 
+                onClick={() => setIsEditMode(!isEditMode)}
+                className={isEditMode ? "bg-orange-600 hover:bg-orange-700" : ""}
+                title={isEditMode ? "Sauvegarder les modifications" : "Modifier l'ordre du jour"}
+              >
+                {isEditMode ? <Save className="w-3 h-3" /> : <Edit3 className="w-3 h-3" />}
+              </Button>
+              
+              {/* Boutons d'ajout - visibles seulement en mode édition */}
+              {isEditMode && (
+                <>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => addNewItem(currentItemIndex)}
+                    title="Ajouter un point principal"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => addBreak(currentItemIndex)}
+                    title="Ajouter une pause"
+                  >
+                    <Coffee className="w-3 h-3" />
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
           
           {isEditMode && (
