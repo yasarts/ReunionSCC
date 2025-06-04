@@ -1,4 +1,7 @@
-const { Pool } = require('@neondatabase/serverless');
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import ws from 'ws';
+
+neonConfig.webSocketConstructor = ws;
 
 async function updateDatabaseSchema() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
