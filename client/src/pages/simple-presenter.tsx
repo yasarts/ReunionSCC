@@ -147,13 +147,21 @@ export default function SimpleMeetingPresenter() {
     );
   };
 
-  // Formater le contenu avec des ancres pour la navigation
+  // Formater le contenu avec des ancres pour la navigation et support markdown
   const formatContentWithAnchors = (content: string) => {
     if (!content) return content;
     
-    const lines = content.split('\n');
-    let formattedContent = '';
+    let formattedContent = content;
     let subsectionIndex = 0;
+    
+    // Support basique du markdown
+    formattedContent = formattedContent
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm">$1</code>');
+    
+    const lines = formattedContent.split('\n');
+    formattedContent = '';
     
     for (const line of lines) {
       if (line.includes(':') || 
@@ -168,6 +176,101 @@ export default function SimpleMeetingPresenter() {
     }
     
     return formattedContent;
+  };
+
+  // Calculer les horaires prévisionnels
+  const calculateScheduledTimes = () => {
+    const startTime = new Date(`${meetingInfo.date} ${meetingInfo.time}`);
+    let currentTime = new Date(startTime);
+    
+    return agenda.map((item, index) => {
+      const scheduledStart = new Date(currentTime);
+      currentTime = new Date(currentTime.getTime() + item.duration * 60000);
+      return {
+        ...item,
+        scheduledStart: scheduledStart.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+        scheduledEnd: currentTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      };
+    });
+  };
+
+  // Numéroter automatiquement les sections et sous-sections
+  const getItemNumber = (item: AgendaItem, index: number) => {
+    if (item.level === 0) {
+      // Section principale
+      const sectionIndex = agenda.filter(a => a.level === 0).findIndex(a => a.id === item.id) + 1;
+      return `${sectionIndex}.`;
+    } else {
+      // Sous-section
+      const parentIndex = agenda.slice(0, index).filter(a => a.level === 0).length;
+      const subsectionIndex = agenda.slice(0, index + 1).filter(a => a.level === item.level && agenda.slice(0, agenda.findIndex(b => b.id === a.id)).filter(b => b.level === 0).length === parentIndex).length;
+      return `${parentIndex}.${subsectionIndex}`;
+    }
+  };
+
+  // Ajouter une pause
+  const addBreak = (afterIndex: number) => {
+    const breakItem: AgendaItem = {
+      id: `break-${Date.now()}`,
+      title: 'Pause',
+      duration: 15,
+      type: 'break',
+      level: 0,
+      completed: false,
+      content: 'Pause de 15 minutes',
+      visualLink: ''
+    };
+    
+    const newAgenda = [...agenda];
+    newAgenda.splice(afterIndex + 1, 0, breakItem);
+    setAgenda(newAgenda);
+  };
+
+  // Glisser-déposer
+  const handleDragStart = (e: React.DragEvent, itemId: string) => {
+    setDraggedItem(itemId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+    e.preventDefault();
+    if (!draggedItem) return;
+
+    const draggedIndex = agenda.findIndex(item => item.id === draggedItem);
+    if (draggedIndex === -1 || draggedIndex === targetIndex) return;
+
+    const newAgenda = [...agenda];
+    const draggedItemData = newAgenda[draggedIndex];
+    
+    // Si on déplace une section, déplacer aussi ses sous-sections
+    if (draggedItemData.level === 0) {
+      const subsections: AgendaItem[] = [];
+      let i = draggedIndex + 1;
+      while (i < newAgenda.length && newAgenda[i].level > 0) {
+        subsections.push(newAgenda[i]);
+        i++;
+      }
+      
+      // Supprimer la section et ses sous-sections
+      newAgenda.splice(draggedIndex, 1 + subsections.length);
+      
+      // Réinsérer à la nouvelle position
+      const insertIndex = targetIndex > draggedIndex ? targetIndex - subsections.length : targetIndex;
+      newAgenda.splice(insertIndex, 0, draggedItemData, ...subsections);
+    } else {
+      // Déplacer seulement la sous-section
+      newAgenda.splice(draggedIndex, 1);
+      const insertIndex = targetIndex > draggedIndex ? targetIndex - 1 : targetIndex;
+      newAgenda.splice(insertIndex, 0, draggedItemData);
+    }
+
+    setAgenda(newAgenda);
+    setDraggedItem(null);
   };
 
   return (
@@ -280,8 +383,34 @@ export default function SimpleMeetingPresenter() {
                       {getTypeLabel(item.type)}
                     </Badge>
                   </div>
-                  <div className="mt-1 text-xs text-gray-500">
-                    {item.duration} min
+                  <div className="mt-1 text-xs text-gray-500 flex items-center gap-2">
+                    {isEditMode ? (
+                      <input
+                        type="number"
+                        value={item.duration}
+                        onChange={(e) => {
+                          const newAgenda = [...agenda];
+                          const itemIndex = newAgenda.findIndex(a => a.id === item.id);
+                          if (itemIndex !== -1) {
+                            newAgenda[itemIndex].duration = parseInt(e.target.value) || 0;
+                            setAgenda(newAgenda);
+                          }
+                        }}
+                        className="w-12 px-1 py-0.5 text-xs border rounded"
+                        min="0"
+                      />
+                    ) : (
+                      <span 
+                        className="cursor-pointer hover:bg-gray-100 px-1 rounded"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsEditingDuration(true);
+                          setEditedDuration(item.duration);
+                        }}
+                      >
+                        {item.duration} min
+                      </span>
+                    )}
                     {item.presenter && ` • ${item.presenter}`}
                   </div>
                 </div>
@@ -388,18 +517,16 @@ export default function SimpleMeetingPresenter() {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="text-lg font-semibold">Contenu</h3>
-                          <Button
-                            variant="outline"
-                            size="sm"
+                          <button
                             onClick={() => {
                               setIsEditingContent(true);
                               setEditedContent(currentItem.content || '');
                             }}
-                            className="flex items-center gap-1"
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Modifier le contenu"
                           >
-                            <Edit3 className="h-3 w-3" />
-                            Modifier
-                          </Button>
+                            <Edit3 className="h-4 w-4 text-gray-600" />
+                          </button>
                         </div>
                         {isEditingContent ? (
                           <div className="space-y-2">
@@ -465,18 +592,16 @@ export default function SimpleMeetingPresenter() {
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="text-lg font-semibold">Durée prévue</h3>
-                          <Button
-                            variant="outline"
-                            size="sm"
+                          <button
                             onClick={() => {
                               setIsEditingDuration(true);
                               setEditedDuration(currentItem.duration);
                             }}
-                            className="flex items-center gap-1"
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Modifier la durée"
                           >
-                            <Edit3 className="h-3 w-3" />
-                            Modifier
-                          </Button>
+                            <Edit3 className="h-4 w-4 text-gray-600" />
+                          </button>
                         </div>
                         {isEditingDuration ? (
                           <div className="space-y-2">
@@ -519,7 +644,16 @@ export default function SimpleMeetingPresenter() {
                         ) : (
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4" />
-                            <span>{currentItem.duration} minutes</span>
+                            <span 
+                              className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
+                              onClick={() => {
+                                setIsEditingDuration(true);
+                                setEditedDuration(currentItem.duration);
+                              }}
+                              title="Cliquer pour modifier"
+                            >
+                              {currentItem.duration} minutes
+                            </span>
                           </div>
                         )}
                       </div>
