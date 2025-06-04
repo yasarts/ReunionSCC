@@ -39,7 +39,7 @@ const requirePermission = (permission: string) => {
   return async (req: any, res: Response, next: any) => {
     try {
       const user = await storage.getUser(req.session.userId);
-      if (!user || !user.permissions[permission]) {
+      if (!user || !user.permissions || !(user.permissions as any)[permission]) {
         return res.status(403).json({ message: "Forbidden" });
       }
       req.user = user;
@@ -512,7 +512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/meeting-types", requireAuth, async (req: any, res: Response) => {
+  app.post("/api/meeting-types", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
     try {
       const meetingType = await storage.createMeetingType(req.body);
       res.status(201).json(meetingType);

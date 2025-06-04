@@ -320,6 +320,84 @@ export default function AdminPanel() {
     },
   });
 
+  const editCompanyForm = useForm<z.infer<typeof createCompanyFormSchema>>({
+    resolver: zodResolver(createCompanyFormSchema),
+    defaultValues: {
+      name: '',
+      siret: '',
+      address: '',
+      phone: '',
+      email: '',
+      sector: '',
+      description: '',
+    },
+  });
+
+  const editUserFormSchema = insertUserSchema.pick({
+    email: true,
+    firstName: true,
+    lastName: true,
+    role: true,
+    companyId: true,
+  });
+
+  const editUserForm = useForm<z.infer<typeof editUserFormSchema>>({
+    resolver: zodResolver(editUserFormSchema),
+    defaultValues: {
+      email: '',
+      firstName: '',
+      lastName: '',
+      role: '',
+      companyId: null,
+    },
+  });
+
+  const editMeetingTypeForm = useForm<z.infer<typeof createMeetingTypeFormSchema>>({
+    resolver: zodResolver(createMeetingTypeFormSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      color: '#0ea5e9',
+    },
+  });
+
+  // Effets pour remplir les formulaires d'édition
+  React.useEffect(() => {
+    if (editingCompany) {
+      editCompanyForm.reset({
+        name: editingCompany.name || '',
+        siret: editingCompany.siret || '',
+        address: editingCompany.address || '',
+        phone: editingCompany.phone || '',
+        email: editingCompany.email || '',
+        sector: editingCompany.sector || '',
+        description: editingCompany.description || '',
+      });
+    }
+  }, [editingCompany, editCompanyForm]);
+
+  React.useEffect(() => {
+    if (editingUser) {
+      editUserForm.reset({
+        firstName: editingUser.firstName || '',
+        lastName: editingUser.lastName || '',
+        email: editingUser.email || '',
+        role: editingUser.role || '',
+        companyId: editingUser.companyId || null,
+      });
+    }
+  }, [editingUser, editUserForm]);
+
+  React.useEffect(() => {
+    if (editingMeetingType) {
+      editMeetingTypeForm.reset({
+        name: editingMeetingType.name || '',
+        description: editingMeetingType.description || '',
+        color: editingMeetingType.color || '#0ea5e9',
+      });
+    }
+  }, [editingMeetingType, editMeetingTypeForm]);
+
   // Vérification des permissions
   if (!user?.permissions?.canManageUsers) {
     return (
@@ -879,6 +957,305 @@ export default function AdminPanel() {
                     disabled={createUserMutation.isPending}
                   >
                     {createUserMutation.isPending ? 'Création...' : 'Créer'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal édition entreprise */}
+        <Dialog open={!!editingCompany} onOpenChange={() => setEditingCompany(null)}>
+          <DialogContent className="bg-white max-w-md">
+            <DialogHeader>
+              <DialogTitle>Modifier l'entreprise</DialogTitle>
+            </DialogHeader>
+            <Form {...editCompanyForm}>
+              <form onSubmit={editCompanyForm.handleSubmit((data) => {
+                if (editingCompany) {
+                  updateCompanyMutation.mutate({ id: editingCompany.id, data });
+                }
+              })} className="space-y-4">
+                <FormField
+                  control={editCompanyForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom de l'entreprise *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Coopérative Alpha" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editCompanyForm.control}
+                  name="siret"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SIRET</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="12345678901234" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name="sector"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Secteur d'activité</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Arts du cirque" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" placeholder="contact@entreprise.com" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editCompanyForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Téléphone</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="01 23 45 67 89" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setEditingCompany(null)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={updateCompanyMutation.isPending}
+                  >
+                    {updateCompanyMutation.isPending ? 'Modification...' : 'Modifier'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal édition utilisateur */}
+        <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
+          <DialogContent className="bg-white max-w-md">
+            <DialogHeader>
+              <DialogTitle>Modifier l'utilisateur</DialogTitle>
+            </DialogHeader>
+            <Form {...editUserForm}>
+              <form onSubmit={editUserForm.handleSubmit((data) => {
+                if (editingUser) {
+                  updateUserMutation.mutate({ id: editingUser.id, data });
+                }
+              })} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={editUserForm.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prénom *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Jean" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nom *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Dupont" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={editUserForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" placeholder="jean.dupont@example.com" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editUserForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Rôle</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner un rôle" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Salarié·es SCC">Salarié·es SCC</SelectItem>
+                          <SelectItem value="Elu·es">Elu·es</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editUserForm.control}
+                  name="companyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Entreprise</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : null)} defaultValue={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner une entreprise" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {companies?.map((company: Company) => (
+                            <SelectItem key={company.id} value={company.id.toString()}>
+                              {company.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setEditingUser(null)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={updateUserMutation.isPending}
+                  >
+                    {updateUserMutation.isPending ? 'Modification...' : 'Modifier'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal édition type de réunion */}
+        <Dialog open={!!editingMeetingType} onOpenChange={() => setEditingMeetingType(null)}>
+          <DialogContent className="bg-white max-w-md">
+            <DialogHeader>
+              <DialogTitle>Modifier le type de réunion</DialogTitle>
+            </DialogHeader>
+            <Form {...editMeetingTypeForm}>
+              <form onSubmit={editMeetingTypeForm.handleSubmit((data) => {
+                if (editingMeetingType) {
+                  updateMeetingTypeMutation.mutate({ id: editingMeetingType.id, data });
+                }
+              })} className="space-y-4">
+                <FormField
+                  control={editMeetingTypeForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom du type *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Conseil National" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editMeetingTypeForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder="Description du type de réunion" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={editMeetingTypeForm.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Couleur</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="color" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setEditingMeetingType(null)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={updateMeetingTypeMutation.isPending}
+                  >
+                    {updateMeetingTypeMutation.isPending ? 'Modification...' : 'Modifier'}
                   </Button>
                 </div>
               </form>
