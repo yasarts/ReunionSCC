@@ -48,13 +48,7 @@ export default function SimpleMeetingPresenter() {
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [newItemType, setNewItemType] = useState<'section' | 'subsection' | 'break'>('section');
   const [selectedParentId, setSelectedParentId] = useState<string>('');
-  const [editingTitle, setEditingTitle] = useState<string | null>(null);
-  const [editedTitle, setEditedTitle] = useState('');
-  const [editingTags, setEditingTags] = useState<string | null>(null);
-  const [editedTags, setEditedTags] = useState('');
-  const [editingPresentation, setEditingPresentation] = useState<string | null>(null);
-  const [editedPresentationLink, setEditedPresentationLink] = useState('');
-  const [editedPresentationTitle, setEditedPresentationTitle] = useState('');
+
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -379,6 +373,8 @@ export default function SimpleMeetingPresenter() {
     return subsections;
   };
 
+
+
   // Navigation vers un élément spécifique
   const navigateToItem = (itemId: string) => {
     const index = agenda.findIndex(item => item.id === itemId);
@@ -387,45 +383,7 @@ export default function SimpleMeetingPresenter() {
     }
   };
 
-  // Fonctions d'édition pour l'aperçu général
-  const saveTitle = (itemId: string) => {
-    const updatedAgenda = agenda.map(item => 
-      item.id === itemId 
-        ? { ...item, title: editedTitle }
-        : item
-    );
-    setAgenda(updatedAgenda);
-    setEditingTitle(null);
-    setEditedTitle('');
-  };
 
-  const saveTags = (itemId: string) => {
-    const tags = editedTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
-    const updatedAgenda = agenda.map(item => 
-      item.id === itemId 
-        ? { ...item, tags: tags }
-        : item
-    );
-    setAgenda(updatedAgenda);
-    setEditingTags(null);
-    setEditedTags('');
-  };
-
-  const savePresentation = (itemId: string) => {
-    const updatedAgenda = agenda.map(item => 
-      item.id === itemId 
-        ? { 
-            ...item, 
-            presentationLink: editedPresentationLink,
-            presentationTitle: editedPresentationTitle || 'Présentation visuelle'
-          }
-        : item
-    );
-    setAgenda(updatedAgenda);
-    setEditingPresentation(null);
-    setEditedPresentationLink('');
-    setEditedPresentationTitle('');
-  };
 
   const convertToSection = (itemId: string) => {
     const updatedAgenda = agenda.map(item => 
@@ -902,6 +860,12 @@ export default function SimpleMeetingPresenter() {
                                           {subsection.presenter && (
                                             <p className="text-xs text-gray-500 mt-1">Présenté par: {subsection.presenter}</p>
                                           )}
+                                          <div className="flex items-center gap-1 mt-1">
+                                            <Clock className="h-3 w-3 text-gray-400" />
+                                            <span className="text-xs text-gray-500">
+                                              Début: {formatTime(getSubsectionStartTime(subsection.id))}
+                                            </span>
+                                          </div>
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2">
