@@ -973,7 +973,11 @@ export default function SimpleMeetingPresenter() {
                     <Label htmlFor="parentSection">Section parente</Label>
                     <Select
                       value={getParentSectionId(editingItem.id)}
-                      onValueChange={(value) => moveSubsectionToSection(editingItem.id, value)}
+                      onValueChange={(value) => {
+                        moveSubsectionToSection(editingItem.id, value);
+                        setShowEditModal(false);
+                        setEditingItem(null);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Choisir une section..." />
@@ -982,7 +986,7 @@ export default function SimpleMeetingPresenter() {
                         {agenda
                           .filter(item => item.level === 0 && item.type !== 'break')
                           .map(section => (
-                            <SelectItem key={section.id} value={section.id}>
+                            <SelectItem key={`section-${section.id}`} value={section.id}>
                               {section.title}
                             </SelectItem>
                           ))}
