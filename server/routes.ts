@@ -27,6 +27,9 @@ const sessionMiddleware = session({
 
 // Authentication middleware
 const requireAuth = (req: any, res: Response, next: any) => {
+  console.log("Session debug:", req.session);
+  console.log("User ID:", req.session?.userId);
+  
   if (!req.session?.userId) {
     return res.status(401).json({ message: "Unauthorized" });
   }
