@@ -639,6 +639,253 @@ export default function AdminPanel() {
           </DialogContent>
         </Dialog>
 
+        {/* Modal création entreprise */}
+        <Dialog open={showCreateCompanyModal} onOpenChange={setShowCreateCompanyModal}>
+          <DialogContent className="bg-white max-w-md">
+            <DialogHeader>
+              <DialogTitle>Créer une nouvelle entreprise</DialogTitle>
+            </DialogHeader>
+            <Form {...companyForm}>
+              <form onSubmit={companyForm.handleSubmit((data) => createCompanyMutation.mutate(data))} className="space-y-4">
+                <FormField
+                  control={companyForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom de l'entreprise *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Coopérative Alpha" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={companyForm.control}
+                  name="siret"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SIRET</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="12345678901234" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={companyForm.control}
+                  name="sector"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Secteur d'activité</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Ex: Arts du cirque" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={companyForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" placeholder="contact@entreprise.com" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={companyForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Téléphone</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="01 23 45 67 89" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowCreateCompanyModal(false)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createCompanyMutation.isPending}
+                  >
+                    {createCompanyMutation.isPending ? 'Création...' : 'Créer'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal création utilisateur */}
+        <Dialog open={showCreateUserModal} onOpenChange={setShowCreateUserModal}>
+          <DialogContent className="bg-white max-w-md">
+            <DialogHeader>
+              <DialogTitle>Créer un nouvel utilisateur</DialogTitle>
+            </DialogHeader>
+            <Form {...userForm}>
+              <form onSubmit={userForm.handleSubmit((data) => createUserMutation.mutate(data))} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={userForm.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prénom *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Jean" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={userForm.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nom *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Dupont" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={userForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" placeholder="jean.dupont@example.com" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={userForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Rôle</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner un rôle" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Salarié·es SCC">Salarié·es SCC</SelectItem>
+                          <SelectItem value="Elu·es">Elu·es</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={userForm.control}
+                  name="companyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Entreprise</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : null)} defaultValue={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner une entreprise" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {companies?.map((company: Company) => (
+                            <SelectItem key={company.id} value={company.id.toString()}>
+                              {company.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={userForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mot de passe *</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="password" placeholder="••••••••" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={userForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmer *</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="password" placeholder="••••••••" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="flex gap-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowCreateUserModal(false)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createUserMutation.isPending}
+                  >
+                    {createUserMutation.isPending ? 'Création...' : 'Créer'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
         {/* Modal gestion des accès */}
         <Dialog open={!!selectedMeetingType} onOpenChange={() => setSelectedMeetingType(null)}>
           <DialogContent className="bg-white max-w-2xl">
