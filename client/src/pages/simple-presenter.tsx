@@ -296,20 +296,71 @@ export default function SimpleMeetingPresenter() {
     const section = agenda.find(item => item.id === sectionId);
     if (!section || section.level !== 0) return 0;
     
-    const sectionIndex = agenda.findIndex(item => item.id === sectionId);
-    let totalDuration = section.duration;
+    const subsections = getSubsections(sectionId);
     
-    // Ajouter la durée de toutes les sous-sections
-    for (let i = sectionIndex + 1; i < agenda.length; i++) {
+    // Si la section a des sous-sections, utiliser la somme des sous-sections uniquement
+    if (subsections.length > 0) {
+      return subsections.reduce((total, sub) => total + sub.duration, 0);
+    }
+    
+    // Sinon, utiliser la durée propre de la section
+    return section.duration;
+  };
+
+  // Calculer l'heure de début d'un élément
+  const getStartTime = (itemId: string) => {
+    const itemIndex = agenda.findIndex(item => item.id === itemId);
+    if (itemIndex === -1) return new Date(`${meetingInfo.date} ${meetingInfo.time}`);
+    
+    let totalMinutes = 0;
+    const startTime = new Date(`${meetingInfo.date} ${meetingInfo.time}`);
+    
+    // Calculer le temps accumulé jusqu'à cet élément
+    for (let i = 0; i < itemIndex; i++) {
       const item = agenda[i];
-      if (item.level === 0) break; // Nouvelle section, arrêter
-      if (item.level === 1) {
-        totalDuration += item.duration;
+      if (item.level === 0) { // Section principale
+        totalMinutes += getSectionTotalDuration(item.id);
       }
     }
     
-    return totalDuration;
+    const result = new Date(startTime);
+    result.setMinutes(result.getMinutes() + totalMinutes);
+    return result;
   };
+
+  // Calculer l'heure de début d'une sous-section
+  const getSubsectionStartTime = (subsectionId: string) => {
+    const subsection = agenda.find(item => item.id === subsectionId);
+    if (!subsection) return new Date();
+    
+    // Trouver la section parent
+    const parentSectionIndex = agenda.findIndex(item => 
+      item.level === 0 && agenda.findIndex(sub => sub.id === subsectionId) > agenda.findIndex(sec => sec.id === item.id)
+    );
+    
+    if (parentSectionIndex === -1) return new Date();
+    
+    const parentSection = agenda[parentSectionIndex];
+    const parentStartTime = getStartTime(parentSection.id);
+    
+    // Calculer les minutes accumulées des sous-sections précédentes
+    let accumulatedMinutes = 0;
+    const subsectionIndex = agenda.findIndex(item => item.id === subsectionId);
+    
+    for (let i = parentSectionIndex + 1; i < subsectionIndex; i++) {
+      const item = agenda[i];
+      if (item.level === 0) break; // Nouvelle section
+      if (item.level === 1) {
+        accumulatedMinutes += item.duration;
+      }
+    }
+    
+    const result = new Date(parentStartTime);
+    result.setMinutes(result.getMinutes() + accumulatedMinutes);
+    return result;
+  };
+
+
 
   // Obtenir les sous-sections d'une section
   const getSubsections = (sectionId: string): AgendaItem[] => {
@@ -774,42 +825,16 @@ export default function SimpleMeetingPresenter() {
                                   <Circle className="h-6 w-6 text-gray-400" />
                                 )}
                                 <div className="flex-1">
-                                  <div className="flex items-center gap-2">
-                                    {editingTitle === section.id ? (
-                                      <div className="flex items-center gap-2 flex-1">
-                                        <Input
-                                          value={editedTitle}
-                                          onChange={(e) => setEditedTitle(e.target.value)}
-                                          className="flex-1"
-                                          placeholder="Titre de la section"
-                                        />
-                                        <Button size="sm" onClick={() => saveTitle(section.id)}>
-                                          <Save className="h-3 w-3" />
-                                        </Button>
-                                        <Button size="sm" variant="ghost" onClick={() => setEditingTitle(null)}>
-                                          <X className="h-3 w-3" />
-                                        </Button>
-                                      </div>
-                                    ) : (
-                                      <>
-                                        <CardTitle className="text-xl hover:text-blue-600 transition-colors">{section.title}</CardTitle>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setEditingTitle(section.id);
-                                            setEditedTitle(section.title);
-                                          }}
-                                          className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                          title="Modifier le titre"
-                                        >
-                                          <Edit3 className="h-3 w-3 text-gray-500" />
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
+                                  <CardTitle className="text-xl hover:text-blue-600 transition-colors">{section.title}</CardTitle>
                                   {section.presenter && (
                                     <p className="text-sm text-gray-600 mt-1">Présenté par: {section.presenter}</p>
                                   )}
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Clock className="h-4 w-4 text-gray-500" />
+                                    <span className="text-sm text-gray-600">
+                                      Début: {formatTime(getStartTime(section.id))}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-3">
@@ -819,131 +844,36 @@ export default function SimpleMeetingPresenter() {
                                 <Badge variant="outline">
                                   {totalDuration} min
                                 </Badge>
-                                {editingTags === section.id ? (
-                                  <div className="flex items-center gap-2">
-                                    <Input
-                                      value={editedTags}
-                                      onChange={(e) => setEditedTags(e.target.value)}
-                                      placeholder="Tags séparés par des virgules"
-                                      className="w-48"
-                                    />
-                                    <Button size="sm" onClick={() => saveTags(section.id)}>
-                                      <Save className="h-3 w-3" />
-                                    </Button>
-                                    <Button size="sm" variant="ghost" onClick={() => setEditingTags(null)}>
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-2">
-                                    {section.tags && section.tags.length > 0 ? (
-                                      <div className="flex gap-1">
-                                        {section.tags.map(tag => (
-                                          <Badge key={tag} variant="secondary" className="text-xs">
-                                            {tag}
-                                          </Badge>
-                                        ))}
-                                      </div>
-                                    ) : (
-                                      <span className="text-xs text-gray-400">Aucun tag</span>
-                                    )}
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setEditingTags(section.id);
-                                        setEditedTags(section.tags ? section.tags.join(', ') : '');
-                                      }}
-                                      className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                      title="Modifier les tags"
-                                    >
-                                      <Edit3 className="h-3 w-3 text-gray-500" />
-                                    </button>
+                                {section.tags && section.tags.length > 0 && (
+                                  <div className="flex gap-1">
+                                    {section.tags.map(tag => (
+                                      <Badge key={tag} variant="secondary" className="text-xs">
+                                        {tag}
+                                      </Badge>
+                                    ))}
                                   </div>
                                 )}
                               </div>
                             </div>
                             
-                            {editingPresentation === section.id ? (
+                            {section.presentationLink && (
                               <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                   <div className="flex items-center gap-2">
                                     <Link2 className="h-4 w-4 text-blue-600" />
-                                    <span className="text-sm font-medium text-blue-800">Édition du lien de présentation</span>
+                                    <span className="text-sm font-medium text-blue-800">
+                                      {section.presentationTitle || 'Présentation visuelle'}
+                                    </span>
                                   </div>
-                                  <Input
-                                    value={editedPresentationTitle}
-                                    onChange={(e) => setEditedPresentationTitle(e.target.value)}
-                                    placeholder="Titre de la présentation"
-                                    className="text-sm"
-                                  />
-                                  <Input
-                                    value={editedPresentationLink}
-                                    onChange={(e) => setEditedPresentationLink(e.target.value)}
-                                    placeholder="URL de la présentation"
-                                    className="text-sm"
-                                  />
-                                  <div className="flex gap-2">
-                                    <Button size="sm" onClick={() => savePresentation(section.id)}>
-                                      <Save className="h-3 w-3" />
-                                    </Button>
-                                    <Button size="sm" variant="ghost" onClick={() => setEditingPresentation(null)}>
-                                      <X className="h-3 w-3" />
-                                    </Button>
-                                  </div>
+                                  <a 
+                                    href={section.presentationLink} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue-600 hover:underline"
+                                  >
+                                    Ouvrir la présentation
+                                  </a>
                                 </div>
-                              </div>
-                            ) : (
-                              <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                                {section.presentationLink ? (
-                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-2">
-                                        <Link2 className="h-4 w-4 text-blue-600" />
-                                        <span className="text-sm font-medium text-blue-800">
-                                          {section.presentationTitle || 'Présentation visuelle'}
-                                        </span>
-                                      </div>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setEditingPresentation(section.id);
-                                          setEditedPresentationLink(section.presentationLink || '');
-                                          setEditedPresentationTitle(section.presentationTitle || '');
-                                        }}
-                                        className="p-1 hover:bg-blue-200 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                        title="Modifier le lien de présentation"
-                                      >
-                                        <Edit3 className="h-3 w-3 text-blue-600" />
-                                      </button>
-                                    </div>
-                                    <a 
-                                      href={section.presentationLink} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-sm text-blue-600 hover:underline"
-                                    >
-                                      Ouvrir la présentation
-                                    </a>
-                                  </div>
-                                ) : (
-                                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-sm text-gray-500">Aucune présentation associée</span>
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setEditingPresentation(section.id);
-                                          setEditedPresentationLink('');
-                                          setEditedPresentationTitle('');
-                                        }}
-                                        className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                                        title="Ajouter un lien de présentation"
-                                      >
-                                        <Plus className="h-3 w-3 text-gray-500" />
-                                      </button>
-                                    </div>
-                                  </div>
-                                )}
                               </div>
                             )}
                           </CardHeader>
