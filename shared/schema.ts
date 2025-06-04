@@ -33,7 +33,8 @@ export const users = pgTable("users", {
   password: varchar("password", { length: 255 }).notNull(),
   firstName: varchar("first_name", { length: 100 }).notNull(),
   lastName: varchar("last_name", { length: 100 }).notNull(),
-  role: varchar("role", { length: 50 }).notNull(), // 'salaried' | 'council_member'
+  role: varchar("role", { length: 50 }).notNull(), // 'Salarié·es SCC' | 'Elu·es'
+  structure: varchar("structure", { length: 200 }), // Structure représentée pour les élus
   permissions: jsonb("permissions").notNull(),
   profileImageUrl: varchar("profile_image_url", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -56,10 +57,13 @@ export const meetings = pgTable("meetings", {
 export const meetingParticipants = pgTable(
   "meeting_participants",
   {
-    meetingId: integer("meeting_id").references(() => meetings.id).notNull(),
-    userId: integer("user_id").references(() => users.id).notNull(),
-    isPresent: boolean("is_present").default(false),
-    joinedAt: timestamp("joined_at"),
+    meetingId: integer("meeting_id").references(() => meetings.id, { onDelete: "cascade" }).notNull(),
+    userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+    status: varchar("status", { length: 20 }).default("pending").notNull(), // 'present' | 'absent' | 'excused' | 'proxy' | 'pending'
+    proxyToUserId: integer("proxy_to_user_id").references(() => users.id),
+    proxyToStructure: varchar("proxy_to_structure", { length: 200 }),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    updatedBy: integer("updated_by").references(() => users.id),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.meetingId, table.userId] }),
@@ -135,6 +139,14 @@ export const meetingParticipantsRelations = relations(meetingParticipants, ({ on
   }),
   user: one(users, {
     fields: [meetingParticipants.userId],
+    references: [users.id],
+  }),
+  proxyToUser: one(users, {
+    fields: [meetingParticipants.proxyToUserId],
+    references: [users.id],
+  }),
+  updatedByUser: one(users, {
+    fields: [meetingParticipants.updatedBy],
     references: [users.id],
   }),
 }));

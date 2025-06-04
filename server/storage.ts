@@ -150,8 +150,11 @@ export class DatabaseStorage implements IStorage {
       .select({
         meetingId: meetingParticipants.meetingId,
         userId: meetingParticipants.userId,
-        isPresent: meetingParticipants.isPresent,
-        joinedAt: meetingParticipants.joinedAt,
+        status: meetingParticipants.status,
+        proxyToUserId: meetingParticipants.proxyToUserId,
+        proxyToStructure: meetingParticipants.proxyToStructure,
+        updatedAt: meetingParticipants.updatedAt,
+        updatedBy: meetingParticipants.updatedBy,
         user: users
       })
       .from(meetingParticipants)
@@ -159,12 +162,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(meetingParticipants.meetingId, meetingId));
   }
 
-  async updateParticipantPresence(meetingId: number, userId: number, isPresent: boolean): Promise<void> {
+  async updateParticipantStatus(
+    meetingId: number, 
+    userId: number, 
+    status: string,
+    proxyToUserId?: number,
+    proxyToStructure?: string,
+    updatedBy?: number
+  ): Promise<void> {
     await db
       .update(meetingParticipants)
       .set({ 
-        isPresent, 
-        joinedAt: isPresent ? new Date() : null 
+        status,
+        proxyToUserId: proxyToUserId || null,
+        proxyToStructure: proxyToStructure || null,
+        updatedAt: new Date(),
+        updatedBy: updatedBy || null
       })
       .where(
         and(
@@ -172,6 +185,25 @@ export class DatabaseStorage implements IStorage {
           eq(meetingParticipants.userId, userId)
         )
       );
+  }
+
+  async getElectedMembers(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.role, "Elu·es"));
+  }
+
+  async getStructures(): Promise<string[]> {
+    const result = await db
+      .selectDistinct({ structure: users.structure })
+      .from(users)
+      .where(and(
+        eq(users.role, "Elu·es"),
+        isNotNull(users.structure)
+      ));
+    
+    return result.map(r => r.structure).filter(Boolean) as string[];
   }
 
   // Agenda operations
