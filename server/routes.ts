@@ -19,9 +19,10 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === "production",
+    secure: false, // Permettre les cookies non-sécurisés en développement
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // Configurer SameSite pour éviter les problèmes CORS
   }
 });
 
@@ -222,6 +223,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(usersWithoutPasswords);
     } catch (error) {
       console.error("Get users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/users", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const result = insertUserSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid user data", errors: result.error.errors });
+      }
+
+      // Hash the password before saving
+      const hashedPassword = await bcrypt.hash(result.data.password, 10);
+      const userData = { ...result.data, password: hashedPassword };
+
+      const user = await storage.createUser(userData);
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Create user error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

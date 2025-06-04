@@ -115,6 +115,28 @@ export default function AdminPanel() {
   });
 
   // Mutations pour créer/modifier des utilisateurs
+  const createUserMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof createUserFormSchema>) => {
+      return await apiRequest('POST', '/api/users', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      setShowCreateUserModal(false);
+      toast({
+        title: "Succès",
+        description: "Utilisateur créé avec succès",
+      });
+    },
+    onError: (error) => {
+      console.error('Erreur création utilisateur:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer l'utilisateur",
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateUserMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<User> }) => {
       return await apiRequest('PUT', `/api/users/${id}`, data);
@@ -175,6 +197,10 @@ export default function AdminPanel() {
 
   const onCreateCompany = (data: z.infer<typeof createCompanyFormSchema>) => {
     createCompanyMutation.mutate(data);
+  };
+
+  const onCreateUser = (data: z.infer<typeof createUserFormSchema>) => {
+    createUserMutation.mutate(data);
   };
 
   const getRoleColor = (role: string) => {
