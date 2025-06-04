@@ -1721,7 +1721,7 @@ export default function AdminPanel() {
                 <div>
                   <Label className="text-sm font-medium">Rôles autorisés</Label>
                   <div className="mt-2 space-y-2">
-                    {["Salarié·es SCC", "Elu·es", "Administrateur"].map(availableRole => {
+                    {["Salarié·es SCC", "Elu·es"].map(availableRole => {
                       const isSelected = meetingTypeRoles?.some((r: any) => r.role === availableRole) || false;
                       return (
                         <div key={availableRole} className="flex items-center space-x-2">
