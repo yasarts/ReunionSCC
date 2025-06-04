@@ -80,14 +80,14 @@ export default function SimpleMeetingPresenter() {
       };
     }
     
-    return initialMeetingInfo;
+    return meetingData.meetingInfo;
   });
   const [itemStates, setItemStates] = useState<Record<string, { completed: boolean; notes: string; startTime?: Date; }>>({});
   const [meetingStartTime] = useState(new Date());
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [itemStartTime, setItemStartTime] = useState<Date | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
   const [editingItem, setEditingItem] = useState<AgendaItem | null>(null);
   const [newParticipant, setNewParticipant] = useState('');
@@ -113,6 +113,15 @@ export default function SimpleMeetingPresenter() {
   const [editingPresenter, setEditingPresenter] = useState<string | null>(null);
   const [editedPresenter, setEditedPresenter] = useState('');
   const [showAdvancedMode, setShowAdvancedMode] = useState<boolean>(false);
+  
+  // État pour la configuration de la réunion
+  const [editedMeetingInfo, setEditedMeetingInfo] = useState({
+    title: '',
+    date: '',
+    time: '',
+    description: '',
+    status: 'draft' as 'draft' | 'scheduled' | 'in_progress' | 'completed'
+  });
 
 
   useEffect(() => {
@@ -154,6 +163,30 @@ export default function SimpleMeetingPresenter() {
     setAgenda(freshData.agendaItems);
     setMeetingInfo(freshData.meetingInfo);
     setCurrentItemIndex(-1);
+  };
+
+  // Fonction pour ouvrir la modale de configuration
+  const openConfigModal = () => {
+    setEditedMeetingInfo({
+      title: meetingInfo.title,
+      date: meetingInfo.date,
+      time: meetingInfo.time,
+      description: '', // À ajouter si nécessaire
+      status: 'scheduled' // Par défaut
+    });
+    setShowConfigModal(true);
+  };
+
+  // Fonction pour sauvegarder les modifications
+  const saveMeetingInfo = () => {
+    const updatedInfo = {
+      ...meetingInfo,
+      title: editedMeetingInfo.title,
+      date: editedMeetingInfo.date,
+      time: editedMeetingInfo.time
+    };
+    setMeetingInfo(updatedInfo);
+    setShowConfigModal(false);
   };
 
   const formatDisplayDate = (dateString: string) => {
@@ -643,7 +676,7 @@ export default function SimpleMeetingPresenter() {
               </Button>
 
               {/* Configuration Button */}
-              <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => setShowEditModal(true)}>
+              <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={openConfigModal}>
                 <Settings className="h-4 w-4" />
                 Configuration
               </Button>
