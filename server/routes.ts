@@ -96,15 +96,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const memberExists = await storage.getUserByEmail("christine.nissim@scc-cirque.org");
-      if (!memberExists) {
-        const hashedPassword = await bcrypt.hash("membre123", 10);
+      const salarieExists = await storage.getUserByEmail("salarie@scc.fr");
+      if (!salarieExists) {
+        const hashedPassword = await bcrypt.hash("password", 10);
         await storage.createUser({
-          email: "christine.nissim@scc-cirque.org",
+          email: "salarie@scc.fr",
           password: hashedPassword,
-          firstName: "Christine",
-          lastName: "Nissim",
-          role: "council_member",
+          firstName: "Salarié",
+          lastName: "SCC",
+          role: "Salarié·es SCC",
+          permissions: {
+            canView: true,
+            canEdit: true,
+            canManageAgenda: true,
+            canManageParticipants: true,
+            canCreateMeetings: true,
+            canManageUsers: true,
+            canVote: true,
+            canSeeVoteResults: true
+          }
+        });
+      }
+
+      const eluExists = await storage.getUserByEmail("elu@scc.fr");
+      if (!eluExists) {
+        const hashedPassword = await bcrypt.hash("password", 10);
+        await storage.createUser({
+          email: "elu@scc.fr",
+          password: hashedPassword,
+          firstName: "Elu",
+          lastName: "SCC",
+          role: "Elu·es",
+          structure: "Conseil National",
           permissions: {
             canView: true,
             canEdit: false,
