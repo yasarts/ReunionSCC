@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Dashboard from "@/pages/dashboard";
 import SimpleMeetingPresenter from "@/pages/simple-presenter";
 import ParticipantsManagement from "@/pages/participants";
+import MeetingConfig from "@/pages/meeting-config";
 import Login from "@/pages/login";
 import AdminPanel from "@/pages/admin";
 import NotFound from "@/pages/not-found";
@@ -34,6 +35,7 @@ function AppContent() {
       <Route path="/" component={Dashboard} />
       <Route path="/presenter/:meetingId" component={SimpleMeetingPresenter} />
       <Route path="/participants/:id" component={ParticipantsManagement} />
+      <Route path="/config/:id" component={MeetingConfig} />
       <Route path="/admin" component={AdminPanel} />
       <Route path="/login" component={Login} />
       <Route component={NotFound} />

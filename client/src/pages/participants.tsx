@@ -96,8 +96,11 @@ export default function ParticipantsManagement() {
       proxyToUserId?: number; 
       proxyToStructure?: string; 
     }) => {
-      await apiRequest(`/api/meetings/${meetingId}/participants/${userId}/status`, {
+      const response = await fetch(`/api/meetings/${meetingId}/participants/${userId}/status`, {
         method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
           status,
           proxyToUserId,
@@ -105,6 +108,10 @@ export default function ParticipantsManagement() {
           updatedBy: currentUser?.id
         })
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/meetings", meetingId, "participants"] });
