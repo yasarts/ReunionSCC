@@ -8,6 +8,7 @@ import {
   meetingParticipants,
   meetingTypes,
   meetingTypeAccess,
+  meetingTypeRoles,
   type Company,
   type InsertCompany,
   type User,
@@ -25,6 +26,8 @@ import {
   type InsertMeetingType,
   type MeetingTypeAccess,
   type InsertMeetingTypeAccess,
+  type MeetingTypeRole,
+  type InsertMeetingTypeRole,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc } from "drizzle-orm";
