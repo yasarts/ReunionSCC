@@ -73,8 +73,11 @@ export const meetingParticipants = pgTable(
   {
     meetingId: integer("meeting_id").references(() => meetings.id).notNull(),
     userId: integer("user_id").references(() => users.id).notNull(),
-    isPresent: boolean("is_present").default(false),
+    status: varchar("status", { length: 20 }).notNull().default("invited"), // 'invited' | 'present' | 'absent' | 'excused' | 'proxy'
+    proxyCompanyId: integer("proxy_company_id").references(() => companies.id), // entreprise à qui le pouvoir est donné
     joinedAt: timestamp("joined_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.meetingId, table.userId] }),

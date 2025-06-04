@@ -47,8 +47,8 @@ export interface IStorage {
   // Meeting participants
   addParticipant(meetingId: number, userId: number): Promise<void>;
   removeParticipant(meetingId: number, userId: number): Promise<void>;
-  getMeetingParticipants(meetingId: number): Promise<(MeetingParticipant & { user: User })[]>;
-  updateParticipantPresence(meetingId: number, userId: number, isPresent: boolean): Promise<void>;
+  getMeetingParticipants(meetingId: number): Promise<(MeetingParticipant & { user: User, proxyCompany?: Company })[]>;
+  updateParticipantStatus(meetingId: number, userId: number, status: string, proxyCompanyId?: number): Promise<void>;
   
   // Agenda operations
   getAgendaItems(meetingId: number): Promise<AgendaItem[]>;
@@ -198,26 +198,37 @@ export class DatabaseStorage implements IStorage {
       );
   }
 
-  async getMeetingParticipants(meetingId: number): Promise<(MeetingParticipant & { user: User })[]> {
-    return await db
+  async getMeetingParticipants(meetingId: number): Promise<(MeetingParticipant & { user: User, proxyCompany?: Company })[]> {
+    const results = await db
       .select({
         meetingId: meetingParticipants.meetingId,
         userId: meetingParticipants.userId,
-        isPresent: meetingParticipants.isPresent,
+        status: meetingParticipants.status,
+        proxyCompanyId: meetingParticipants.proxyCompanyId,
         joinedAt: meetingParticipants.joinedAt,
-        user: users
+        createdAt: meetingParticipants.createdAt,
+        updatedAt: meetingParticipants.updatedAt,
+        user: users,
+        proxyCompany: companies
       })
       .from(meetingParticipants)
       .innerJoin(users, eq(meetingParticipants.userId, users.id))
+      .leftJoin(companies, eq(meetingParticipants.proxyCompanyId, companies.id))
       .where(eq(meetingParticipants.meetingId, meetingId));
+
+    return results.map(result => ({
+      ...result,
+      proxyCompany: result.proxyCompany || undefined
+    })) as (MeetingParticipant & { user: User, proxyCompany?: Company })[];
   }
 
-  async updateParticipantPresence(meetingId: number, userId: number, isPresent: boolean): Promise<void> {
+  async updateParticipantStatus(meetingId: number, userId: number, status: string, proxyCompanyId?: number): Promise<void> {
     await db
       .update(meetingParticipants)
       .set({ 
-        isPresent, 
-        joinedAt: isPresent ? new Date() : null 
+        status,
+        proxyCompanyId: proxyCompanyId || null,
+        updatedAt: new Date()
       })
       .where(
         and(
