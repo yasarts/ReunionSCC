@@ -158,6 +158,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Company routes
+  app.get("/api/companies", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const companies = await storage.getCompanies();
+      res.json(companies);
+    } catch (error) {
+      console.error("Get companies error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/companies", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const result = insertCompanySchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid company data", errors: result.error.errors });
+      }
+
+      const company = await storage.createCompany(result.data);
+      res.status(201).json(company);
+    } catch (error) {
+      console.error("Create company error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/companies/:id", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      const result = insertCompanySchema.partial().safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid company data", errors: result.error.errors });
+      }
+
+      const company = await storage.updateCompany(companyId, result.data);
+      res.json(company);
+    } catch (error) {
+      console.error("Update company error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/companies/:id", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      await storage.deleteCompany(companyId);
+      res.json({ message: "Company deleted successfully" });
+    } catch (error) {
+      console.error("Delete company error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // User management routes
+  app.get("/api/users", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      const usersWithoutPasswords = users.map(user => {
+        const { password: _, ...userWithoutPassword } = user;
+        return userWithoutPassword;
+      });
+      res.json(usersWithoutPasswords);
+    } catch (error) {
+      console.error("Get users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.put("/api/users/:id", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const result = insertUserSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: "Invalid user data", errors: result.error.errors });
+      }
+
+      const user = await storage.updateUser(userId, result.data);
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Update user error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Meeting routes
   app.get("/api/meetings", requireAuth, async (req: any, res: Response) => {
     try {

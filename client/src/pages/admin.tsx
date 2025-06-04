@@ -1,105 +1,554 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { ArrowLeft, Users, Plus, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, Users, Plus, Edit, Trash2, Building, MapPin, Phone, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { insertCompanySchema, insertUserSchema, type Company, type User } from '@shared/schema';
+import { z } from 'zod';
 
-interface User {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: 'Salarié·es SCC' | 'Elu·es';
-  permissions: {
-    canEdit: boolean;
-    canManageAgenda: boolean;
-    canManageUsers: boolean;
-    canCreateMeetings: boolean;
-    canExport: boolean;
-  };
-  createdAt: string;
-}
+const createCompanyFormSchema = insertCompanySchema;
+const createUserFormSchema = insertUserSchema.extend({
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Les mots de passe ne correspondent pas",
+  path: ["confirmPassword"],
+});
 
 export default function AdminPanel() {
   const [, setLocation] = useLocation();
-  const { user, requirePermission } = useAuth();
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: 1,
-      email: 'salarie@scc.fr',
-      firstName: 'Marie',
-      lastName: 'Dupont',
-      role: 'Salarié·es SCC',
-      permissions: {
-        canEdit: true,
-        canManageAgenda: true,
-        canManageUsers: true,
-        canCreateMeetings: true,
-        canExport: true
-      },
-      createdAt: '2024-01-15'
-    },
-    {
-      id: 2,
-      email: 'elu@scc.fr',
-      firstName: 'Jean',
-      lastName: 'Martin',
-      role: 'Elu·es',
-      permissions: {
-        canEdit: false,
-        canManageAgenda: false,
-        canManageUsers: false,
-        canCreateMeetings: false,
-        canExport: false
-      },
-      createdAt: '2024-02-01'
-    }
-  ]);
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  
+  const [showCreateCompanyModal, setShowCreateCompanyModal] = useState(false);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<Company | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  const [newUser, setNewUser] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    role: 'Elu·es' as 'Salarié·es SCC' | 'Elu·es'
-  });
-
-  if (!requirePermission('canManageUsers')) {
+  // Vérifier les permissions
+  if (!user?.permissions?.canManageUsers) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-semibold mb-2">Accès non autorisé</h2>
-            <p className="text-gray-600 mb-4">Vous n'avez pas les permissions pour accéder à cette page.</p>
-            <Button onClick={() => setLocation('/')}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Retour à l'accueil
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+        <div className="max-w-4xl mx-auto">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">Accès refusé</h2>
+              <p className="text-gray-600">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+              <Button onClick={() => setLocation('/')} className="mt-4">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Retour au tableau de bord
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
-  const createUser = () => {
-    const permissions = newUser.role === 'Salarié·es SCC' ? {
-      canEdit: true,
-      canManageAgenda: true,
-      canManageUsers: true,
-      canCreateMeetings: true,
-      canExport: true
-    } : {
-      canEdit: false,
-      canManageAgenda: false,
-      canManageUsers: false,
-      canCreateMeetings: false,
-      canExport: false
-    };
+  // Requêtes pour récupérer les données
+  const { data: companies, isLoading: companiesLoading } = useQuery({
+    queryKey: ['/api/companies'],
+  });
+
+  const { data: users, isLoading: usersLoading } = useQuery({
+    queryKey: ['/api/users'],
+  });
+
+  // Mutations pour créer/modifier/supprimer des entreprises
+  const createCompanyMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof createCompanyFormSchema>) => {
+      console.log('Création entreprise:', data);
+      return await apiRequest('/api/companies', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+      setShowCreateCompanyModal(false);
+      toast({
+        title: "Succès",
+        description: "Entreprise créée avec succès",
+      });
+    },
+    onError: (error) => {
+      console.error('Erreur création entreprise:', error);
+      console.error('Erreur mutation:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer l'entreprise",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateCompanyMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<Company> }) => {
+      return await apiRequest(`/api/companies/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+      setEditingCompany(null);
+      toast({
+        title: "Succès",
+        description: "Entreprise modifiée avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier l'entreprise",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteCompanyMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest(`/api/companies/${id}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
+      toast({
+        title: "Succès",
+        description: "Entreprise supprimée avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'entreprise",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutations pour créer/modifier des utilisateurs
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<User> }) => {
+      return await apiRequest(`/api/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      setEditingUser(null);
+      toast({
+        title: "Succès",
+        description: "Utilisateur modifié avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier l'utilisateur",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Formulaires
+  const companyForm = useForm<z.infer<typeof createCompanyFormSchema>>({
+    resolver: zodResolver(createCompanyFormSchema),
+    defaultValues: {
+      name: '',
+      siret: '',
+      address: '',
+      phone: '',
+      email: '',
+      sector: '',
+      description: '',
+    },
+  });
+
+  const userForm = useForm<z.infer<typeof createUserFormSchema>>({
+    resolver: zodResolver(createUserFormSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+      firstName: '',
+      lastName: '',
+      role: '',
+      companyId: null,
+      permissions: {
+        canView: true,
+        canEdit: false,
+        canManageAgenda: false,
+        canManageParticipants: false,
+        canCreateMeetings: false,
+        canManageUsers: false,
+        canVote: true,
+        canSeeVoteResults: true,
+      },
+    },
+  });
+
+  const onCreateCompany = (data: z.infer<typeof createCompanyFormSchema>) => {
+    createCompanyMutation.mutate(data);
+  };
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'Salarié·es SCC':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'Elu·es':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getCompanyName = (companyId: number | null) => {
+    if (!companyId || !companies) return 'Non assigné';
+    const company = companies.find((c: Company) => c.id === companyId);
+    return company?.name || 'Non assigné';
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* En-tête */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setLocation('/')}
+              className="bg-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour
+            </Button>
+            <h1 className="text-3xl font-bold text-gray-800">Administration</h1>
+          </div>
+        </div>
+
+        {/* Contenu principal avec onglets */}
+        <Tabs defaultValue="companies" className="space-y-6">
+          <TabsList className="bg-white p-1 rounded-lg shadow-sm">
+            <TabsTrigger value="companies" className="flex items-center gap-2">
+              <Building className="w-4 h-4" />
+              Entreprises
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Utilisateurs
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Onglet Entreprises */}
+          <TabsContent value="companies" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold text-gray-800">Gestion des entreprises</h2>
+              <Button 
+                onClick={() => setShowCreateCompanyModal(true)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nouvelle entreprise
+              </Button>
+            </div>
+
+            {companiesLoading ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardContent className="p-6">
+                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded mb-4"></div>
+                      <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {companies?.map((company: Company) => (
+                  <Card key={company.id} className="bg-white shadow-sm hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-3">
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-lg text-gray-800">{company.name}</CardTitle>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingCompany(company)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteCompanyMutation.mutate(company.id)}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                      {company.siret && (
+                        <p className="text-sm text-gray-600">SIRET: {company.siret}</p>
+                      )}
+                      {company.sector && (
+                        <p className="text-sm text-gray-600">Secteur: {company.sector}</p>
+                      )}
+                      {company.address && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <MapPin className="w-3 h-3" />
+                          {company.address}
+                        </div>
+                      )}
+                      {company.phone && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Phone className="w-3 h-3" />
+                          {company.phone}
+                        </div>
+                      )}
+                      {company.email && (
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Mail className="w-3 h-3" />
+                          {company.email}
+                        </div>
+                      )}
+                      {company.description && (
+                        <p className="text-sm text-gray-600 mt-2">{company.description}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Onglet Utilisateurs */}
+          <TabsContent value="users" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold text-gray-800">Gestion des utilisateurs</h2>
+              <Button 
+                onClick={() => setShowCreateUserModal(true)}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nouvel utilisateur
+              </Button>
+            </div>
+
+            {usersLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardContent className="p-6">
+                      <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded mb-2"></div>
+                      <div className="h-3 bg-gray-200 rounded"></div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {users?.map((userData: User) => (
+                  <Card key={userData.id} className="bg-white shadow-sm">
+                    <CardContent className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-lg font-medium text-gray-800">
+                              {userData.firstName} {userData.lastName}
+                            </h3>
+                            <Badge className={getRoleColor(userData.role)}>
+                              {userData.role}
+                            </Badge>
+                          </div>
+                          <p className="text-gray-600">{userData.email}</p>
+                          <p className="text-sm text-gray-500">
+                            Entreprise: {getCompanyName(userData.companyId)}
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {userData.permissions?.canEdit && (
+                              <Badge variant="secondary">Modification</Badge>
+                            )}
+                            {userData.permissions?.canManageAgenda && (
+                              <Badge variant="secondary">Gestion agenda</Badge>
+                            )}
+                            {userData.permissions?.canManageUsers && (
+                              <Badge variant="secondary">Gestion utilisateurs</Badge>
+                            )}
+                            {userData.permissions?.canCreateMeetings && (
+                              <Badge variant="secondary">Création réunions</Badge>
+                            )}
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setEditingUser(userData)}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {/* Modal de création d'entreprise */}
+        <Dialog open={showCreateCompanyModal} onOpenChange={setShowCreateCompanyModal}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Nouvelle entreprise</DialogTitle>
+            </DialogHeader>
+            <Form {...companyForm}>
+              <form onSubmit={companyForm.handleSubmit(onCreateCompany)} className="space-y-4">
+                <FormField
+                  control={companyForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nom de l'entreprise *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Nom de l'entreprise" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={companyForm.control}
+                  name="siret"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>SIRET</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Numéro SIRET" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={companyForm.control}
+                  name="sector"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Secteur d'activité</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="Secteur d'activité" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={companyForm.control}
+                  name="address"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Adresse</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder="Adresse complète" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={companyForm.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Téléphone</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Téléphone" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={companyForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="email" placeholder="Email" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={companyForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} placeholder="Description de l'entreprise" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowCreateCompanyModal(false)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createCompanyMutation.isPending}
+                  >
+                    {createCompanyMutation.isPending ? 'Création...' : 'Créer'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+      </div>
+    </div>
+  );
+}
 
     const user: User = {
       id: Date.now(),
