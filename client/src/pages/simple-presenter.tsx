@@ -39,6 +39,11 @@ export default function SimpleMeetingPresenter() {
   const [newParticipant, setNewParticipant] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditingContent, setIsEditingContent] = useState(false);
+  const [editedContent, setEditedContent] = useState('');
+  const [isEditingDuration, setIsEditingDuration] = useState(false);
+  const [editedDuration, setEditedDuration] = useState(0);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -100,6 +105,71 @@ export default function SimpleMeetingPresenter() {
     }
   };
 
+  // Générer un menu automatique pour les sections avec sous-sections
+  const generateSectionMenu = (item: AgendaItem) => {
+    if (!item.content) return null;
+    
+    // Détecter les sous-sections dans le contenu (titre avec ":" ou numérotées)
+    const subsections = item.content.split('\n')
+      .filter(line => line.trim())
+      .filter(line => 
+        line.includes(':') || 
+        /^\d+\./.test(line.trim()) ||
+        /^[A-Z]\./.test(line.trim()) ||
+        /^-/.test(line.trim())
+      )
+      .slice(0, 8); // Limiter à 8 sous-sections max
+
+    if (subsections.length <= 1) return null;
+
+    return (
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <h4 className="font-semibold text-blue-900 mb-2">Menu de navigation</h4>
+        <div className="space-y-1">
+          {subsections.map((subsection, index) => (
+            <button
+              key={index}
+              className="block w-full text-left text-sm text-blue-700 hover:text-blue-900 hover:bg-blue-100 p-1 rounded transition-colors"
+              onClick={() => {
+                // Scroll vers la section correspondante ou mettre en évidence
+                const element = document.getElementById(`subsection-${index}`);
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+            >
+              {subsection.trim().substring(0, 80)}
+              {subsection.length > 80 ? '...' : ''}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Formater le contenu avec des ancres pour la navigation
+  const formatContentWithAnchors = (content: string) => {
+    if (!content) return content;
+    
+    const lines = content.split('\n');
+    let formattedContent = '';
+    let subsectionIndex = 0;
+    
+    for (const line of lines) {
+      if (line.includes(':') || 
+          /^\d+\./.test(line.trim()) ||
+          /^[A-Z]\./.test(line.trim()) ||
+          /^-/.test(line.trim())) {
+        formattedContent += `<div id="subsection-${subsectionIndex}" class="font-semibold mt-4 mb-2 text-lg">${line}</div>\n`;
+        subsectionIndex++;
+      } else {
+        formattedContent += line + '\n';
+      }
+    }
+    
+    return formattedContent;
+  };
+
   return (
     <div className="h-screen bg-gray-50 flex flex-col" style={{ aspectRatio: '16/9' }}>
       {/* Nouvelle barre de navigation */}
@@ -126,7 +196,7 @@ export default function SimpleMeetingPresenter() {
               </Button>
 
               {/* Configuration Button */}
-              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => setShowEditModal(true)}>
                 <Settings className="h-4 w-4" />
                 Configuration
               </Button>
@@ -162,7 +232,18 @@ export default function SimpleMeetingPresenter() {
         {/* Sidebar - Agenda */}
         <div className="w-80 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
           <div className="p-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Ordre du jour</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Ordre du jour</h2>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setIsEditMode(!isEditMode)}
+                className="flex items-center gap-1"
+              >
+                <Edit className="h-3 w-3" />
+                {isEditMode ? 'Terminer' : 'Modifier'}
+              </Button>
+            </div>
             <div className="mt-2 text-sm text-gray-600">
               <div>Réunion: {formatDisplayDate(meetingInfo.date)}</div>
               <div>Heure: {formatTime(currentTime)}</div>
@@ -304,14 +385,60 @@ export default function SimpleMeetingPresenter() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {currentItem.content && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">Contenu</h3>
-                          <div className="prose prose-gray max-w-none">
-                            <p className="whitespace-pre-wrap">{currentItem.content}</p>
-                          </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-lg font-semibold">Contenu</h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setIsEditingContent(true);
+                              setEditedContent(currentItem.content || '');
+                            }}
+                            className="flex items-center gap-1"
+                          >
+                            <Edit className="h-3 w-3" />
+                            Modifier
+                          </Button>
                         </div>
-                      )}
+                        {isEditingContent ? (
+                          <div className="space-y-2">
+                            <textarea
+                              value={editedContent}
+                              onChange={(e) => setEditedContent(e.target.value)}
+                              className="w-full h-32 p-2 border rounded-md resize-none"
+                              placeholder="Contenu de l'élément..."
+                            />
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  const updatedAgenda = agenda.map(item => 
+                                    item.id === currentItem.id 
+                                      ? { ...item, content: editedContent }
+                                      : item
+                                  );
+                                  setAgenda(updatedAgenda);
+                                  setIsEditingContent(false);
+                                }}
+                              >
+                                Sauvegarder
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsEditingContent(false)}
+                              >
+                                Annuler
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="prose prose-gray max-w-none">
+                            <p className="whitespace-pre-wrap">{currentItem.content || 'Aucun contenu défini'}</p>
+                          </div>
+                        )}
+                      </div>
                       
                       {currentItem.visualLink && (
                         <div>
@@ -328,11 +455,65 @@ export default function SimpleMeetingPresenter() {
                       )}
                       
                       <div>
-                        <h3 className="text-lg font-semibold mb-2">Durée prévue</h3>
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4" />
-                          <span>{currentItem.duration} minutes</span>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-lg font-semibold">Durée prévue</h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setIsEditingDuration(true);
+                              setEditedDuration(currentItem.duration);
+                            }}
+                            className="flex items-center gap-1"
+                          >
+                            <Edit className="h-3 w-3" />
+                            Modifier
+                          </Button>
                         </div>
+                        {isEditingDuration ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4" />
+                              <input
+                                type="number"
+                                value={editedDuration}
+                                onChange={(e) => setEditedDuration(parseInt(e.target.value) || 0)}
+                                className="w-20 p-1 border rounded text-center"
+                                min="1"
+                                max="240"
+                              />
+                              <span>minutes</span>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  const updatedAgenda = agenda.map(item => 
+                                    item.id === currentItem.id 
+                                      ? { ...item, duration: editedDuration }
+                                      : item
+                                  );
+                                  setAgenda(updatedAgenda);
+                                  setIsEditingDuration(false);
+                                }}
+                              >
+                                Sauvegarder
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsEditingDuration(false)}
+                              >
+                                Annuler
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4" />
+                            <span>{currentItem.duration} minutes</span>
+                          </div>
+                        )}
                       </div>
                       
                       {itemStates[currentItem.id]?.notes && (
