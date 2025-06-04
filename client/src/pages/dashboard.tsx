@@ -169,6 +169,8 @@ export default function Dashboard() {
   // Gestionnaires pour le calendrier
   const handleMeetingSelect = (meeting: Meeting) => {
     setSelectedMeeting(meeting);
+    // Redirection vers la page de présentation correspondante
+    setLocation(`/simple-presenter/${meeting.id}`);
   };
 
   const handleDateSelect = (date: Date) => {
@@ -426,7 +428,7 @@ export default function Dashboard() {
                 <div className="flex gap-2 pt-2">
                   <Button 
                     size="sm" 
-                    onClick={() => setLocation(`/presenter/${meeting.id}`)}
+                    onClick={() => setLocation(`/simple-presenter/${meeting.id}`)}
                     className="flex-1"
                   >
                     <Play className="w-4 h-4 mr-2" />
