@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'wouter';
-import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown, Move, Save, X } from 'lucide-react';
+import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown, Move, Save, X, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { agendaItems as initialAgenda, meetingInfo as initialMeetingInfo, type AgendaItem } from '@/data/agenda';
+import { ParticipantsModal } from '@/components/ParticipantsModal';
 
 interface MeetingInfo {
   title: string;
@@ -479,61 +480,67 @@ export default function SimpleMeetingPresenter() {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col" style={{ aspectRatio: '16/9' }}>
-      {/* En-tête compact pour 16/9 */}
-      <div className="bg-white border-b p-3 flex-shrink-0">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-xl font-bold text-blue-800">{meetingInfo.title}</h1>
-              {/* Barre de progression colorée */}
-              <div className="mt-1">
-                <div className="flex items-center gap-2">
-                  <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-blue-500 via-green-500 to-blue-600 transition-all duration-300"
-                      style={{ width: `${progress}%` }}
-                    ></div>
-                  </div>
-                  <span className="text-xs text-gray-600">{completedItems}/{totalItems}</span>
-                </div>
-              </div>
+      {/* Nouvelle barre de navigation */}
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Left side - Title */}
+            <div className="flex-1">
+              <h1 className="text-xl font-semibold text-gray-900">{meetingInfo.title}</h1>
             </div>
-            <span className="text-sm text-gray-600">{formatDisplayDate(meetingInfo.date)} - {formatTime(currentTime)}</span>
-            <span className="text-sm text-gray-600">Durée: {getMeetingDuration()}</span>
+            
+            {/* Right side - Action buttons */}
+            <div className="flex items-center space-x-3">
+              {/* Home Button */}
+              <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => setLocation('/')}>
+                <Home className="h-4 w-4" />
+                Accueil
+              </Button>
+
+              {/* Export PDF Button */}
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Export PDF
+              </Button>
+
+              {/* Configuration Button */}
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Configuration
+              </Button>
+
+              {/* Participants Button - Icon + Count */}
+              <button
+                onClick={() => setShowParticipantsModal(true)}
+                className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Users className="h-5 w-5" />
+                <span className="font-medium">{meetingInfo.participants.length}</span>
+              </button>
+            </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setLocation('/')}
-            >
-              <Home className="w-4 h-4" />
-              Accueil
-            </Button>
+          {/* Progress Bar - Below title */}
+          <div className="pb-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600">
+                Progression de la réunion
+              </span>
+              <span className="text-sm font-medium text-gray-900">
+                {completedItems}/{totalItems} points traités
+              </span>
+            </div>
+            <Progress value={progress} className="h-2" />
+          </div>
+        </div>
+      </header>
 
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={exportToPDF}
-            >
-              <FileDown className="w-4 h-4" />
-              Export PDF
-            </Button>
-
-
-            
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => setShowParticipantsModal(true)}
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
-            
-            <div className="flex items-center gap-1 text-sm text-gray-600">
-              <Users className="w-4 h-4" />
-              <span>{meetingInfo.participants.length}</span>
+      <div className="flex-1 flex flex-col">
+        <div className="bg-white border-b p-3 flex-shrink-0">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">{formatDisplayDate(meetingInfo.date)} - {formatTime(currentTime)}</span>
+              <span className="text-sm text-gray-600">Durée: {getMeetingDuration()}</span>
             </div>
             
             <div className="w-32">
@@ -1163,6 +1170,14 @@ export default function SimpleMeetingPresenter() {
           </div>
         </div>
       )}
+
+      {/* Modal des participants */}
+      <ParticipantsModal
+        isOpen={showParticipantsModal}
+        onClose={() => setShowParticipantsModal(false)}
+        meetingId={1} // ID fixe pour la démonstration
+        meetingTitle={meetingInfo.title}
+      />
     </div>
   );
 }
