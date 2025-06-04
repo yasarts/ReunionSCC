@@ -34,12 +34,18 @@ const sessionMiddleware = session({
 
 // Authentication middleware
 const requireAuth = (req: any, res: Response, next: any) => {
-  console.log("Session debug:", req.session);
-  console.log("User ID:", req.session?.userId);
+  console.log("=== AUTH CHECK ===");
+  console.log("Session ID:", req.sessionID);
+  console.log("Session data:", req.session);
+  console.log("Session userId:", req.session?.userId);
+  console.log("Request path:", req.path);
+  console.log("==================");
   
   if (!req.session?.userId) {
+    console.log("AUTH FAILED: No userId in session");
     return res.status(401).json({ message: "Unauthorized" });
   }
+  console.log("AUTH SUCCESS: User ID", req.session.userId);
   next();
 };
 
