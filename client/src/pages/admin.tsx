@@ -46,6 +46,8 @@ export default function AdminPanel() {
   const [editingMeetingType, setEditingMeetingType] = useState<MeetingType | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [selectedMeetingType, setSelectedMeetingType] = useState<MeetingType | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
+  const [editingRole, setEditingRole] = useState<string | null>(null);
 
   // Requêtes pour récupérer les données
   const { data: companies, isLoading: companiesLoading } = useQuery({
@@ -475,7 +477,11 @@ export default function AdminPanel() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {companies?.map((company: Company) => (
-                  <Card key={company.id} className="bg-white hover:shadow-md transition-shadow">
+                  <Card 
+                    key={company.id} 
+                    className="bg-white hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => setSelectedCompany(selectedCompany?.id === company.id ? null : company)}
+                  >
                     <CardHeader className="pb-2">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg">{company.name}</CardTitle>
@@ -483,14 +489,20 @@ export default function AdminPanel() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setEditingCompany(company)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingCompany(company);
+                            }}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteCompanyMutation.mutate(company.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteCompanyMutation.mutate(company.id);
+                            }}
                             className="text-red-500 hover:text-red-700"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -520,6 +532,31 @@ export default function AdminPanel() {
                           <p className="text-gray-600 mt-2">{company.description}</p>
                         )}
                       </div>
+                      {selectedCompany?.id === company.id && (
+                        <div className="mt-4 pt-4 border-t">
+                          <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+                            <Users className="w-4 h-4" />
+                            Utilisateurs de cette entreprise
+                          </h4>
+                          {users?.filter((user: User) => user.companyId === company.id).length > 0 ? (
+                            <div className="space-y-2">
+                              {users?.filter((user: User) => user.companyId === company.id).map((user: User) => (
+                                <div key={user.id} className="text-xs bg-gray-50 p-3 rounded-lg flex justify-between items-center">
+                                  <div>
+                                    <span className="font-medium">{user.firstName} {user.lastName}</span>
+                                    <div className="text-gray-500 mt-1">{user.email}</div>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs">
+                                    {user.role || 'Aucun rôle'}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-gray-500 italic">Aucun utilisateur assigné à cette entreprise</p>
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -666,11 +703,26 @@ export default function AdminPanel() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {/* Rôles prédéfinis */}
-              <Card className="bg-white hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
+              <Card 
+                className="bg-white hover:shadow-md transition-shadow border-l-4 border-l-blue-500 cursor-pointer"
+                onClick={() => setSelectedRole(selectedRole === "salarie" ? null : "salarie")}
+              >
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500" />
-                    Salarié·es SCC
+                  <CardTitle className="text-lg flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-blue-500" />
+                      Salarié·es SCC
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingRole("salarie");
+                      }}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -680,14 +732,54 @@ export default function AdminPanel() {
                     <Badge variant="secondary" className="text-xs">Vote</Badge>
                     <Badge variant="secondary" className="text-xs">Voir résultats</Badge>
                   </div>
+                  {selectedRole === "salarie" && (
+                    <div className="mt-4 pt-4 border-t">
+                      <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Utilisateurs avec ce rôle
+                      </h4>
+                      {users?.filter((user: User) => user.role === "Salarié·es SCC").length > 0 ? (
+                        <div className="space-y-2">
+                          {users?.filter((user: User) => user.role === "Salarié·es SCC").map((user: User) => (
+                            <div key={user.id} className="text-xs bg-blue-50 p-3 rounded-lg flex justify-between items-center">
+                              <div>
+                                <span className="font-medium">{user.firstName} {user.lastName}</span>
+                                <div className="text-gray-500 mt-1">{user.email}</div>
+                              </div>
+                              <Badge variant="outline" className="text-xs">
+                                {companies?.find((c: Company) => c.id === user.companyId)?.name || 'Aucune entreprise'}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-500 italic">Aucun utilisateur avec ce rôle</p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
-              <Card className="bg-white hover:shadow-md transition-shadow border-l-4 border-l-green-500">
+              <Card 
+                className="bg-white hover:shadow-md transition-shadow border-l-4 border-l-green-500 cursor-pointer"
+                onClick={() => setSelectedRole(selectedRole === "elu" ? null : "elu")}
+              >
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-green-500" />
-                    Elu·es
+                  <CardTitle className="text-lg flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500" />
+                      Elu·es
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingRole("elu");
+                      }}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -695,6 +787,31 @@ export default function AdminPanel() {
                   <div className="space-y-1">
                     <Badge variant="secondary" className="text-xs">Toutes permissions</Badge>
                   </div>
+                  {selectedRole === "elu" && (
+                    <div className="mt-4 pt-4 border-t">
+                      <h4 className="font-medium text-sm mb-3 flex items-center gap-2">
+                        <Users className="w-4 h-4" />
+                        Utilisateurs avec ce rôle
+                      </h4>
+                      {users?.filter((user: User) => user.role === "Elu·es").length > 0 ? (
+                        <div className="space-y-2">
+                          {users?.filter((user: User) => user.role === "Elu·es").map((user: User) => (
+                            <div key={user.id} className="text-xs bg-green-50 p-3 rounded-lg flex justify-between items-center">
+                              <div>
+                                <span className="font-medium">{user.firstName} {user.lastName}</span>
+                                <div className="text-gray-500 mt-1">{user.email}</div>
+                              </div>
+                              <Badge variant="outline" className="text-xs">
+                                {companies?.find((c: Company) => c.id === user.companyId)?.name || 'Aucune entreprise'}
+                              </Badge>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-gray-500 italic">Aucun utilisateur avec ce rôle</p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
