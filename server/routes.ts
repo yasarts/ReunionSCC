@@ -213,12 +213,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.get("/api/auth/me", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/auth/me", async (req: any, res: Response) => {
+    console.log("=== GET /api/auth/me ===");
+    console.log("Session ID:", req.sessionID);
+    console.log("Session data:", req.session);
+    console.log("Session userId:", req.session?.userId);
+    
+    if (!req.session?.userId) {
+      console.log("No userId in session, returning 401");
+      return res.status(401).json({ message: "Not authenticated" });
+    }
+
     try {
       const user = await storage.getUser(req.session.userId);
+      console.log("User found:", user ? `ID: ${user.id}, Email: ${user.email}` : "Not found");
+      
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+      
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {

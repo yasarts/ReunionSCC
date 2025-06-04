@@ -1,118 +1,164 @@
-import { useState } from 'react';
-import { useLocation } from 'wouter';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { ArrowLeft, Users, Plus, Edit, Trash2, Building2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/hooks/useAuth';
-import { apiRequest, queryClient } from '@/lib/queryClient';
-import { useToast } from '@/hooks/use-toast';
-import type { User, Structure } from '@shared/schema';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
+import { Users, Building2, Plus, Trash2 } from "lucide-react";
 
+// Schemas de validation
 const createUserSchema = z.object({
-  email: z.string().email('Email invalide'),
-  firstName: z.string().min(1, 'Prénom requis'),
-  lastName: z.string().min(1, 'Nom requis'),
-  role: z.enum(['Salarié·es SCC', 'Elu·es']),
+  email: z.string().email("Email invalide"),
+  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
+  firstName: z.string().min(1, "Le prénom est requis"),
+  lastName: z.string().min(1, "Le nom est requis"),
+  role: z.string().min(1, "Le rôle est requis"),
   structure: z.string().optional(),
-  password: z.string().min(6, 'Mot de passe minimum 6 caractères')
 });
 
 const createStructureSchema = z.object({
-  name: z.string().min(1, 'Nom de structure requis')
+  name: z.string().min(1, "Le nom de la structure est requis"),
+  type: z.string().min(1, "Le type de structure est requis"),
+  description: z.string().optional(),
 });
 
 type CreateUserFormData = z.infer<typeof createUserSchema>;
 type CreateStructureFormData = z.infer<typeof createStructureSchema>;
 
+interface User {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  structure?: string;
+  createdAt: string;
+}
+
+interface Structure {
+  id: number;
+  name: string;
+  type: string;
+  description?: string;
+  createdAt: string;
+}
+
 export default function AdminPanel() {
-  const [, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
-  const [showCreateStructureModal, setShowCreateStructureModal] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editingStructure, setEditingStructure] = useState<Structure | null>(null);
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("users");
 
-  // Requêtes pour récupérer les données
-  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
-    queryKey: ['/api/admin/users'],
-    enabled: user?.permissions?.canManageUsers
+  // Vérification des permissions
+  if (!isAuthenticated || !user?.permissions?.canManageUsers) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="max-w-md mx-auto">
+          <CardHeader>
+            <CardTitle className="text-red-600">Accès refusé</CardTitle>
+            <CardDescription>
+              Vous n'avez pas les permissions nécessaires pour accéder à cette page.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  // Queries
+  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
+    queryKey: ["/api/admin/users"],
+    enabled: activeTab === "users",
   });
 
-  const { data: structures = [], isLoading: structuresLoading } = useQuery<Structure[]>({
-    queryKey: ['/api/admin/structures'],
-    enabled: user?.permissions?.canManageUsers
+  const { data: structures = [], isLoading: isLoadingStructures } = useQuery({
+    queryKey: ["/api/admin/structures"],
+    enabled: activeTab === "structures",
   });
 
-  // Mutations pour créer/modifier des utilisateurs
-  const createUserMutation = useMutation({
-    mutationFn: async (data: CreateUserFormData) => {
-      return await apiRequest('/api/admin/users', 'POST', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      setShowCreateUserModal(false);
-      toast({ title: 'Utilisateur créé avec succès' });
-    },
-    onError: (error) => {
-      toast({ 
-        title: 'Erreur', 
-        description: 'Impossible de créer l\'utilisateur', 
-        variant: 'destructive' 
-      });
-    }
-  });
-
-  // Mutations pour créer/modifier des structures
-  const createStructureMutation = useMutation({
-    mutationFn: async (data: CreateStructureFormData) => {
-      return await apiRequest('/api/admin/structures', 'POST', data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/structures'] });
-      setShowCreateStructureModal(false);
-      toast({ title: 'Structure créée avec succès' });
-    },
-    onError: (error) => {
-      toast({ 
-        title: 'Erreur', 
-        description: 'Impossible de créer la structure', 
-        variant: 'destructive' 
-      });
-    }
-  });
-
-  // Formulaires
+  // Forms
   const userForm = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
-      email: '',
-      firstName: '',
-      lastName: '',
-      role: 'Elu·es',
-      structure: '',
-      password: ''
-    }
+      email: "",
+      password: "",
+      firstName: "",
+      lastName: "",
+      role: "",
+      structure: "",
+    },
   });
 
   const structureForm = useForm<CreateStructureFormData>({
     resolver: zodResolver(createStructureSchema),
     defaultValues: {
-      name: ''
-    }
+      name: "",
+      type: "",
+      description: "",
+    },
   });
 
+  // Mutations
+  const createUserMutation = useMutation({
+    mutationFn: async (data: CreateUserFormData) => {
+      return await apiRequest("/api/admin/users", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Utilisateur créé",
+        description: "Le nouvel utilisateur a été créé avec succès.",
+      });
+      userForm.reset();
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de créer l'utilisateur.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createStructureMutation = useMutation({
+    mutationFn: async (data: CreateStructureFormData) => {
+      return await apiRequest("/api/admin/structures", {
+        method: "POST",
+        body: JSON.stringify(data),
+        headers: { "Content-Type": "application/json" },
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Structure créée",
+        description: "La nouvelle structure a été créée avec succès.",
+      });
+      structureForm.reset();
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/structures"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de créer la structure.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handlers
   const handleCreateUser = (data: CreateUserFormData) => {
     createUserMutation.mutate(data);
   };
@@ -121,343 +167,313 @@ export default function AdminPanel() {
     createStructureMutation.mutate(data);
   };
 
-  if (!user?.permissions?.canManageUsers) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-semibold mb-2">Accès refusé</h2>
-            <p className="text-gray-600">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
-            <Button onClick={() => setLocation('/')} className="mt-4">
-              Retour au tableau de bord
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* En-tête */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLocation('/')}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Retour
-            </Button>
-            <h1 className="text-3xl font-bold text-gray-900">Administration</h1>
-          </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+            Administration
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Gestion des utilisateurs et des structures
+          </p>
         </div>
 
-        {/* Onglets principaux */}
-        <Tabs defaultValue="users" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="users" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
+              <Users className="w-4 h-4" />
               Utilisateurs
             </TabsTrigger>
             <TabsTrigger value="structures" className="flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
+              <Building2 className="w-4 h-4" />
               Structures
             </TabsTrigger>
           </TabsList>
 
           {/* Onglet Utilisateurs */}
           <TabsContent value="users" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">Gestion des utilisateurs</h2>
-              <Button 
-                onClick={() => setShowCreateUserModal(true)}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Nouvel utilisateur
-              </Button>
-            </div>
-
-            {usersLoading ? (
-              <div className="text-center py-8">Chargement des utilisateurs...</div>
-            ) : (
-              <div className="grid gap-4">
-                {users.map((userItem: User) => (
-                  <Card key={userItem.id}>
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-3">
-                            <h3 className="font-semibold text-lg">
-                              {userItem.firstName} {userItem.lastName}
-                            </h3>
-                            <Badge variant={userItem.role === 'Salarié·es SCC' ? 'default' : 'secondary'}>
-                              {userItem.role}
-                            </Badge>
-                          </div>
-                          <p className="text-gray-600">{userItem.email}</p>
-                          {userItem.structure && (
-                            <p className="text-sm text-gray-500">
-                              Structure: {userItem.structure}
-                            </p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Formulaire de création d'utilisateur */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    Créer un utilisateur
+                  </CardTitle>
+                  <CardDescription>
+                    Ajouter un nouvel utilisateur au système
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...userForm}>
+                    <form onSubmit={userForm.handleSubmit(handleCreateUser)} className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={userForm.control}
+                          name="firstName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Prénom</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
                           )}
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {userItem.permissions && typeof userItem.permissions === 'object' && 
-                              Object.entries(userItem.permissions)
-                                .filter(([, value]) => value)
-                                .map(([key]) => (
-                                  <Badge key={key} variant="outline" className="text-xs">
-                                    {key.replace('can', '').replace(/([A-Z])/g, ' $1').toLowerCase()}
-                                  </Badge>
-                                ))
-                            }
+                        />
+                        <FormField
+                          control={userForm.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nom</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={userForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type="email" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={userForm.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Mot de passe</FormLabel>
+                            <FormControl>
+                              <Input type="password" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={userForm.control}
+                        name="role"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Rôle</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sélectionner un rôle" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Salarié·es SCC">Salarié·es SCC</SelectItem>
+                                <SelectItem value="Elu·es">Elu·es</SelectItem>
+                                <SelectItem value="Invité·es">Invité·es</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={userForm.control}
+                        name="structure"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Structure (optionnel)</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Ex: Conseil National" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button 
+                        type="submit" 
+                        className="w-full"
+                        disabled={createUserMutation.isPending}
+                      >
+                        {createUserMutation.isPending ? "Création..." : "Créer l'utilisateur"}
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+
+              {/* Liste des utilisateurs */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Utilisateurs existants</CardTitle>
+                  <CardDescription>
+                    Liste de tous les utilisateurs du système
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingUsers ? (
+                    <div className="text-center py-4">Chargement...</div>
+                  ) : users.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      Aucun utilisateur trouvé
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {users.map((userItem: User) => (
+                        <div
+                          key={userItem.id}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
+                          <div>
+                            <div className="font-medium">
+                              {userItem.firstName} {userItem.lastName}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {userItem.email} • {userItem.role}
+                              {userItem.structure && ` • ${userItem.structure}`}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingUser(userItem)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           {/* Onglet Structures */}
           <TabsContent value="structures" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-semibold">Gestion des structures</h2>
-              <Button 
-                onClick={() => setShowCreateStructureModal(true)}
-                className="flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Nouvelle structure
-              </Button>
-            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Formulaire de création de structure */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    Créer une structure
+                  </CardTitle>
+                  <CardDescription>
+                    Ajouter une nouvelle structure organisationnelle
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...structureForm}>
+                    <form onSubmit={structureForm.handleSubmit(handleCreateStructure)} className="space-y-4">
+                      <FormField
+                        control={structureForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nom de la structure</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Ex: Conseil National" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-            {structuresLoading ? (
-              <div className="text-center py-8">Chargement des structures...</div>
-            ) : (
-              <div className="grid gap-4">
-                {structures.map((structure: Structure) => (
-                  <Card key={structure.id}>
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-2">
-                          <h3 className="font-semibold text-lg">{structure.name}</h3>
-                          {structure.description && (
-                            <p className="text-gray-600">{structure.description}</p>
-                          )}
-                          <p className="text-sm text-gray-500">
-                            Créée le {new Date(structure.createdAt).toLocaleDateString('fr-FR')}
-                          </p>
+                      <FormField
+                        control={structureForm.control}
+                        name="type"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Type</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Sélectionner un type" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="Conseil">Conseil</SelectItem>
+                                <SelectItem value="Commission">Commission</SelectItem>
+                                <SelectItem value="Comité">Comité</SelectItem>
+                                <SelectItem value="Délégation">Délégation</SelectItem>
+                                <SelectItem value="Autre">Autre</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={structureForm.control}
+                        name="description"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Description (optionnel)</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Description de la structure" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button 
+                        type="submit" 
+                        className="w-full"
+                        disabled={createStructureMutation.isPending}
+                      >
+                        {createStructureMutation.isPending ? "Création..." : "Créer la structure"}
+                      </Button>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+
+              {/* Liste des structures */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Structures existantes</CardTitle>
+                  <CardDescription>
+                    Liste de toutes les structures organisationnelles
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoadingStructures ? (
+                    <div className="text-center py-4">Chargement...</div>
+                  ) : structures.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      Aucune structure trouvée
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {structures.map((structure: Structure) => (
+                        <div
+                          key={structure.id}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
+                          <div>
+                            <div className="font-medium">{structure.name}</div>
+                            <div className="text-sm text-gray-500">
+                              {structure.type}
+                              {structure.description && ` • ${structure.description}`}
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setEditingStructure(structure)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
-
-        {/* Modal de création d'utilisateur */}
-        <Dialog open={showCreateUserModal} onOpenChange={setShowCreateUserModal}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Créer un nouvel utilisateur</DialogTitle>
-            </DialogHeader>
-            <Form {...userForm}>
-              <form onSubmit={userForm.handleSubmit(handleCreateUser)} className="space-y-4">
-                <FormField
-                  control={userForm.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="email" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={userForm.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Prénom</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={userForm.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nom</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <FormField
-                  control={userForm.control}
-                  name="role"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Rôle</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner un rôle" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Salarié·es SCC">Salarié·es SCC</SelectItem>
-                          <SelectItem value="Elu·es">Elu·es</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={userForm.control}
-                  name="structure"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Structure (pour les élus)</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner une structure" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="none">Aucune structure</SelectItem>
-                          {structures.map((structure: Structure) => (
-                            <SelectItem key={structure.id} value={structure.name}>
-                              {structure.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={userForm.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Mot de passe</FormLabel>
-                      <FormControl>
-                        <Input {...field} type="password" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowCreateUserModal(false)}
-                  >
-                    Annuler
-                  </Button>
-                  <Button type="submit" disabled={createUserMutation.isPending}>
-                    {createUserMutation.isPending ? 'Création...' : 'Créer'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Modal de création de structure */}
-        <Dialog open={showCreateStructureModal} onOpenChange={setShowCreateStructureModal}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Créer une nouvelle structure</DialogTitle>
-            </DialogHeader>
-            <Form {...structureForm}>
-              <form onSubmit={structureForm.handleSubmit(handleCreateStructure)} className="space-y-4">
-                <FormField
-                  control={structureForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nom de la structure</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="Ex: Conseil Municipal de Paris" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="flex justify-end gap-2 pt-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShowCreateStructureModal(false)}
-                  >
-                    Annuler
-                  </Button>
-                  <Button type="submit" disabled={createStructureMutation.isPending}>
-                    {createStructureMutation.isPending ? 'Création...' : 'Créer'}
-                  </Button>
-                </div>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
