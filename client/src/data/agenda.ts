@@ -42,6 +42,40 @@ export const meetingConfigs = {
       "Chef de Projet"
     ],
     pouvoir: ""
+  },
+  "comite-direction-juin": {
+    title: "Comité de Direction Juin",
+    date: "2025-06-12",
+    time: "15:00",
+    participants: [
+      "Directeur Général",
+      "Directeur Opérationnel",
+      "Directeur RH",
+      "Directeur Commercial"
+    ],
+    pouvoir: ""
+  },
+  "formation-nouveaux-employes": {
+    title: "Formation Nouveaux Employés",
+    date: "2025-06-15",
+    time: "10:00",
+    participants: [
+      "Responsable Formation",
+      "Responsable RH",
+      "Nouveaux employés"
+    ],
+    pouvoir: ""
+  },
+  "reunion-projet-tech": {
+    title: "Réunion Projet Technologique",
+    date: "2025-06-18",
+    time: "14:30",
+    participants: [
+      "Chef de Projet Tech",
+      "Développeur Senior",
+      "Architecte Système"
+    ],
+    pouvoir: ""
   }
 };
 
@@ -361,6 +395,212 @@ export const agendaConfigs = {
       completed: false,
       presenter: "Président",
       content: "Clôture officielle de la réunion"
+    }
+  ],
+  "comite-direction-juin": [
+    {
+      id: "comite-ouverture",
+      title: "Ouverture du Comité de Direction",
+      duration: 5,
+      type: "opening",
+      level: 0,
+      completed: false,
+      presenter: "Directeur Général",
+      content: "Ouverture de la réunion mensuelle du comité de direction"
+    },
+    {
+      id: "comite-bilan",
+      title: "Bilan d'activité du mois",
+      duration: 20,
+      type: "information",
+      level: 0,
+      completed: false,
+      presenter: "Directeur Opérationnel",
+      content: "Présentation des résultats du mois écoulé"
+    },
+    {
+      id: "comite-rh",
+      title: "Points RH et recrutements",
+      duration: 15,
+      type: "discussion",
+      level: 0,
+      completed: false,
+      presenter: "Directeur RH",
+      content: "État des recrutements en cours et questions RH"
+    },
+    {
+      id: "comite-commercial",
+      title: "Stratégie commerciale",
+      duration: 25,
+      type: "discussion",
+      level: 0,
+      completed: false,
+      presenter: "Directeur Commercial",
+      content: "Présentation de la stratégie commerciale et nouveaux contrats"
+    },
+    {
+      id: "comite-decisions",
+      title: "Décisions stratégiques",
+      duration: 20,
+      type: "decision",
+      level: 0,
+      completed: false,
+      presenter: "Directeur Général",
+      content: "Validation des orientations stratégiques"
+    },
+    {
+      id: "comite-cloture",
+      title: "Clôture",
+      duration: 5,
+      type: "closing",
+      level: 0,
+      completed: false,
+      presenter: "Directeur Général",
+      content: "Clôture du comité de direction"
+    }
+  ],
+  "formation-nouveaux-employes": [
+    {
+      id: "formation-accueil",
+      title: "Accueil des nouveaux employés",
+      duration: 15,
+      type: "opening",
+      level: 0,
+      completed: false,
+      presenter: "Responsable RH",
+      content: "Présentation de l'entreprise et accueil des nouveaux collaborateurs"
+    },
+    {
+      id: "formation-procedures",
+      title: "Présentation des procédures",
+      duration: 60,
+      type: "information",
+      level: 0,
+      completed: false,
+      presenter: "Responsable Formation",
+      content: "Formation aux procédures internes et outils de travail"
+    },
+    {
+      id: "formation-securite",
+      title: "Formation sécurité",
+      duration: 45,
+      type: "information",
+      level: 0,
+      completed: false,
+      presenter: "Responsable Sécurité",
+      content: "Formation aux consignes de sécurité et évacuation"
+    },
+    {
+      id: "formation-questions",
+      title: "Questions et réponses",
+      duration: 30,
+      type: "discussion",
+      level: 0,
+      completed: false,
+      presenter: "Responsable Formation",
+      content: "Session de questions-réponses avec les nouveaux employés"
+    }
+  ],
+  "reunion-projet-tech": [
+    {
+      id: "tech-ouverture",
+      title: "Ouverture de la réunion technique",
+      duration: 5,
+      type: "opening",
+      level: 0,
+      completed: false,
+      presenter: "Chef de Projet Tech",
+      content: "Ouverture de la réunion d'avancement technique"
+    },
+    {
+      id: "tech-sprint-review",
+      title: "Revue du sprint en cours",
+      duration: 30,
+      type: "information",
+      level: 0,
+      completed: false,
+      presenter: "Développeur Senior",
+      content: "Présentation des développements réalisés et blocages"
+    },
+    {
+      id: "tech-architecture",
+      title: "Évolutions architecturales",
+      duration: 25,
+      type: "discussion",
+      level: 0,
+      completed: false,
+      presenter: "Architecte Système",
+      content: "Discussion sur les évolutions architecturales proposées"
+    },
+    {
+      id: "tech-planning",
+      title: "Planification des prochaines itérations",
+      duration: 20,
+      type: "decision",
+      level: 0,
+      completed: false,
+      presenter: "Chef de Projet Tech",
+      content: "Validation du planning des prochains développements"
+    },
+    {
+      id: "tech-roadmap",
+      title: "Feuille de route technique",
+      duration: 25,
+      type: "discussion",
+      level: 0,
+      completed: false,
+      presenter: "Architecte Système",
+      content: "Présentation de la roadmap technique à moyen terme"
+    },
+    {
+      id: "tech-risques",
+      title: "Identification des risques",
+      duration: 15,
+      type: "discussion",
+      level: 0,
+      completed: false,
+      presenter: "Chef de Projet Tech",
+      content: "Analyse des risques techniques et mitigation"
+    },
+    {
+      id: "tech-veille",
+      title: "Veille technologique",
+      duration: 10,
+      type: "information",
+      level: 0,
+      completed: false,
+      presenter: "Développeur Senior",
+      content: "Présentation des nouvelles technologies et outils"
+    },
+    {
+      id: "tech-formation",
+      title: "Besoins en formation",
+      duration: 10,
+      type: "discussion",
+      level: 0,
+      completed: false,
+      presenter: "Chef de Projet Tech",
+      content: "Identification des besoins en formation de l'équipe"
+    },
+    {
+      id: "tech-actions",
+      title: "Plan d'actions",
+      duration: 15,
+      type: "decision",
+      level: 0,
+      completed: false,
+      presenter: "Chef de Projet Tech",
+      content: "Définition du plan d'actions pour les prochaines semaines"
+    },
+    {
+      id: "tech-cloture",
+      title: "Clôture",
+      duration: 5,
+      type: "closing",
+      level: 0,
+      completed: false,
+      presenter: "Chef de Projet Tech",
+      content: "Clôture de la réunion technique"
     }
   ]
 };
