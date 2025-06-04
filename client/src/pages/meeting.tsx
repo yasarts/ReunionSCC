@@ -9,6 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ParticipantsModal } from "@/components/ParticipantsModal";
 import { apiRequest } from "@/lib/queryClient";
 import type { Meeting, AgendaItem, Vote, VoteResponse } from "@/types";
 import { 
@@ -24,7 +25,8 @@ import {
   Vote as VoteIcon,
   Users,
   CheckCircle,
-  Circle
+  Circle,
+  UserCheck
 } from "lucide-react";
 
 export default function MeetingView() {
@@ -36,6 +38,7 @@ export default function MeetingView() {
   const [timer, setTimer] = useState(0);
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [websocket, setWebsocket] = useState<WebSocket | null>(null);
+  const [showParticipantsModal, setShowParticipantsModal] = useState(false);
 
   const { data: meeting, isLoading, error } = useQuery<Meeting>({
     queryKey: [`/api/meetings/${id}`],
@@ -236,6 +239,17 @@ export default function MeetingView() {
             </div>
             
             <div className="flex items-center space-x-4">
+              {/* Participants Button */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowParticipantsModal(true)}
+                className="flex items-center gap-2"
+              >
+                <UserCheck className="h-4 w-4" />
+                Participants ({participants?.length || 0})
+              </Button>
+
               {/* Timer */}
               <div className="flex items-center space-x-2 bg-gray-100 rounded-lg px-3 py-2">
                 <Clock className="h-4 w-4 text-gray-600" />
@@ -488,6 +502,14 @@ export default function MeetingView() {
           </main>
         </div>
       </div>
+
+      {/* Participants Modal */}
+      <ParticipantsModal
+        isOpen={showParticipantsModal}
+        onClose={() => setShowParticipantsModal(false)}
+        meetingId={parseInt(id!)}
+        meetingTitle={meeting.title}
+      />
     </div>
   );
 }

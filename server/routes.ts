@@ -473,16 +473,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/meetings/:meetingId/participants/:userId/presence", requireAuth, async (req: any, res: Response) => {
+  app.put("/api/meetings/:meetingId/participants/:userId/status", requireAuth, async (req: any, res: Response) => {
     try {
       const meetingId = parseInt(req.params.meetingId);
       const userId = parseInt(req.params.userId);
-      const { isPresent } = req.body;
+      const { status, proxyCompanyId } = req.body;
 
-      await storage.updateParticipantPresence(meetingId, userId, isPresent);
-      res.json({ message: "Presence updated successfully" });
+      await storage.updateParticipantStatus(meetingId, userId, status, proxyCompanyId);
+      res.json({ message: "Participant status updated successfully" });
     } catch (error) {
-      console.error("Update presence error:", error);
+      console.error("Update participant status error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
