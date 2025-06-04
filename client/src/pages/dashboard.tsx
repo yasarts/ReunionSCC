@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { MiniCalendar } from '@/components/MiniCalendar';
+import { getMeetingData } from '@/data/agenda';
 
 interface Meeting {
   id: string;
@@ -33,6 +34,24 @@ export default function Dashboard() {
   const loadMeetingInfo = (meetingId: string) => {
     const savedInfo = localStorage.getItem(`meetingInfo_${meetingId}`);
     return savedInfo ? JSON.parse(savedInfo) : null;
+  };
+
+  // Fonction pour calculer la durée totale réelle d'une réunion
+  const calculateMeetingDuration = (meetingId: string) => {
+    try {
+      const meetingData = getMeetingData(meetingId);
+      
+      if (meetingData && meetingData.agendaItems) {
+        return meetingData.agendaItems.reduce((total: number, item: any) => {
+          return total + (item.duration || 0);
+        }, 0);
+      }
+      
+      // Durée par défaut si pas de données
+      return 120;
+    } catch (error) {
+      return 120; // Durée par défaut
+    }
   };
 
   // Fonction pour initialiser les réunions avec les données sauvegardées
@@ -129,9 +148,11 @@ export default function Dashboard() {
     }
     ];
 
-    // Appliquer les modifications sauvegardées
+    // Appliquer les modifications sauvegardées et calculer la durée réelle
     return baseMeetings.map(meeting => {
       const savedInfo = loadMeetingInfo(meeting.id);
+      const realDuration = calculateMeetingDuration(meeting.id);
+      
       if (savedInfo) {
         return {
           ...meeting,
@@ -139,10 +160,14 @@ export default function Dashboard() {
           date: savedInfo.date || meeting.date,
           time: savedInfo.time || meeting.time,
           description: savedInfo.description || meeting.description,
-          status: savedInfo.status || meeting.status
+          status: savedInfo.status || meeting.status,
+          totalDuration: realDuration
         };
       }
-      return meeting;
+      return {
+        ...meeting,
+        totalDuration: realDuration
+      };
     });
   };
 

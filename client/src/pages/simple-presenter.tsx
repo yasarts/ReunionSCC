@@ -154,14 +154,14 @@ export default function SimpleMeetingPresenter() {
   // Fonction de débogage pour réinitialiser les données
   const resetMeetingData = () => {
     const agendaKey = `meeting-agenda-${meetingId || 'default'}`;
-    const infoKey = `meeting-info-${meetingId || 'default'}`;
+    // Supprimer uniquement les données d'agenda, préserver les infos de configuration
     localStorage.removeItem(agendaKey);
-    localStorage.removeItem(infoKey);
+    localStorage.removeItem(`itemStates_${meetingId}`);
     
-    // Recharger les données spécifiques à cette réunion
+    // Recharger les données d'agenda uniquement
     const freshData = getMeetingData(meetingId || 'conseil-national-2025');
     setAgenda(freshData.agendaItems);
-    setMeetingInfo(freshData.meetingInfo);
+    // Ne pas réinitialiser meetingInfo pour préserver les modifications de configuration
     setCurrentItemIndex(-1);
   };
 
