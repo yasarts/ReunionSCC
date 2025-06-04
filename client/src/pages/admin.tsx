@@ -31,6 +31,12 @@ const createUserFormSchema = insertUserSchema.extend({
 
 const createMeetingTypeFormSchema = insertMeetingTypeSchema;
 
+const editMeetingTypeFormSchema = insertMeetingTypeSchema.pick({
+  name: true,
+  description: true,
+  color: true,
+});
+
 // Composant pour afficher les rôles d'un type de réunion
 function MeetingTypeRoles({ meetingTypeId }: { meetingTypeId: number }) {
   const { data: roles, isLoading } = useQuery({
@@ -430,8 +436,8 @@ export default function AdminPanel() {
     },
   });
 
-  const editMeetingTypeForm = useForm<z.infer<typeof createMeetingTypeFormSchema>>({
-    resolver: zodResolver(createMeetingTypeFormSchema),
+  const editMeetingTypeForm = useForm<z.infer<typeof editMeetingTypeFormSchema>>({
+    resolver: zodResolver(editMeetingTypeFormSchema),
     defaultValues: {
       name: '',
       description: '',
