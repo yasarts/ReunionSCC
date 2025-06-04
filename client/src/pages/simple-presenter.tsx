@@ -25,7 +25,7 @@ export default function SimpleMeetingPresenter() {
   const [, setLocation] = useLocation();
   const meetingId = params.meetingId;
   
-  const [currentItemIndex, setCurrentItemIndex] = useState(0);
+  const [currentItemIndex, setCurrentItemIndex] = useState(-1);
   const [agenda, setAgenda] = useState<AgendaItem[]>(initialAgenda);
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo>(initialMeetingInfo);
   const [itemStates, setItemStates] = useState<Record<string, { completed: boolean; notes: string; startTime?: Date; }>>({});
@@ -428,15 +428,15 @@ export default function SimpleMeetingPresenter() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentItemIndex(Math.max(0, currentItemIndex - 1))}
-                  disabled={currentItemIndex === 0}
+                  onClick={() => setCurrentItemIndex(Math.max(-1, currentItemIndex - 1))}
+                  disabled={currentItemIndex === -1}
                 >
                   <SkipForward className="w-4 h-4 rotate-180" />
                   Précédent
                 </Button>
                 
                 <div className="text-sm font-medium">
-                  {currentItemIndex + 1} / {totalItems}
+                  {currentItemIndex === -1 ? "Aperçu" : `${currentItemIndex + 1} / ${totalItems}`}
                 </div>
                 
                 <Button
@@ -498,7 +498,55 @@ export default function SimpleMeetingPresenter() {
 
           {/* Main content display */}
           <div className="flex-1 overflow-y-auto">
-            {currentItem ? (
+            {currentItemIndex === -1 ? (
+              // Page d'aperçu automatique de l'ordre du jour
+              <div className="p-8">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-2xl">Ordre du jour - Aperçu général</CardTitle>
+                    <p className="text-gray-600">{meetingInfo.title} - {formatDisplayDate(meetingInfo.date)}</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {calculateScheduledTimes().map((item, index) => (
+                        <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-sm">
+                                {getItemNumber(item, index)} {item.title}
+                              </span>
+                              <Badge variant={item.type === 'break' ? 'secondary' : 'outline'} className="text-xs">
+                                {getTypeLabel(item.type)}
+                              </Badge>
+                            </div>
+                            {item.presenter && (
+                              <p className="text-xs text-gray-500 mt-1">Présenté par: {item.presenter}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-medium">{item.scheduledStart} - {item.scheduledEnd}</div>
+                            <div className="text-xs text-gray-500">{item.duration} min</div>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                        <div className="text-sm text-blue-800">
+                          <strong>Durée totale estimée:</strong> {getMeetingDuration()}
+                        </div>
+                        <div className="text-xs text-blue-600 mt-1">
+                          Fin prévue: {(() => {
+                            const totalDuration = agenda.reduce((acc, item) => acc + item.duration, 0);
+                            const endTime = new Date(`${meetingInfo.date} ${meetingInfo.time}`);
+                            endTime.setMinutes(endTime.getMinutes() + totalDuration);
+                            return endTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : currentItem ? (
               <div className="p-8">
                 <Card>
                   <CardHeader>
@@ -530,11 +578,14 @@ export default function SimpleMeetingPresenter() {
                         </div>
                         {isEditingContent ? (
                           <div className="space-y-2">
+                            <div className="text-xs text-gray-500 mb-2">
+                              Support Markdown: **gras**, *italique*, `code`, - listes
+                            </div>
                             <textarea
                               value={editedContent}
                               onChange={(e) => setEditedContent(e.target.value)}
-                              className="w-full h-32 p-2 border rounded-md resize-none"
-                              placeholder="Contenu de l'élément..."
+                              className="w-full h-32 p-2 border rounded-md resize-none font-mono text-sm"
+                              placeholder="Contenu de l'élément (support Markdown)..."
                             />
                             <div className="flex gap-2">
                               <Button
