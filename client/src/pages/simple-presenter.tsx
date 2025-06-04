@@ -76,6 +76,30 @@ export default function SimpleMeetingPresenter() {
     window.print();
   };
 
+  const getTypeColor = (type: AgendaItem['type']) => {
+    switch (type) {
+      case 'opening': return 'bg-blue-100 text-blue-800';
+      case 'discussion': return 'bg-orange-100 text-orange-800';
+      case 'decision': return 'bg-red-100 text-red-800';
+      case 'information': return 'bg-green-100 text-green-800';
+      case 'break': return 'bg-purple-100 text-purple-800';
+      case 'closing': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getTypeLabel = (type: AgendaItem['type']) => {
+    switch (type) {
+      case 'opening': return 'Ouverture';
+      case 'discussion': return 'Discussion';
+      case 'decision': return 'Décision';
+      case 'information': return 'Information';
+      case 'break': return 'Pause';
+      case 'closing': return 'Clôture';
+      default: return 'Autre';
+    }
+  };
+
   return (
     <div className="h-screen bg-gray-50 flex flex-col" style={{ aspectRatio: '16/9' }}>
       {/* Nouvelle barre de navigation */}
@@ -133,42 +157,203 @@ export default function SimpleMeetingPresenter() {
         </div>
       </header>
 
-      {/* Content area with proper structure */}
+      {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 overflow-y-auto">
-          {/* Contenu principal de la présentation */}
-          <div className="p-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>{currentItem?.title || 'Aucun élément'}</span>
-                  <Badge variant="outline">{currentItem?.type}</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-gray-600 mb-4">{currentItem?.content || 'Aucun contenu'}</p>
-                
-                <div className="flex items-center justify-between">
-                  <Button 
-                    onClick={() => setCurrentItemIndex(Math.max(0, currentItemIndex - 1))}
-                    disabled={currentItemIndex === 0}
-                  >
-                    Précédent
-                  </Button>
-                  
-                  <span className="text-sm text-gray-500">
-                    {currentItemIndex + 1} / {totalItems}
-                  </span>
-                  
-                  <Button 
-                    onClick={() => setCurrentItemIndex(Math.min(totalItems - 1, currentItemIndex + 1))}
-                    disabled={currentItemIndex === totalItems - 1}
-                  >
-                    Suivant
-                  </Button>
+        {/* Sidebar - Agenda */}
+        <div className="w-80 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-gray-200">
+            <h2 className="text-lg font-semibold text-gray-900">Ordre du jour</h2>
+            <div className="mt-2 text-sm text-gray-600">
+              <div>Réunion: {formatDisplayDate(meetingInfo.date)}</div>
+              <div>Heure: {formatTime(currentTime)}</div>
+              <div>Durée: {getMeetingDuration()}</div>
+            </div>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-2">
+              {agenda.map((item, index) => (
+                <div
+                  key={item.id}
+                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                    index === currentItemIndex
+                      ? 'bg-blue-50 border-blue-300'
+                      : itemStates[item.id]?.completed
+                      ? 'bg-green-50 border-green-300'
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                  }`}
+                  onClick={() => setCurrentItemIndex(index)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {itemStates[item.id]?.completed ? (
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      ) : index === currentItemIndex ? (
+                        <Play className="h-4 w-4 text-blue-600" />
+                      ) : (
+                        <Circle className="h-4 w-4 text-gray-400" />
+                      )}
+                      <span className="font-medium text-sm">{item.title}</span>
+                    </div>
+                    <Badge variant="outline" className={getTypeColor(item.type)}>
+                      {getTypeLabel(item.type)}
+                    </Badge>
+                  </div>
+                  <div className="mt-1 text-xs text-gray-500">
+                    {item.duration} min
+                    {item.presenter && ` • ${item.presenter}`}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Main presentation area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Secondary header with controls */}
+          <div className="bg-white border-b p-4 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentItemIndex(Math.max(0, currentItemIndex - 1))}
+                  disabled={currentItemIndex === 0}
+                >
+                  <SkipForward className="w-4 h-4 rotate-180" />
+                  Précédent
+                </Button>
+                
+                <div className="text-sm font-medium">
+                  {currentItemIndex + 1} / {totalItems}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentItemIndex(Math.min(totalItems - 1, currentItemIndex + 1))}
+                  disabled={currentItemIndex === totalItems - 1}
+                >
+                  Suivant
+                  <SkipForward className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={isTimerRunning ? "destructive" : "default"}
+                  size="sm"
+                  onClick={() => {
+                    setIsTimerRunning(!isTimerRunning);
+                    if (!isTimerRunning) {
+                      setItemStartTime(new Date());
+                    }
+                  }}
+                >
+                  {isTimerRunning ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  {isTimerRunning ? 'Pause' : 'Démarrer'}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (currentItem) {
+                      setItemStates({
+                        ...itemStates,
+                        [currentItem.id]: {
+                          ...itemStates[currentItem.id],
+                          completed: !itemStates[currentItem.id]?.completed
+                        }
+                      });
+                    }
+                  }}
+                >
+                  {itemStates[currentItem?.id]?.completed ? (
+                    <>
+                      <Circle className="w-4 h-4" />
+                      Marquer non terminé
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4" />
+                      Marquer terminé
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Main content display */}
+          <div className="flex-1 overflow-y-auto">
+            {currentItem ? (
+              <div className="p-8">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-2xl">{currentItem.title}</CardTitle>
+                      <Badge className={getTypeColor(currentItem.type)}>
+                        {getTypeLabel(currentItem.type)}
+                      </Badge>
+                    </div>
+                    {currentItem.presenter && (
+                      <p className="text-gray-600">Présenté par: {currentItem.presenter}</p>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-6">
+                      {currentItem.content && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">Contenu</h3>
+                          <div className="prose prose-gray max-w-none">
+                            <p className="whitespace-pre-wrap">{currentItem.content}</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {currentItem.visualLink && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">Résumé visuel</h3>
+                          <Button
+                            variant="outline"
+                            onClick={() => window.open(currentItem.visualLink, '_blank')}
+                            className="flex items-center gap-2"
+                          >
+                            <Link2 className="w-4 h-4" />
+                            Ouvrir le résumé visuel
+                          </Button>
+                        </div>
+                      )}
+                      
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Durée prévue</h3>
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          <span>{currentItem.duration} minutes</span>
+                        </div>
+                      </div>
+                      
+                      {itemStates[currentItem.id]?.notes && (
+                        <div>
+                          <h3 className="text-lg font-semibold mb-2">Notes</h3>
+                          <p className="text-gray-700 bg-gray-50 p-3 rounded">
+                            {itemStates[currentItem.id].notes}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <p>Aucun élément sélectionné</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
