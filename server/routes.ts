@@ -19,14 +19,14 @@ declare module 'express-session' {
 const MemStore = MemoryStore(session);
 
 const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || "dev-secret-key",
+  secret: process.env.SESSION_SECRET || "dev-secret-key-that-is-long-enough-for-session-security",
   store: new MemStore({
     checkPeriod: 86400000 // prune expired entries every 24h
   }),
-  resave: false,
-  saveUninitialized: false,
+  resave: true,
+  saveUninitialized: true,
   cookie: {
-    secure: process.env.NODE_ENV === "production",
+    secure: false, // Désactiver pour le développement
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
