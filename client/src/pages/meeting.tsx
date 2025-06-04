@@ -26,7 +26,10 @@ import {
   Users,
   CheckCircle,
   Circle,
-  UserCheck
+  UserCheck,
+  Home,
+  FileText,
+  Settings
 } from "lucide-react";
 
 export default function MeetingView() {
@@ -226,54 +229,53 @@ export default function MeetingView() {
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div>
-                <h1 className="text-lg font-semibold text-gray-900">{meeting.title}</h1>
-                <p className="text-sm text-gray-500">
-                  {participants?.length || 0} participants présents
-                </p>
-              </div>
+            {/* Left side - Title */}
+            <div className="flex-1">
+              <h1 className="text-xl font-semibold text-gray-900">{meeting.title}</h1>
             </div>
             
-            <div className="flex items-center space-x-4">
-              {/* Participants Button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowParticipantsModal(true)}
-                className="flex items-center gap-2"
-              >
-                <UserCheck className="h-4 w-4" />
-                Participants ({participants?.length || 0})
+            {/* Right side - Action buttons */}
+            <div className="flex items-center space-x-3">
+              {/* Home Button */}
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                Accueil
               </Button>
 
-              {/* Timer */}
-              <div className="flex items-center space-x-2 bg-gray-100 rounded-lg px-3 py-2">
-                <Clock className="h-4 w-4 text-gray-600" />
-                <span className="font-mono text-lg font-semibold text-gray-900">
-                  {formatTime(timer)}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsTimerRunning(!isTimerRunning)}
-                  className="text-green-600 hover:text-green-700"
-                >
-                  {isTimerRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setTimer(0)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                </Button>
-              </div>
+              {/* Export PDF Button */}
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Export PDF
+              </Button>
+
+              {/* Configuration Button */}
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Configuration
+              </Button>
+
+              {/* Participants Button - Icon + Count */}
+              <button
+                onClick={() => setShowParticipantsModal(true)}
+                className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Users className="h-5 w-5" />
+                <span className="font-medium">{participants?.length || 0}</span>
+              </button>
             </div>
+          </div>
+          
+          {/* Progress Bar - Below title */}
+          <div className="pb-3">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-600">
+                Progression de la réunion
+              </span>
+              <span className="text-sm font-medium text-gray-900">
+                {completedCount}/{totalCount} points traités
+              </span>
+            </div>
+            <Progress value={progressPercent} className="h-2" />
           </div>
         </div>
       </header>
