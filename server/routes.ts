@@ -556,7 +556,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/meeting-types/:id/access", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+  app.post("/api/meeting-types/:id/access", async (req: any, res: Response) => {
     try {
       const meetingTypeId = parseInt(req.params.id);
       const accessData = { ...req.body, meetingTypeId };
@@ -568,7 +568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/meeting-type-access/:id", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+  app.delete("/api/meeting-type-access/:id", async (req: any, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       await storage.deleteMeetingTypeAccess(id);

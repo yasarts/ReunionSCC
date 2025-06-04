@@ -40,6 +40,7 @@ export default function AdminPanel() {
   const [showCreateCompanyModal, setShowCreateCompanyModal] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [showCreateMeetingTypeModal, setShowCreateMeetingTypeModal] = useState(false);
+  const [showCreateRoleModal, setShowCreateRoleModal] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editingMeetingType, setEditingMeetingType] = useState<MeetingType | null>(null);
@@ -649,7 +650,191 @@ export default function AdminPanel() {
               </div>
             )}
           </TabsContent>
+
+          {/* Onglet Rôles & Permissions */}
+          <TabsContent value="roles" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-semibold text-gray-800">Gestion des rôles et permissions</h2>
+              <Button 
+                onClick={() => setShowCreateRoleModal(true)}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nouveau rôle
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Rôles prédéfinis */}
+              <Card className="bg-white hover:shadow-md transition-shadow border-l-4 border-l-blue-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500" />
+                    Salarié·es SCC
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-3">Rôle par défaut pour les salariés de SCC</p>
+                  <div className="space-y-1">
+                    <Badge variant="secondary" className="text-xs">Lecture</Badge>
+                    <Badge variant="secondary" className="text-xs">Vote</Badge>
+                    <Badge variant="secondary" className="text-xs">Voir résultats</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white hover:shadow-md transition-shadow border-l-4 border-l-green-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500" />
+                    Elu·es
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 mb-3">Rôle pour les membres élus du conseil</p>
+                  <div className="space-y-1">
+                    <Badge variant="secondary" className="text-xs">Toutes permissions</Badge>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-white hover:shadow-md transition-shadow border-l-4 border-l-purple-500">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-purple-500" />
+                    <Plus className="w-4 h-4" />
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600 text-center py-8">
+                    Cliquez sur "Nouveau rôle" pour créer un rôle personnalisé avec des permissions spécifiques
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="bg-white rounded-lg p-6 shadow-sm">
+              <h3 className="text-lg font-semibold mb-4">Configuration des permissions</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Permissions de base</h4>
+                  <ul className="text-sm space-y-1 text-gray-600">
+                    <li>• Lecture (canView)</li>
+                    <li>• Édition (canEdit)</li>
+                    <li>• Vote (canVote)</li>
+                    <li>• Voir résultats (canSeeVoteResults)</li>
+                  </ul>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Permissions avancées</h4>
+                  <ul className="text-sm space-y-1 text-gray-600">
+                    <li>• Gérer agenda (canManageAgenda)</li>
+                    <li>• Gérer participants (canManageParticipants)</li>
+                    <li>• Créer réunions (canCreateMeetings)</li>
+                  </ul>
+                </div>
+                <div className="p-4 border rounded-lg">
+                  <h4 className="font-medium mb-2">Permissions administrateur</h4>
+                  <ul className="text-sm space-y-1 text-gray-600">
+                    <li>• Gérer utilisateurs (canManageUsers)</li>
+                    <li>• Accès administration</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
+
+        {/* Modal création rôle personnalisé */}
+        <Dialog open={showCreateRoleModal} onOpenChange={setShowCreateRoleModal}>
+          <DialogContent className="bg-white max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Créer un rôle personnalisé</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="roleName">Nom du rôle</Label>
+                  <Input
+                    id="roleName"
+                    placeholder="Ex: Administrateur, Modérateur..."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="roleColor">Couleur du rôle</Label>
+                  <Input
+                    id="roleColor"
+                    type="color"
+                    defaultValue="#6366f1"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-base font-semibold">Permissions</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm">Permissions de base</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="canView" className="rounded" />
+                        <Label htmlFor="canView" className="text-sm">Lecture des réunions</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="canEdit" className="rounded" />
+                        <Label htmlFor="canEdit" className="text-sm">Édition des contenus</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="canVote" className="rounded" />
+                        <Label htmlFor="canVote" className="text-sm">Droit de vote</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="canSeeVoteResults" className="rounded" />
+                        <Label htmlFor="canSeeVoteResults" className="text-sm">Voir les résultats de vote</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm">Permissions avancées</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="canManageAgenda" className="rounded" />
+                        <Label htmlFor="canManageAgenda" className="text-sm">Gérer l'agenda</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="canManageParticipants" className="rounded" />
+                        <Label htmlFor="canManageParticipants" className="text-sm">Gérer les participants</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="canCreateMeetings" className="rounded" />
+                        <Label htmlFor="canCreateMeetings" className="text-sm">Créer des réunions</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="canManageUsers" className="rounded" />
+                        <Label htmlFor="canManageUsers" className="text-sm">Gérer les utilisateurs</Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowCreateRoleModal(false)}
+                >
+                  Annuler
+                </Button>
+                <Button 
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  Créer le rôle
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Modal création type de réunion */}
         <Dialog open={showCreateMeetingTypeModal} onOpenChange={setShowCreateMeetingTypeModal}>
