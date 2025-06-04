@@ -1800,13 +1800,27 @@ export default function AdminPanel() {
                   <Button 
                     type="submit" 
                     disabled={updateMeetingTypeMutation.isPending}
-                    onClick={() => console.log('Button clicked!')}
                   >
                     {updateMeetingTypeMutation.isPending ? 'Sauvegarde...' : 'Sauvegarder'}
                   </Button>
                 </div>
               </form>
             </Form>
+            
+            {/* Bouton de test temporaire */}
+            <Button 
+              onClick={() => {
+                console.log('Test button clicked!');
+                const formData = editMeetingTypeForm.getValues();
+                console.log('Current form data:', formData);
+                if (editingMeetingType) {
+                  updateMeetingTypeMutation.mutate({ id: editingMeetingType.id, data: formData });
+                }
+              }}
+              className="mt-4 w-full"
+            >
+              TEST - Sauvegarder maintenant
+            </Button>
           </DialogContent>
         </Dialog>
 
