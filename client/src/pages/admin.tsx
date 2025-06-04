@@ -1720,109 +1720,38 @@ export default function AdminPanel() {
 
                 <div>
                   <Label className="text-sm font-medium">Rôles autorisés</Label>
-                  <div className="mt-2 space-y-3">
-                    {/* Rôles prédéfinis avec cases à cocher */}
-                    <div className="space-y-2">
-                      <div className="text-xs font-medium text-gray-600">Rôles disponibles :</div>
-                      {["Salarié·es SCC", "Elu·es", "Administrateur", "Président", "Secrétaire", "Trésorier"].map(predefinedRole => {
-                        const isSelected = meetingTypeRoles.some((r: any) => r.role === predefinedRole);
-                        return (
-                          <div key={predefinedRole} className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`role-${predefinedRole}`}
-                              checked={isSelected}
-                              onChange={(e) => {
-                                if (editingMeetingType) {
-                                  if (e.target.checked) {
-                                    addMeetingTypeRoleMutation.mutate({
-                                      meetingTypeId: editingMeetingType.id,
-                                      role: predefinedRole
-                                    });
-                                  } else {
-                                    const roleToRemove = meetingTypeRoles.find((r: any) => r.role === predefinedRole);
-                                    if (roleToRemove) {
-                                      removeMeetingTypeRoleMutation.mutate(roleToRemove.id);
-                                    }
+                  <div className="mt-2 space-y-2">
+                    {["Salarié·es SCC", "Elu·es", "Administrateur"].map(availableRole => {
+                      const isSelected = meetingTypeRoles?.some((r: any) => r.role === availableRole) || false;
+                      return (
+                        <div key={availableRole} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`role-${availableRole}`}
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (editingMeetingType) {
+                                if (e.target.checked) {
+                                  addMeetingTypeRoleMutation.mutate({
+                                    meetingTypeId: editingMeetingType.id,
+                                    role: availableRole
+                                  });
+                                } else {
+                                  const roleToRemove = meetingTypeRoles?.find((r: any) => r.role === availableRole);
+                                  if (roleToRemove) {
+                                    removeMeetingTypeRoleMutation.mutate(roleToRemove.id);
                                   }
                                 }
-                              }}
-                              className="rounded"
-                            />
-                            <Label htmlFor={`role-${predefinedRole}`} className="text-sm cursor-pointer">
-                              {predefinedRole}
-                            </Label>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    {/* Rôles personnalisés existants */}
-                    {meetingTypeRoles.filter((r: any) => !["Salarié·es SCC", "Elu·es", "Administrateur", "Président", "Secrétaire", "Trésorier"].includes(r.role)).length > 0 && (
-                      <div className="border-t pt-3">
-                        <div className="text-xs font-medium text-gray-600 mb-2">Rôles personnalisés :</div>
-                        <div className="space-y-1">
-                          {meetingTypeRoles.filter((r: any) => !["Salarié·es SCC", "Elu·es", "Administrateur", "Président", "Secrétaire", "Trésorier"].includes(r.role)).map((roleItem: any) => (
-                            <div key={roleItem.id} className="flex items-center justify-between p-2 bg-blue-50 rounded text-sm">
-                              <span>{roleItem.role}</span>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeMeetingTypeRoleMutation.mutate(roleItem.id)}
-                                className="h-6 w-6 p-0 hover:bg-red-100"
-                              >
-                                ×
-                              </Button>
-                            </div>
-                          ))}
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <Label htmlFor={`role-${availableRole}`} className="text-sm cursor-pointer">
+                            {availableRole}
+                          </Label>
                         </div>
-                      </div>
-                    )}
-
-                    {/* Ajout de rôle personnalisé */}
-                    <div className="border-t pt-3">
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          placeholder="Nouveau rôle personnalisé..."
-                          className="flex-1 px-2 py-1 text-sm border rounded"
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter' && editingMeetingType) {
-                              const input = e.target as HTMLInputElement;
-                              const role = input.value.trim();
-                              if (role) {
-                                addMeetingTypeRoleMutation.mutate({
-                                  meetingTypeId: editingMeetingType.id,
-                                  role: role
-                                });
-                                input.value = '';
-                              }
-                            }
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            if (editingMeetingType) {
-                              const input = (e.target as HTMLElement).parentElement?.querySelector('input') as HTMLInputElement;
-                              const role = input?.value.trim();
-                              if (role) {
-                                addMeetingTypeRoleMutation.mutate({
-                                  meetingTypeId: editingMeetingType.id,
-                                  role: role
-                                });
-                                input.value = '';
-                              }
-                            }
-                          }}
-                        >
-                          +
-                        </Button>
-                      </div>
-                    </div>
+                      );
+                    })}
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
                     Seuls les utilisateurs avec ces rôles pourront accéder à ce type de réunion
