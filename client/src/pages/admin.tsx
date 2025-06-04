@@ -862,6 +862,98 @@ export default function AdminPanel() {
           </TabsContent>
         </Tabs>
 
+        {/* Modal édition rôle */}
+        <Dialog open={!!editingRole} onOpenChange={() => setEditingRole(null)}>
+          <DialogContent className="bg-white max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                Éditer le rôle {editingRole === "salarie" ? "Salarié·es SCC" : editingRole === "elu" ? "Elu·es" : ""}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <Label>Nom du rôle</Label>
+                  <Input
+                    readOnly
+                    value={editingRole === "salarie" ? "Salarié·es SCC" : editingRole === "elu" ? "Elu·es" : ""}
+                    className="bg-gray-50"
+                  />
+                </div>
+                <div>
+                  <Label>Description</Label>
+                  <Input
+                    defaultValue={editingRole === "salarie" ? "Rôle par défaut pour les salariés de SCC" : "Rôle pour les membres élus du conseil"}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-base font-semibold">Permissions</Label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm">Permissions de base</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="edit-canView" className="rounded" defaultChecked />
+                        <Label htmlFor="edit-canView" className="text-sm">Lecture des réunions</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="edit-canEdit" className="rounded" />
+                        <Label htmlFor="edit-canEdit" className="text-sm">Édition des contenus</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="edit-canVote" className="rounded" defaultChecked />
+                        <Label htmlFor="edit-canVote" className="text-sm">Droit de vote</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="edit-canSeeVoteResults" className="rounded" defaultChecked />
+                        <Label htmlFor="edit-canSeeVoteResults" className="text-sm">Voir les résultats de vote</Label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm">Permissions avancées</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="edit-canManageAgenda" className="rounded" defaultChecked={editingRole === "elu"} />
+                        <Label htmlFor="edit-canManageAgenda" className="text-sm">Gérer l'agenda</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="edit-canManageParticipants" className="rounded" defaultChecked={editingRole === "elu"} />
+                        <Label htmlFor="edit-canManageParticipants" className="text-sm">Gérer les participants</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="edit-canCreateMeetings" className="rounded" defaultChecked={editingRole === "elu"} />
+                        <Label htmlFor="edit-canCreateMeetings" className="text-sm">Créer des réunions</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input type="checkbox" id="edit-canManageUsers" className="rounded" defaultChecked={editingRole === "elu"} />
+                        <Label htmlFor="edit-canManageUsers" className="text-sm">Gérer les utilisateurs</Label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2 pt-4 border-t">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setEditingRole(null)}
+                >
+                  Annuler
+                </Button>
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  Sauvegarder
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Modal création rôle personnalisé */}
         <Dialog open={showCreateRoleModal} onOpenChange={setShowCreateRoleModal}>
           <DialogContent className="bg-white max-w-2xl">
@@ -1178,11 +1270,11 @@ export default function AdminPanel() {
                   name="role"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Rôle</FormLabel>
+                      <FormLabel>Rôle principal</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Sélectionner un rôle" />
+                            <SelectValue placeholder="Sélectionner un rôle principal" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -1194,6 +1286,36 @@ export default function AdminPanel() {
                     </FormItem>
                   )}
                 />
+
+                <div>
+                  <Label className="text-sm font-medium">Rôles additionnels</Label>
+                  <div className="mt-2 space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="additional-salarie" 
+                        className="rounded"
+                      />
+                      <Label htmlFor="additional-salarie" className="text-sm">Salarié·es SCC</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="additional-elu" 
+                        className="rounded"
+                      />
+                      <Label htmlFor="additional-elu" className="text-sm">Elu·es</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="additional-admin" 
+                        className="rounded"
+                      />
+                      <Label htmlFor="additional-admin" className="text-sm">Administrateur</Label>
+                    </div>
+                  </div>
+                </div>
 
                 <FormField
                   control={userForm.control}
@@ -1548,6 +1670,41 @@ export default function AdminPanel() {
                     </FormItem>
                   )}
                 />
+
+                <div>
+                  <Label className="text-sm font-medium">Rôles autorisés</Label>
+                  <div className="mt-2 space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="role-salarie" 
+                        className="rounded"
+                        defaultChecked
+                      />
+                      <Label htmlFor="role-salarie" className="text-sm">Salarié·es SCC</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="role-elu" 
+                        className="rounded"
+                        defaultChecked
+                      />
+                      <Label htmlFor="role-elu" className="text-sm">Elu·es</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input 
+                        type="checkbox" 
+                        id="role-admin" 
+                        className="rounded"
+                      />
+                      <Label htmlFor="role-admin" className="text-sm">Administrateur</Label>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Seuls les utilisateurs avec ces rôles pourront accéder à ce type de réunion
+                  </p>
+                </div>
                 
                 <div className="flex gap-2 pt-4">
                   <Button 

@@ -81,6 +81,12 @@ export interface IStorage {
   createMeetingTypeAccess(access: InsertMeetingTypeAccess): Promise<MeetingTypeAccess>;
   deleteMeetingTypeAccess(id: number): Promise<void>;
   getUserAccessibleMeetingTypes(userId: number): Promise<MeetingType[]>;
+  
+  // Meeting type role operations
+  getMeetingTypeRoles(meetingTypeId: number): Promise<MeetingTypeRole[]>;
+  createMeetingTypeRole(role: InsertMeetingTypeRole): Promise<MeetingTypeRole>;
+  deleteMeetingTypeRole(id: number): Promise<void>;
+  getMeetingTypesByRole(role: string): Promise<MeetingType[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -434,6 +440,43 @@ export class DatabaseStorage implements IStorage {
       );
 
     return accessibleTypes.map(result => result.meetingType);
+  }
+
+  // Meeting type role operations
+  async getMeetingTypeRoles(meetingTypeId: number): Promise<MeetingTypeRole[]> {
+    return await db
+      .select()
+      .from(meetingTypeRoles)
+      .where(eq(meetingTypeRoles.meetingTypeId, meetingTypeId));
+  }
+
+  async createMeetingTypeRole(role: InsertMeetingTypeRole): Promise<MeetingTypeRole> {
+    const [created] = await db
+      .insert(meetingTypeRoles)
+      .values(role)
+      .returning();
+    return created;
+  }
+
+  async deleteMeetingTypeRole(id: number): Promise<void> {
+    await db
+      .delete(meetingTypeRoles)
+      .where(eq(meetingTypeRoles.id, id));
+  }
+
+  async getMeetingTypesByRole(role: string): Promise<MeetingType[]> {
+    const roleTypes = await db
+      .select({ meetingType: meetingTypes })
+      .from(meetingTypeRoles)
+      .innerJoin(meetingTypes, eq(meetingTypeRoles.meetingTypeId, meetingTypes.id))
+      .where(
+        and(
+          eq(meetingTypeRoles.role, role),
+          eq(meetingTypes.isActive, true)
+        )
+      );
+
+    return roleTypes.map(result => result.meetingType);
   }
 }
 

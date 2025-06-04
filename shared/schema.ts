@@ -295,6 +295,11 @@ export const insertMeetingTypeAccessSchema = createInsertSchema(meetingTypeAcces
   createdAt: true,
 });
 
+export const insertMeetingTypeRoleSchema = createInsertSchema(meetingTypeRoles).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertMeetingSchema = createInsertSchema(meetings).omit({
   id: true,
   createdAt: true,
@@ -330,6 +335,8 @@ export type MeetingType = typeof meetingTypes.$inferSelect;
 export type InsertMeetingType = z.infer<typeof insertMeetingTypeSchema>;
 export type MeetingTypeAccess = typeof meetingTypeAccess.$inferSelect;
 export type InsertMeetingTypeAccess = z.infer<typeof insertMeetingTypeAccessSchema>;
+export type MeetingTypeRole = typeof meetingTypeRoles.$inferSelect;
+export type InsertMeetingTypeRole = z.infer<typeof insertMeetingTypeRoleSchema>;
 export type Meeting = typeof meetings.$inferSelect;
 export type InsertMeeting = z.infer<typeof insertMeetingSchema>;
 export type AgendaItem = typeof agendaItems.$inferSelect;
