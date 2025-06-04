@@ -1831,6 +1831,110 @@ export default function SimpleMeetingPresenter() {
           </div>
         </div>
       )}
+
+      {/* Modal de configuration de la réunion */}
+      {showConfigModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Configuration de la réunion</h3>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              saveMeetingInfo();
+            }} className="space-y-4">
+              <div>
+                <Label htmlFor="meeting-title">Titre de la réunion</Label>
+                <Input
+                  id="meeting-title"
+                  value={editedMeetingInfo.title}
+                  onChange={(e) => setEditedMeetingInfo({
+                    ...editedMeetingInfo,
+                    title: e.target.value
+                  })}
+                  placeholder="Titre de la réunion"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="meeting-date">Date</Label>
+                <Input
+                  id="meeting-date"
+                  type="date"
+                  value={editedMeetingInfo.date}
+                  onChange={(e) => setEditedMeetingInfo({
+                    ...editedMeetingInfo,
+                    date: e.target.value
+                  })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="meeting-time">Heure de début</Label>
+                <Input
+                  id="meeting-time"
+                  type="time"
+                  value={editedMeetingInfo.time}
+                  onChange={(e) => setEditedMeetingInfo({
+                    ...editedMeetingInfo,
+                    time: e.target.value
+                  })}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="meeting-status">État</Label>
+                <Select
+                  value={editedMeetingInfo.status}
+                  onValueChange={(value) => setEditedMeetingInfo({
+                    ...editedMeetingInfo,
+                    status: value as 'draft' | 'scheduled' | 'in_progress' | 'completed'
+                  })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un état" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Brouillon</SelectItem>
+                    <SelectItem value="scheduled">Planifiée</SelectItem>
+                    <SelectItem value="in_progress">En cours</SelectItem>
+                    <SelectItem value="completed">Terminée</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="meeting-description">Description courte</Label>
+                <Textarea
+                  id="meeting-description"
+                  value={editedMeetingInfo.description}
+                  onChange={(e) => setEditedMeetingInfo({
+                    ...editedMeetingInfo,
+                    description: e.target.value
+                  })}
+                  placeholder="Description courte de la réunion"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowConfigModal(false)}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit">
+                  Sauvegarder
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
