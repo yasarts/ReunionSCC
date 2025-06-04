@@ -395,26 +395,6 @@ export default function SimpleMeetingPresenter() {
     }
   };
 
-
-
-  const convertToSection = (itemId: string) => {
-    const updatedAgenda = agenda.map(item => 
-      item.id === itemId 
-        ? { ...item, level: 0, parentSectionId: undefined }
-        : item
-    );
-    setAgenda(updatedAgenda);
-  };
-
-  const convertToSubsection = (itemId: string, parentId: string) => {
-    const updatedAgenda = agenda.map(item => 
-      item.id === itemId 
-        ? { ...item, level: 1, parentSectionId: parentId }
-        : item
-    );
-    setAgenda(updatedAgenda);
-  };;
-
   // Fonctions pour sauvegarder les modifications
   const saveTitle = (itemId: string) => {
     const updatedAgenda = agenda.map(item => 
