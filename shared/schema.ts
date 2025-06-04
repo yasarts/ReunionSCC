@@ -9,11 +9,12 @@ import {
   integer,
   boolean,
   decimal,
-  primaryKey
+  primaryKey,
+  unique
 } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
-import { relations } from "drizzle-orm";
 
 // Session storage table (required for sessions)
 export const sessions = pgTable(
@@ -55,12 +56,38 @@ export const users = pgTable("users", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// Meeting types table
+export const meetingTypes = pgTable("meeting_types", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  color: varchar("color", { length: 7 }).default("#3B82F6"), // Hex color
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Meeting type access control table
+export const meetingTypeAccess = pgTable("meeting_type_access", {
+  id: serial("id").primaryKey(),
+  meetingTypeId: integer("meeting_type_id").references(() => meetingTypes.id, { onDelete: "cascade" }).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  companyId: integer("company_id").references(() => companies.id, { onDelete: "cascade" }),
+  accessLevel: varchar("access_level", { length: 50 }).default("view").notNull(), // 'view' | 'edit' | 'admin'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  // Un utilisateur ou une entreprise ne peut avoir qu'un seul niveau d'accès par type de réunion
+  uniqueUserAccess: unique().on(table.meetingTypeId, table.userId),
+  uniqueCompanyAccess: unique().on(table.meetingTypeId, table.companyId),
+}));
+
 // Meetings table
 export const meetings = pgTable("meetings", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description"),
   date: timestamp("date").notNull(),
+  meetingTypeId: integer("meeting_type_id").references(() => meetingTypes.id),
   createdBy: integer("created_by").references(() => users.id).notNull(),
   status: varchar("status", { length: 50 }).notNull().default("draft"), // 'draft' | 'scheduled' | 'in_progress' | 'completed'
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -145,10 +172,34 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   createdVotes: many(votes),
 }));
 
+export const meetingTypesRelations = relations(meetingTypes, ({ many }) => ({
+  meetings: many(meetings),
+  accessControls: many(meetingTypeAccess),
+}));
+
+export const meetingTypeAccessRelations = relations(meetingTypeAccess, ({ one }) => ({
+  meetingType: one(meetingTypes, {
+    fields: [meetingTypeAccess.meetingTypeId],
+    references: [meetingTypes.id],
+  }),
+  user: one(users, {
+    fields: [meetingTypeAccess.userId],
+    references: [users.id],
+  }),
+  company: one(companies, {
+    fields: [meetingTypeAccess.companyId],
+    references: [companies.id],
+  }),
+}));
+
 export const meetingsRelations = relations(meetings, ({ one, many }) => ({
   creator: one(users, {
     fields: [meetings.createdBy],
     references: [users.id],
+  }),
+  meetingType: one(meetingTypes, {
+    fields: [meetings.meetingTypeId],
+    references: [meetingTypes.id],
   }),
   participants: many(meetingParticipants),
   agendaItems: many(agendaItems),
@@ -212,6 +263,17 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+});
+
+export const insertMeetingTypeSchema = createInsertSchema(meetingTypes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertMeetingTypeAccessSchema = createInsertSchema(meetingTypeAccess).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertMeetingSchema = createInsertSchema(meetings).omit({
