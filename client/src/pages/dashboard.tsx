@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Plus, Calendar, Users, Clock, Play, Edit3, Trash2, Copy, LogOut, FileDown, Settings, Eye } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -28,7 +28,16 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { user, logout, requirePermission } = useAuth();
   const [viewAsElu, setViewAsElu] = useState(false);
-  const [meetings, setMeetings] = useState<Meeting[]>([
+  
+  // Fonction pour charger les informations de réunion depuis localStorage
+  const loadMeetingInfo = (meetingId: string) => {
+    const savedInfo = localStorage.getItem(`meetingInfo_${meetingId}`);
+    return savedInfo ? JSON.parse(savedInfo) : null;
+  };
+
+  // Fonction pour initialiser les réunions avec les données sauvegardées
+  const initializeMeetings = () => {
+    const baseMeetings = [
     {
       id: 'conseil-national-2025',
       title: 'Conseil National SCC 2025-06-05',
@@ -44,7 +53,7 @@ export default function Dashboard() {
         'Responsable Pôle Production'
       ],
       pouvoir: 'Pouvoir donné par Mme Martin à M. Dupont pour représentation aux votes',
-      status: 'scheduled',
+      status: 'scheduled' as const,
       agendaItemsCount: 12,
       totalDuration: 180,
       createdAt: '2024-12-01'
@@ -118,9 +127,54 @@ export default function Dashboard() {
       totalDuration: 150,
       createdAt: '2024-11-28'
     }
-  ]);
-  
+    ];
+
+    // Appliquer les modifications sauvegardées
+    return baseMeetings.map(meeting => {
+      const savedInfo = loadMeetingInfo(meeting.id);
+      if (savedInfo) {
+        return {
+          ...meeting,
+          title: savedInfo.title || meeting.title,
+          date: savedInfo.date || meeting.date,
+          time: savedInfo.time || meeting.time,
+          description: savedInfo.description || meeting.description,
+          status: savedInfo.status || meeting.status
+        };
+      }
+      return meeting;
+    });
+  };
+
+  const [meetings, setMeetings] = useState<Meeting[]>(initializeMeetings());
   const [showCreateModal, setShowCreateModal] = useState(false);
+
+  // Écouter les changements dans localStorage pour synchroniser les modifications
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key && e.key.startsWith('meetingInfo_')) {
+        // Rafraîchir les données des réunions
+        setMeetings(initializeMeetings());
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Écouter également les changements dans la même fenêtre
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = function(key, value) {
+      originalSetItem.apply(this, [key, value]);
+      if (key.startsWith('meetingInfo_')) {
+        // Déclencher une mise à jour
+        setTimeout(() => setMeetings(initializeMeetings()), 100);
+      }
+    };
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      localStorage.setItem = originalSetItem;
+    };
+  }, []);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [newMeeting, setNewMeeting] = useState<Partial<Meeting>>({

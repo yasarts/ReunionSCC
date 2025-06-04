@@ -183,8 +183,20 @@ export default function SimpleMeetingPresenter() {
       ...meetingInfo,
       title: editedMeetingInfo.title,
       date: editedMeetingInfo.date,
-      time: editedMeetingInfo.time
+      time: editedMeetingInfo.time,
+      description: editedMeetingInfo.description,
+      status: editedMeetingInfo.status
     };
+    
+    // Sauvegarder dans localStorage pour la synchronisation
+    localStorage.setItem(`meetingInfo_${meetingId}`, JSON.stringify({
+      title: editedMeetingInfo.title,
+      date: editedMeetingInfo.date,
+      time: editedMeetingInfo.time,
+      description: editedMeetingInfo.description,
+      status: editedMeetingInfo.status
+    }));
+    
     setMeetingInfo(updatedInfo);
     setShowConfigModal(false);
   };
