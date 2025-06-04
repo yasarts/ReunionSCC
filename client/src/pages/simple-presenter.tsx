@@ -44,6 +44,9 @@ export default function SimpleMeetingPresenter() {
   const [editedContent, setEditedContent] = useState('');
   const [isEditingDuration, setIsEditingDuration] = useState(false);
   const [editedDuration, setEditedDuration] = useState(0);
+  const [showAddItemModal, setShowAddItemModal] = useState(false);
+  const [newItemType, setNewItemType] = useState<'section' | 'subsection' | 'break'>('section');
+  const [selectedParentId, setSelectedParentId] = useState<string>('');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -206,7 +209,76 @@ export default function SimpleMeetingPresenter() {
       const subsectionIndex = agenda.slice(0, index + 1).filter(a => a.level === item.level && agenda.slice(0, agenda.findIndex(b => b.id === a.id)).filter(b => b.level === 0).length === parentIndex).length;
       return `${parentIndex}.${subsectionIndex}`;
     }
+  }
+
+  // Fonction pour obtenir toutes les sections parentes (niveau 0)
+  const getParentSections = () => {
+    return agenda.filter(item => item.level === 0 && item.type !== 'break');
   };
+
+  // Fonction pour déplacer un élément et ses sous-éléments
+  const moveItemWithChildren = (fromIndex: number, toIndex: number) => {
+    const newAgenda = [...agenda];
+    const itemToMove = newAgenda[fromIndex];
+    
+    if (itemToMove.level === 0) {
+      // Si c'est une section, on déplace aussi toutes ses sous-sections
+      const childItems = [];
+      let i = fromIndex + 1;
+      while (i < newAgenda.length && newAgenda[i].level > itemToMove.level) {
+        childItems.push(newAgenda[i]);
+        i++;
+      }
+      
+      // Supprimer l'élément et ses enfants de leur position actuelle
+      newAgenda.splice(fromIndex, 1 + childItems.length);
+      
+      // Insérer à la nouvelle position
+      const adjustedToIndex = toIndex > fromIndex ? toIndex - (1 + childItems.length) : toIndex;
+      newAgenda.splice(adjustedToIndex, 0, itemToMove, ...childItems);
+    } else {
+      // Pour les sous-sections, déplacement simple
+      const [movedItem] = newAgenda.splice(fromIndex, 1);
+      newAgenda.splice(toIndex, 0, movedItem);
+    }
+    
+    setAgenda(newAgenda);
+  };
+
+  // Fonction pour ajouter un nouvel élément
+  const addNewItem = (title: string, duration: number, type: 'section' | 'subsection' | 'break', parentId?: string) => {
+    const newItem: AgendaItem = {
+      id: `item-${Date.now()}`,
+      title: title,
+      duration: duration,
+      type: type === 'break' ? 'break' : 'discussion',
+      level: type === 'subsection' ? 1 : 0,
+      completed: false,
+      content: "",
+      parentSectionId: parentId
+    };
+
+    const newAgenda = [...agenda];
+    
+    if (type === 'subsection' && parentId) {
+      // Insérer après la dernière sous-section de la section parente
+      const parentIndex = newAgenda.findIndex(item => item.id === parentId);
+      let insertIndex = parentIndex + 1;
+      
+      // Trouver la position après toutes les sous-sections existantes
+      while (insertIndex < newAgenda.length && newAgenda[insertIndex].level > 0) {
+        insertIndex++;
+      }
+      
+      newAgenda.splice(insertIndex, 0, newItem);
+    } else {
+      // Ajouter à la fin pour les sections et pauses
+      newAgenda.push(newItem);
+    }
+    
+    setAgenda(newAgenda);
+    setShowAddItemModal(false);
+  };;
 
   // Ajouter une pause
   const addBreak = (afterIndex: number) => {

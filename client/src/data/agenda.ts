@@ -10,6 +10,7 @@ export interface AgendaItem {
   content?: string;
   visualLink?: string;
   isSubsection?: boolean;
+  parentSectionId?: string;
   startTime?: string;
 }
 
