@@ -262,6 +262,50 @@ export default function SimpleMeetingPresenter() {
     setShowEditModal(false);
   };
 
+  // Fonction pour obtenir l'ID de la section parente d'une sous-section
+  const getParentSectionId = (subsectionId: string): string => {
+    const subsectionIndex = agenda.findIndex(item => item.id === subsectionId);
+    if (subsectionIndex === -1) return '';
+    
+    // Chercher la section parente (level 0) qui précède cette sous-section
+    for (let i = subsectionIndex - 1; i >= 0; i--) {
+      if (agenda[i].level === 0 && agenda[i].type !== 'break') {
+        return agenda[i].id;
+      }
+    }
+    return '';
+  };
+
+  // Fonction pour déplacer une sous-section vers une autre section
+  const moveSubsectionToSection = (subsectionId: string, newParentId: string) => {
+    const subsectionIndex = agenda.findIndex(item => item.id === subsectionId);
+    const newParentIndex = agenda.findIndex(item => item.id === newParentId);
+    
+    if (subsectionIndex === -1 || newParentIndex === -1) return;
+    
+    const subsection = agenda[subsectionIndex];
+    const newAgenda = [...agenda];
+    
+    // Retirer la sous-section de sa position actuelle
+    newAgenda.splice(subsectionIndex, 1);
+    
+    // Trouver la position d'insertion après la nouvelle section parente
+    const adjustedParentIndex = subsectionIndex < newParentIndex ? newParentIndex - 1 : newParentIndex;
+    let insertIndex = adjustedParentIndex + 1;
+    
+    // Trouver la fin des sous-sections existantes de la nouvelle section parente
+    while (insertIndex < newAgenda.length && newAgenda[insertIndex].level > 0) {
+      insertIndex++;
+    }
+    
+    // Insérer la sous-section à la nouvelle position
+    newAgenda.splice(insertIndex, 0, subsection);
+    
+    // Renuméroter tous les éléments
+    const renumberedAgenda = renumberAgenda(newAgenda);
+    setAgenda(renumberedAgenda);
+  };
+
   // Fonctions de glisser-déplacer et re-numérotation
   const renumberAgenda = (newAgenda: AgendaItem[]) => {
     let sectionCount = 0;
@@ -922,6 +966,30 @@ export default function SimpleMeetingPresenter() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Section parente pour les sous-sections */}
+                {editingItem && editingItem.level === 1 && (
+                  <div>
+                    <Label htmlFor="parentSection">Section parente</Label>
+                    <Select
+                      value={getParentSectionId(editingItem.id)}
+                      onValueChange={(value) => moveSubsectionToSection(editingItem.id, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choisir une section..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {agenda
+                          .filter(item => item.level === 0 && item.type !== 'break')
+                          .map(section => (
+                            <SelectItem key={section.id} value={section.id}>
+                              {section.title}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 
                 <div>
                   <Label htmlFor="presenter">Présentateur</Label>

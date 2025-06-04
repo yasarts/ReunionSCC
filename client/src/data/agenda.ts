@@ -114,7 +114,9 @@ export const agendaItems: AgendaItem[] = [
     duration: 30,
     type: "discussion",
     level: 1,
-    completed: false
+    completed: false,
+    content: "Discussion sur l'interpellation du Syndeac concernant la charte TDC et les questions de production et résidence",
+    visualLink: ""
   },
   {
     id: "3",
@@ -126,11 +128,13 @@ export const agendaItems: AgendaItem[] = [
   },
   {
     id: "3.1",
-    title: "Changements de gouvernance au sein du SYNAVI",
+    title: "3.1 Changements de gouvernance au sein du SYNAVI",
     duration: 10,
     type: "information",
     level: 1,
-    completed: false
+    completed: false,
+    content: "Présentation des modifications de gouvernance au sein du SYNAVI",
+    visualLink: ""
   },
   {
     id: "3.2",
