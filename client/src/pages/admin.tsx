@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import React from 'react';
 import { useLocation } from 'wouter';
 import { ArrowLeft, Users, Plus, Edit, Trash2, Building, MapPin, Phone, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -194,6 +195,57 @@ export default function AdminPanel() {
       },
     },
   });
+
+  // Formulaires d'édition
+  const editCompanyForm = useForm<z.infer<typeof createCompanyFormSchema>>({
+    resolver: zodResolver(createCompanyFormSchema),
+    defaultValues: {
+      name: '',
+      siret: '',
+      address: '',
+      phone: '',
+      email: '',
+      sector: '',
+      description: '',
+    },
+  });
+
+  const editUserForm = useForm<Partial<User>>({
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      role: '',
+      companyId: null,
+    },
+  });
+
+  // Effet pour remplir les formulaires d'édition quand on sélectionne un élément à modifier
+  React.useEffect(() => {
+    if (editingCompany) {
+      editCompanyForm.reset({
+        name: editingCompany.name || '',
+        siret: editingCompany.siret || '',
+        address: editingCompany.address || '',
+        phone: editingCompany.phone || '',
+        email: editingCompany.email || '',
+        sector: editingCompany.sector || '',
+        description: editingCompany.description || '',
+      });
+    }
+  }, [editingCompany, editCompanyForm]);
+
+  React.useEffect(() => {
+    if (editingUser) {
+      editUserForm.reset({
+        firstName: editingUser.firstName || '',
+        lastName: editingUser.lastName || '',
+        email: editingUser.email || '',
+        role: editingUser.role || '',
+        companyId: editingUser.companyId,
+      });
+    }
+  }, [editingUser, editUserForm]);
 
   const onCreateCompany = (data: z.infer<typeof createCompanyFormSchema>) => {
     createCompanyMutation.mutate(data);
@@ -557,6 +609,410 @@ export default function AdminPanel() {
                 </div>
               </form>
             </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal d'édition d'entreprise */}
+        <Dialog open={!!editingCompany} onOpenChange={() => setEditingCompany(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Modifier l'entreprise</DialogTitle>
+            </DialogHeader>
+            {editingCompany && (
+              <Form {...editCompanyForm}>
+                <form onSubmit={editCompanyForm.handleSubmit((data) => updateCompanyMutation.mutate({ id: editingCompany.id, data }))} className="space-y-4">
+                  <FormField
+                    control={editCompanyForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nom de l'entreprise *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Nom de l'entreprise" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editCompanyForm.control}
+                    name="siret"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>SIRET</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="SIRET" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editCompanyForm.control}
+                    name="sector"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Secteur d'activité</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Secteur d'activité" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editCompanyForm.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Adresse</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Adresse complète" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editCompanyForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Téléphone</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Téléphone" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={editCompanyForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="email" placeholder="Email" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={editCompanyForm.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea {...field} placeholder="Description de l'entreprise" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setEditingCompany(null)}
+                    >
+                      Annuler
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={updateCompanyMutation.isPending}
+                    >
+                      {updateCompanyMutation.isPending ? 'Modification...' : 'Modifier'}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de création d'utilisateur */}
+        <Dialog open={showCreateUserModal} onOpenChange={setShowCreateUserModal}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Nouvel utilisateur</DialogTitle>
+            </DialogHeader>
+            <Form {...userForm}>
+              <form onSubmit={userForm.handleSubmit(onCreateUser)} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={userForm.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prénom *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Prénom" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={userForm.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nom *</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="Nom" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={userForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email *</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="email" placeholder="email@example.com" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={userForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mot de passe *</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="password" placeholder="Mot de passe" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={userForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmer *</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="password" placeholder="Confirmer" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <FormField
+                  control={userForm.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Rôle *</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner un rôle" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="salaried">Salarié·es SCC</SelectItem>
+                          <SelectItem value="elected">Elu·es</SelectItem>
+                          <SelectItem value="admin">Administrateur</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={userForm.control}
+                  name="companyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Entreprise</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : null)} value={field.value?.toString() || ""}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner une entreprise" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">Aucune entreprise</SelectItem>
+                          {companies?.map((company: Company) => (
+                            <SelectItem key={company.id} value={company.id.toString()}>
+                              {company.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setShowCreateUserModal(false)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createUserMutation.isPending}
+                  >
+                    {createUserMutation.isPending ? 'Création...' : 'Créer'}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal d'édition d'utilisateur */}
+        <Dialog open={!!editingUser} onOpenChange={() => setEditingUser(null)}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Modifier l'utilisateur</DialogTitle>
+            </DialogHeader>
+            {editingUser && (
+              <Form {...editUserForm}>
+                <form onSubmit={editUserForm.handleSubmit((data) => updateUserMutation.mutate({ id: editingUser.id, data }))} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={editUserForm.control}
+                      name="firstName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prénom *</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Prénom" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={editUserForm.control}
+                      name="lastName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Nom *</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Nom" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email *</FormLabel>
+                        <FormControl>
+                          <Input {...field} type="email" placeholder="email@example.com" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="role"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Rôle *</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionner un rôle" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="salaried">Salarié·es SCC</SelectItem>
+                            <SelectItem value="elected">Elu·es</SelectItem>
+                            <SelectItem value="admin">Administrateur</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={editUserForm.control}
+                    name="companyId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Entreprise</FormLabel>
+                        <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : null)} value={field.value?.toString() || ""}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Sélectionner une entreprise" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">Aucune entreprise</SelectItem>
+                            {companies?.map((company: Company) => (
+                              <SelectItem key={company.id} value={company.id.toString()}>
+                                {company.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end gap-2 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setEditingUser(null)}
+                    >
+                      Annuler
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={updateUserMutation.isPending}
+                    >
+                      {updateUserMutation.isPending ? 'Modification...' : 'Modifier'}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            )}
           </DialogContent>
         </Dialog>
 
