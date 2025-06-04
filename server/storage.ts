@@ -415,6 +415,7 @@ export class DatabaseStorage implements IStorage {
     const [created] = await db
       .insert(meetingTypeAccess)
       .values(access)
+      .onConflictDoNothing()
       .returning();
     return created;
   }

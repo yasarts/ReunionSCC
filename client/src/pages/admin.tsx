@@ -1719,34 +1719,47 @@ export default function AdminPanel() {
                 />
 
                 <div>
-                  <Label className="text-sm font-medium">Rôles autorisés</Label>
-                  <div className="mt-2 space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="role-salarie" 
-                        className="rounded"
-                        defaultChecked
-                      />
-                      <Label htmlFor="role-salarie" className="text-sm">Salarié·es SCC</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="role-elu" 
-                        className="rounded"
-                        defaultChecked
-                      />
-                      <Label htmlFor="role-elu" className="text-sm">Elu·es</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input 
-                        type="checkbox" 
-                        id="role-admin" 
-                        className="rounded"
-                      />
-                      <Label htmlFor="role-admin" className="text-sm">Administrateur</Label>
-                    </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label className="text-sm font-medium">Rôles autorisés</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        if (editingMeetingType) {
+                          const role = prompt("Nouveau rôle:");
+                          if (role && role.trim()) {
+                            addMeetingTypeRoleMutation.mutate({
+                              meetingTypeId: editingMeetingType.id,
+                              role: role.trim()
+                            });
+                          }
+                        }
+                      }}
+                    >
+                      + Ajouter
+                    </Button>
+                  </div>
+                  <div className="mt-2 space-y-2 max-h-32 overflow-y-auto">
+                    {rolesLoading ? (
+                      <div className="text-center py-2 text-sm text-gray-500">Chargement...</div>
+                    ) : meetingTypeRoles.length === 0 ? (
+                      <div className="text-center py-2 text-sm text-gray-500">Aucun rôle configuré</div>
+                    ) : (
+                      meetingTypeRoles.map((roleItem: any) => (
+                        <div key={roleItem.id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <span className="text-sm">{roleItem.role}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeMeetingTypeRoleMutation.mutate(roleItem.id)}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))
+                    )}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
                     Seuls les utilisateurs avec ces rôles pourront accéder à ce type de réunion
