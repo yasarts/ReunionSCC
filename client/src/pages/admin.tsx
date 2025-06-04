@@ -96,8 +96,8 @@ export default function AdminPanel() {
   });
 
   const { data: meetingTypeRoles = [], isLoading: rolesLoading } = useQuery({
-    queryKey: ['/api/meeting-types', selectedMeetingType?.id, 'roles'],
-    enabled: !!selectedMeetingType?.id,
+    queryKey: ['/api/meeting-types', editingMeetingType?.id, 'roles'],
+    enabled: !!editingMeetingType?.id,
   });
 
   // Mutations pour créer/modifier/supprimer des entreprises
@@ -315,8 +315,8 @@ export default function AdminPanel() {
     mutationFn: async ({ meetingTypeId, role }: { meetingTypeId: number; role: string }) => {
       return await apiRequest('POST', `/api/meeting-types/${meetingTypeId}/roles`, { role });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types', selectedMeetingType?.id, 'roles'] });
+    onSuccess: (_, { meetingTypeId }) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types', meetingTypeId, 'roles'] });
       setShowCreateRoleModal(false);
       toast({
         title: "Succès",
@@ -337,7 +337,7 @@ export default function AdminPanel() {
       return await apiRequest('DELETE', `/api/meeting-type-roles/${roleId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types', selectedMeetingType?.id, 'roles'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types', editingMeetingType?.id, 'roles'] });
       toast({
         title: "Succès",
         description: "Rôle supprimé avec succès",
