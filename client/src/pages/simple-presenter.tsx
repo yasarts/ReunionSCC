@@ -167,12 +167,16 @@ export default function SimpleMeetingPresenter() {
 
   // Fonction pour ouvrir la modale de configuration
   const openConfigModal = () => {
+    // Récupérer les données sauvegardées pour pré-remplir le formulaire
+    const savedInfo = localStorage.getItem(`meetingInfo_${meetingId}`);
+    const savedData = savedInfo ? JSON.parse(savedInfo) : {};
+    
     setEditedMeetingInfo({
-      title: meetingInfo.title,
-      date: meetingInfo.date,
-      time: meetingInfo.time,
-      description: '', // À ajouter si nécessaire
-      status: 'scheduled' // Par défaut
+      title: savedData.title || meetingInfo.title,
+      date: savedData.date || meetingInfo.date,
+      time: savedData.time || meetingInfo.time,
+      description: savedData.description || '',
+      status: savedData.status || 'scheduled'
     });
     setShowConfigModal(true);
   };
