@@ -1746,6 +1746,7 @@ export default function AdminPanel() {
                   <div className="mt-2 space-y-2">
                     {["Salarié·es SCC", "Elu·es"].map(availableRole => {
                       const isSelected = meetingTypeRoles?.some((r: any) => r.role === availableRole) || false;
+                      console.log('Role check:', availableRole, 'isSelected:', isSelected, 'roles:', meetingTypeRoles);
                       return (
                         <div key={availableRole} className="flex items-center space-x-2">
                           <input
