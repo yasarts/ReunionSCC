@@ -80,6 +80,83 @@ function PermissionCheckbox({
   );
 }
 
+// Composant pour afficher les permissions d'un rôle
+function RolePermissionsBadges({ roleKey }: { roleKey: string }) {
+  const [permissions, setPermissions] = React.useState<Record<string, boolean>>({});
+
+  React.useEffect(() => {
+    const savedPermissions = localStorage.getItem(`permissions_${roleKey}`);
+    if (savedPermissions) {
+      setPermissions(JSON.parse(savedPermissions));
+    } else {
+      // Permissions par défaut
+      const defaultPermissions = roleKey === "elu" ? {
+        canView: true,
+        canEdit: false,
+        canVote: true,
+        canSeeVoteResults: true,
+        canManageAgenda: true,
+        canManageParticipants: true,
+        canCreateMeetings: true,
+        canManageUsers: true,
+      } : {
+        canView: true,
+        canEdit: false,
+        canVote: true,
+        canSeeVoteResults: true,
+        canManageAgenda: false,
+        canManageParticipants: false,
+        canCreateMeetings: false,
+        canManageUsers: false,
+      };
+      setPermissions(defaultPermissions);
+    }
+  }, [roleKey]);
+
+  const getActivePermissions = () => {
+    const permissionLabels = {
+      canView: "Lecture",
+      canEdit: "Édition",
+      canVote: "Vote",
+      canSeeVoteResults: "Résultats",
+      canManageAgenda: "Agenda",
+      canManageParticipants: "Participants",
+      canCreateMeetings: "Créer réunions",
+      canManageUsers: "Gérer utilisateurs",
+    };
+
+    return Object.entries(permissions)
+      .filter(([_, value]) => value)
+      .map(([key, _]) => permissionLabels[key as keyof typeof permissionLabels])
+      .filter(Boolean);
+  };
+
+  const activePermissions = getActivePermissions();
+
+  if (activePermissions.length === 0) {
+    return <Badge variant="secondary" className="text-xs">Aucune permission</Badge>;
+  }
+
+  if (activePermissions.length > 3) {
+    return (
+      <>
+        {activePermissions.slice(0, 2).map((permission, index) => (
+          <Badge key={index} variant="secondary" className="text-xs">{permission}</Badge>
+        ))}
+        <Badge variant="outline" className="text-xs">+{activePermissions.length - 2} autres</Badge>
+      </>
+    );
+  }
+
+  return (
+    <>
+      {activePermissions.map((permission, index) => (
+        <Badge key={index} variant="secondary" className="text-xs">{permission}</Badge>
+      ))}
+    </>
+  );
+}
+
 // Composant pour afficher les rôles d'un type de réunion
 function MeetingTypeRoles({ meetingTypeId }: { meetingTypeId: number }) {
   const { data: roles, isLoading } = useQuery({
@@ -847,9 +924,7 @@ export default function AdminPanel() {
                 <CardContent>
                   <p className="text-sm text-gray-600 mb-3">Rôle par défaut pour les salariés de SCC</p>
                   <div className="space-y-1">
-                    <Badge variant="secondary" className="text-xs">Lecture</Badge>
-                    <Badge variant="secondary" className="text-xs">Vote</Badge>
-                    <Badge variant="secondary" className="text-xs">Voir résultats</Badge>
+                    <RolePermissionsBadges roleKey="salarie" />
                   </div>
                   {selectedRole === "salarie" && (
                     <div className="mt-4 pt-4 border-t">
@@ -904,7 +979,7 @@ export default function AdminPanel() {
                 <CardContent>
                   <p className="text-sm text-gray-600 mb-3">Rôle pour les membres élus du conseil</p>
                   <div className="space-y-1">
-                    <Badge variant="secondary" className="text-xs">Toutes permissions</Badge>
+                    <RolePermissionsBadges roleKey="elu" />
                   </div>
                   {selectedRole === "elu" && (
                     <div className="mt-4 pt-4 border-t">
