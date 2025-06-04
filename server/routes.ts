@@ -512,7 +512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/meeting-types", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+  app.post("/api/meeting-types", requireAuth, async (req: any, res: Response) => {
     try {
       const meetingType = await storage.createMeetingType(req.body);
       res.status(201).json(meetingType);

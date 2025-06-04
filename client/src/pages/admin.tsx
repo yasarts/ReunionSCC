@@ -450,6 +450,10 @@ export default function AdminPanel() {
               <MapPin className="w-4 h-4" />
               Types de Réunions
             </TabsTrigger>
+            <TabsTrigger value="roles" className="flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Rôles & Permissions
+            </TabsTrigger>
           </TabsList>
 
           {/* Onglet Entreprises */}
