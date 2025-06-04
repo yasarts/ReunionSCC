@@ -367,16 +367,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/meetings/:meetingId/participants/:userId/presence", requireAuth, async (req: any, res: Response) => {
+  app.put("/api/meetings/:meetingId/participants/:userId/status", requireAuth, async (req: any, res: Response) => {
     try {
       const meetingId = parseInt(req.params.meetingId);
       const userId = parseInt(req.params.userId);
-      const { isPresent } = req.body;
+      const { status, proxyToUserId, proxyToStructure, updatedBy } = req.body;
 
-      await storage.updateParticipantPresence(meetingId, userId, isPresent);
-      res.json({ message: "Presence updated successfully" });
+      await storage.updateParticipantStatus(meetingId, userId, status, proxyToUserId, proxyToStructure, updatedBy);
+      res.json({ message: "Status updated successfully" });
     } catch (error) {
-      console.error("Update presence error:", error);
+      console.error("Update status error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/users/elected", requireAuth, async (req: any, res: Response) => {
+    try {
+      const electedMembers = await storage.getElectedMembers();
+      res.json(electedMembers);
+    } catch (error) {
+      console.error("Get elected members error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/structures", requireAuth, async (req: any, res: Response) => {
+    try {
+      const structures = await storage.getStructures();
+      res.json(structures);
+    } catch (error) {
+      console.error("Get structures error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

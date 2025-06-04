@@ -18,7 +18,7 @@ import {
   type MeetingParticipant,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, isNotNull } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -36,7 +36,9 @@ export interface IStorage {
   addParticipant(meetingId: number, userId: number): Promise<void>;
   removeParticipant(meetingId: number, userId: number): Promise<void>;
   getMeetingParticipants(meetingId: number): Promise<(MeetingParticipant & { user: User })[]>;
-  updateParticipantPresence(meetingId: number, userId: number, isPresent: boolean): Promise<void>;
+  updateParticipantStatus(meetingId: number, userId: number, status: string, proxyToUserId?: number, proxyToStructure?: string, updatedBy?: number): Promise<void>;
+  getElectedMembers(): Promise<User[]>;
+  getStructures(): Promise<string[]>;
   
   // Agenda operations
   getAgendaItems(meetingId: number): Promise<AgendaItem[]>;
