@@ -197,6 +197,11 @@ export default function SimpleMeetingPresenter() {
       status: editedMeetingInfo.status
     }));
     
+    // Déclencher un événement personnalisé pour notifier les autres composants
+    window.dispatchEvent(new CustomEvent('meetingInfoUpdated', { 
+      detail: { meetingId, updatedInfo } 
+    }));
+    
     setMeetingInfo(updatedInfo);
     setShowConfigModal(false);
   };

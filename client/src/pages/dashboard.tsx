@@ -149,31 +149,41 @@ export default function Dashboard() {
   const [meetings, setMeetings] = useState<Meeting[]>(initializeMeetings());
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  // Fonction pour rafraîchir les données des réunions
+  const refreshMeetings = () => {
+    setMeetings(initializeMeetings());
+  };
+
   // Écouter les changements dans localStorage pour synchroniser les modifications
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key && e.key.startsWith('meetingInfo_')) {
-        // Rafraîchir les données des réunions
-        setMeetings(initializeMeetings());
+        refreshMeetings();
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
     
-    // Écouter également les changements dans la même fenêtre
-    const originalSetItem = localStorage.setItem;
-    localStorage.setItem = function(key, value) {
-      originalSetItem.apply(this, [key, value]);
-      if (key.startsWith('meetingInfo_')) {
-        // Déclencher une mise à jour
-        setTimeout(() => setMeetings(initializeMeetings()), 100);
-      }
+    // Écouter également les événements personnalisés pour les changements locaux
+    const handleMeetingUpdate = () => {
+      refreshMeetings();
     };
+    
+    window.addEventListener('meetingInfoUpdated', handleMeetingUpdate);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      localStorage.setItem = originalSetItem;
+      window.removeEventListener('meetingInfoUpdated', handleMeetingUpdate);
     };
+  }, []);
+
+  // Rafraîchir périodiquement pour s'assurer de la synchronisation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshMeetings();
+    }, 2000); // Vérifier toutes les 2 secondes
+
+    return () => clearInterval(interval);
   }, []);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
