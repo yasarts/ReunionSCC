@@ -1806,21 +1806,6 @@ export default function AdminPanel() {
                 </div>
               </form>
             </Form>
-            
-            {/* Bouton de test temporaire */}
-            <Button 
-              onClick={() => {
-                console.log('Test button clicked!');
-                const formData = editMeetingTypeForm.getValues();
-                console.log('Current form data:', formData);
-                if (editingMeetingType) {
-                  updateMeetingTypeMutation.mutate({ id: editingMeetingType.id, data: formData });
-                }
-              }}
-              className="mt-4 w-full"
-            >
-              TEST - Sauvegarder maintenant
-            </Button>
           </DialogContent>
         </Dialog>
 
@@ -1883,6 +1868,46 @@ export default function AdminPanel() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+
+                <div className="border-t pt-4">
+                  <h4 className="font-medium mb-2">Rôles autorisés</h4>
+                  <div className="space-y-2 mb-4">
+                    {["Salarié·es SCC", "Elu·es"].map(availableRole => {
+                      const isSelected = meetingTypeRoles?.some((r: any) => r.role === availableRole) || false;
+                      return (
+                        <div key={availableRole} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`access-role-${availableRole}`}
+                            checked={isSelected}
+                            onChange={(e) => {
+                              if (selectedMeetingType) {
+                                if (e.target.checked) {
+                                  addMeetingTypeRoleMutation.mutate({
+                                    meetingTypeId: selectedMeetingType.id,
+                                    role: availableRole
+                                  });
+                                } else {
+                                  const roleToRemove = meetingTypeRoles?.find((r: any) => r.role === availableRole);
+                                  if (roleToRemove) {
+                                    removeMeetingTypeRoleMutation.mutate(roleToRemove.id);
+                                  }
+                                }
+                              }
+                            }}
+                            className="rounded"
+                          />
+                          <label htmlFor={`access-role-${availableRole}`} className="text-sm cursor-pointer">
+                            {availableRole}
+                          </label>
+                        </div>
+                      );
+                    })}
+                    <p className="text-xs text-gray-500 mt-2">
+                      Seuls les utilisateurs avec ces rôles pourront accéder à ce type de réunion
+                    </p>
                   </div>
                 </div>
 
