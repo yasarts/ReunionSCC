@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getMeetingData, type AgendaItem } from '@/data/agenda';
 import { ParticipantsModal } from '@/components/ParticipantsModal';
+import { useQuery } from '@tanstack/react-query';
+import { type MeetingType } from '@shared/schema';
 
 interface MeetingInfo {
   title: string;
@@ -19,12 +21,18 @@ interface MeetingInfo {
   time: string;
   participants: string[];
   pouvoir: string;
+  meetingTypeId?: number;
 }
 
 export default function SimpleMeetingPresenter() {
   const params = useParams();
   const [, setLocation] = useLocation();
   const meetingId = params.meetingId;
+  
+  // Récupérer les types de réunions disponibles
+  const { data: meetingTypes } = useQuery({
+    queryKey: ['/api/meeting-types'],
+  });
   
   const [currentItemIndex, setCurrentItemIndex] = useState(-1);
   // Chargement des données spécifiques à la réunion
@@ -120,7 +128,7 @@ export default function SimpleMeetingPresenter() {
     date: '',
     time: '',
     description: '',
-    status: 'draft' as 'draft' | 'scheduled' | 'in_progress' | 'completed'
+    meetingTypeId: undefined as number | undefined
   });
 
 
@@ -176,7 +184,7 @@ export default function SimpleMeetingPresenter() {
       date: savedData.date || meetingInfo.date,
       time: savedData.time || meetingInfo.time,
       description: savedData.description || '',
-      status: savedData.status || 'scheduled'
+      meetingTypeId: savedData.meetingTypeId || meetingInfo.meetingTypeId
     });
     setShowConfigModal(true);
   };
@@ -188,8 +196,7 @@ export default function SimpleMeetingPresenter() {
       title: editedMeetingInfo.title,
       date: editedMeetingInfo.date,
       time: editedMeetingInfo.time,
-      description: editedMeetingInfo.description,
-      status: editedMeetingInfo.status
+      meetingTypeId: editedMeetingInfo.meetingTypeId
     };
     
     // Sauvegarder dans localStorage pour la synchronisation
@@ -198,7 +205,7 @@ export default function SimpleMeetingPresenter() {
       date: editedMeetingInfo.date,
       time: editedMeetingInfo.time,
       description: editedMeetingInfo.description,
-      status: editedMeetingInfo.status
+      meetingTypeId: editedMeetingInfo.meetingTypeId
     }));
     
     // Déclencher un événement personnalisé pour notifier les autres composants
@@ -1906,22 +1913,29 @@ export default function SimpleMeetingPresenter() {
               </div>
 
               <div>
-                <Label htmlFor="meeting-status">État</Label>
+                <Label htmlFor="meeting-type">Type de réunion</Label>
                 <Select
-                  value={editedMeetingInfo.status}
+                  value={editedMeetingInfo.meetingTypeId?.toString() || ""}
                   onValueChange={(value) => setEditedMeetingInfo({
                     ...editedMeetingInfo,
-                    status: value as 'draft' | 'scheduled' | 'in_progress' | 'completed'
+                    meetingTypeId: value ? parseInt(value) : undefined
                   })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un état" />
+                    <SelectValue placeholder="Sélectionner un type de réunion" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="draft">Brouillon</SelectItem>
-                    <SelectItem value="scheduled">Planifiée</SelectItem>
-                    <SelectItem value="in_progress">En cours</SelectItem>
-                    <SelectItem value="completed">Terminée</SelectItem>
+                    {meetingTypes?.map((type: MeetingType) => (
+                      <SelectItem key={type.id} value={type.id.toString()}>
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full"
+                            style={{ backgroundColor: type.color }}
+                          />
+                          {type.name}
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
