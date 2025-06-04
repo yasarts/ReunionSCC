@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { MiniCalendar } from '@/components/MiniCalendar';
 
 interface Meeting {
   id: string;
@@ -47,10 +48,81 @@ export default function Dashboard() {
       agendaItemsCount: 12,
       totalDuration: 180,
       createdAt: '2024-12-01'
+    },
+    {
+      id: 'reunion-budget-2025',
+      title: 'Réunion Budget 2025',
+      date: '2025-06-08',
+      time: '09:30',
+      description: 'Révision du budget annuel et allocation des ressources',
+      participants: [
+        'Directeur Financier',
+        'Responsable Comptabilité',
+        'Chef de Projet'
+      ],
+      pouvoir: '',
+      status: 'scheduled',
+      agendaItemsCount: 8,
+      totalDuration: 120,
+      createdAt: '2024-12-02'
+    },
+    {
+      id: 'comite-direction-juin',
+      title: 'Comité de Direction Juin',
+      date: '2025-06-12',
+      time: '15:00',
+      description: 'Réunion mensuelle du comité de direction',
+      participants: [
+        'Directeur Général',
+        'Directeur Opérationnel',
+        'Directeur RH',
+        'Directeur Commercial'
+      ],
+      pouvoir: '',
+      status: 'draft',
+      agendaItemsCount: 6,
+      totalDuration: 90,
+      createdAt: '2024-12-03'
+    },
+    {
+      id: 'formation-nouveaux-employes',
+      title: 'Formation Nouveaux Employés',
+      date: '2025-06-15',
+      time: '10:00',
+      description: 'Session de formation pour les nouveaux collaborateurs',
+      participants: [
+        'Responsable Formation',
+        'Responsable RH',
+        'Nouveaux employés'
+      ],
+      pouvoir: '',
+      status: 'scheduled',
+      agendaItemsCount: 4,
+      totalDuration: 240,
+      createdAt: '2024-12-04'
+    },
+    {
+      id: 'reunion-projet-tech',
+      title: 'Réunion Projet Technologique',
+      date: '2025-06-18',
+      time: '14:30',
+      description: 'Point d\'avancement sur les projets technologiques en cours',
+      participants: [
+        'Chef de Projet Tech',
+        'Développeur Senior',
+        'Architecte Système'
+      ],
+      pouvoir: '',
+      status: 'completed',
+      agendaItemsCount: 10,
+      totalDuration: 150,
+      createdAt: '2024-11-28'
     }
   ]);
   
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
+  const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [newMeeting, setNewMeeting] = useState<Partial<Meeting>>({
     title: '',
     date: '',
@@ -92,6 +164,24 @@ export default function Dashboard() {
 
   const deleteMeeting = (id: string) => {
     setMeetings(meetings.filter(m => m.id !== id));
+  };
+
+  // Gestionnaires pour le calendrier
+  const handleMeetingSelect = (meeting: Meeting) => {
+    setSelectedMeeting(meeting);
+  };
+
+  const handleDateSelect = (date: Date) => {
+    setSelectedDate(date);
+    const dateMeetings = meetings.filter(meeting => {
+      const meetingDate = new Date(meeting.date).toDateString();
+      return meetingDate === date.toDateString();
+    });
+    if (dateMeetings.length === 1) {
+      setSelectedMeeting(dateMeetings[0]);
+    } else {
+      setSelectedMeeting(null);
+    }
   };
 
   const duplicateMeeting = (meeting: Meeting) => {
@@ -280,8 +370,24 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Liste des réunions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Interface principale avec calendrier */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Liste des réunions - 3 colonnes */}
+          <div className="lg:col-span-3">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Réunions</h2>
+              {selectedDate && (
+                <div className="text-sm text-gray-600">
+                  Réunions du {selectedDate.toLocaleDateString('fr-FR', { 
+                    day: 'numeric', 
+                    month: 'long', 
+                    year: 'numeric' 
+                  })}
+                </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {meetings.map((meeting) => (
             <Card key={meeting.id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-3">
@@ -349,6 +455,62 @@ export default function Dashboard() {
               </CardContent>
             </Card>
           ))}
+            </div>
+          </div>
+
+          {/* Mini-calendrier - 1 colonne */}
+          <div className="lg:col-span-1">
+            <MiniCalendar
+              meetings={meetings.map(m => ({
+                ...m,
+                duration: m.totalDuration
+              }))}
+              onMeetingSelect={handleMeetingSelect}
+              onDateSelect={handleDateSelect}
+              selectedDate={selectedDate}
+            />
+
+            {/* Détails de la réunion sélectionnée */}
+            {selectedMeeting && (
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle className="text-lg">{selectedMeeting.title}</CardTitle>
+                  <Badge className={getStatusColor(selectedMeeting.status)}>
+                    {getStatusLabel(selectedMeeting.status)}
+                  </Badge>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    <span>{selectedMeeting.date} à {selectedMeeting.time}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Users className="w-4 h-4" />
+                    <span>{selectedMeeting.participants.length} participants</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Clock className="w-4 h-4" />
+                    <span>{selectedMeeting.agendaItemsCount} points - {formatDuration(selectedMeeting.totalDuration)}</span>
+                  </div>
+
+                  {selectedMeeting.description && (
+                    <p className="text-sm text-gray-600">{selectedMeeting.description}</p>
+                  )}
+
+                  <Button 
+                    size="sm" 
+                    onClick={() => setLocation(`/presenter/${selectedMeeting.id}`)}
+                    className="w-full mt-3"
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Présenter cette réunion
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
 
         {/* Modal de création */}
