@@ -379,7 +379,7 @@ export default function AdminPanel() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Aucune structure</SelectItem>
+                          <SelectItem value="none">Aucune structure</SelectItem>
                           {structures.map((structure: Structure) => (
                             <SelectItem key={structure.id} value={structure.name}>
                               {structure.name}

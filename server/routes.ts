@@ -144,7 +144,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       req.session.userId = user.id;
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) reject(err);
+          else resolve(undefined);
+        });
+      });
       console.log("User logged in, session userId set to:", user.id);
+      console.log("Session after save:", req.session);
       
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
