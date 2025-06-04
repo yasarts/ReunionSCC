@@ -240,7 +240,7 @@ export default function SimpleMeetingPresenter() {
                 onClick={() => setIsEditMode(!isEditMode)}
                 className="flex items-center gap-1"
               >
-                <Edit className="h-3 w-3" />
+                <Edit3 className="h-3 w-3" />
                 {isEditMode ? 'Terminer' : 'Modifier'}
               </Button>
             </div>
@@ -397,7 +397,7 @@ export default function SimpleMeetingPresenter() {
                             }}
                             className="flex items-center gap-1"
                           >
-                            <Edit className="h-3 w-3" />
+                            <Edit3 className="h-3 w-3" />
                             Modifier
                           </Button>
                         </div>
@@ -434,8 +434,16 @@ export default function SimpleMeetingPresenter() {
                             </div>
                           </div>
                         ) : (
-                          <div className="prose prose-gray max-w-none">
-                            <p className="whitespace-pre-wrap">{currentItem.content || 'Aucun contenu défini'}</p>
+                          <div>
+                            {generateSectionMenu(currentItem)}
+                            <div className="prose prose-gray max-w-none">
+                              <div 
+                                className="whitespace-pre-wrap"
+                                dangerouslySetInnerHTML={{ 
+                                  __html: formatContentWithAnchors(currentItem.content || 'Aucun contenu défini')
+                                }}
+                              />
+                            </div>
                           </div>
                         )}
                       </div>
@@ -466,7 +474,7 @@ export default function SimpleMeetingPresenter() {
                             }}
                             className="flex items-center gap-1"
                           >
-                            <Edit className="h-3 w-3" />
+                            <Edit3 className="h-3 w-3" />
                             Modifier
                           </Button>
                         </div>
