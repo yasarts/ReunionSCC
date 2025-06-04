@@ -8,6 +8,13 @@ import { insertUserSchema, insertMeetingSchema, insertAgendaItemSchema, insertVo
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 
+// Extend session type
+declare module 'express-session' {
+  interface SessionData {
+    userId?: number;
+  }
+}
+
 // Session configuration
 const MemStore = MemoryStore(session);
 
@@ -136,7 +143,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      (req.session as any).userId = user.id;
+      req.session.userId = user.id;
+      console.log("User logged in, session userId set to:", user.id);
+      
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {
