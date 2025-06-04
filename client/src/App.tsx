@@ -32,6 +32,8 @@ function AppContent() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/presenter/:meetingId" component={SimpleMeetingPresenter} />
+      <Route path="/simple-presenter/:meetingId" component={SimpleMeetingPresenter} />
+      <Route path="/simple-presenter" component={SimpleMeetingPresenter} />
       <Route path="/admin" component={AdminPanel} />
       <Route path="/login" component={Login} />
       <Route component={NotFound} />
