@@ -860,12 +860,7 @@ export default function SimpleMeetingPresenter() {
                                           {subsection.presenter && (
                                             <p className="text-xs text-gray-500 mt-1">Présenté par: {subsection.presenter}</p>
                                           )}
-                                          <div className="flex items-center gap-1 mt-1">
-                                            <Clock className="h-3 w-3 text-gray-400" />
-                                            <span className="text-xs text-gray-500">
-                                              Début: {formatTime(getSubsectionStartTime(subsection.id))}
-                                            </span>
-                                          </div>
+
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2">
@@ -900,10 +895,17 @@ export default function SimpleMeetingPresenter() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-semibold text-gray-900">Résumé de la réunion</h3>
-                        <p className="text-sm text-gray-600">Durée totale estimée: {getMeetingDuration()}</p>
+                        <p className="text-sm text-gray-600">Durée totale estimée: {(() => {
+                          const sections = agenda.filter(item => item.level === 0);
+                          const totalMinutes = sections.reduce((acc, section) => acc + getSectionTotalDuration(section.id), 0);
+                          const hours = Math.floor(totalMinutes / 60);
+                          const minutes = totalMinutes % 60;
+                          return hours > 0 ? `${hours}h ${minutes}min` : `${minutes}min`;
+                        })()}</p>
                         <p className="text-xs text-gray-500 mt-1">
                           Fin prévue: {(() => {
-                            const totalDuration = agenda.reduce((acc, item) => acc + item.duration, 0);
+                            const sections = agenda.filter(item => item.level === 0);
+                            const totalDuration = sections.reduce((acc, section) => acc + getSectionTotalDuration(section.id), 0);
                             const endTime = new Date(`${meetingInfo.date} ${meetingInfo.time}`);
                             endTime.setMinutes(endTime.getMinutes() + totalDuration);
                             return endTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
