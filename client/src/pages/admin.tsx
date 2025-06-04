@@ -1800,6 +1800,7 @@ export default function AdminPanel() {
                   <Button 
                     type="submit" 
                     disabled={updateMeetingTypeMutation.isPending}
+                    onClick={() => console.log('Button clicked!')}
                   >
                     {updateMeetingTypeMutation.isPending ? 'Sauvegarde...' : 'Sauvegarder'}
                   </Button>
