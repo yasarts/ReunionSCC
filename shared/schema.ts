@@ -49,6 +49,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name", { length: 100 }).notNull(),
   lastName: varchar("last_name", { length: 100 }).notNull(),
   role: varchar("role", { length: 50 }).notNull(), // 'salaried' | 'council_member'
+  roles: text("roles").array(), // Multiple roles support
   companyId: integer("company_id").references(() => companies.id),
   permissions: jsonb("permissions").notNull(),
   profileImageUrl: varchar("profile_image_url", { length: 500 }),
@@ -79,6 +80,16 @@ export const meetingTypeAccess = pgTable("meeting_type_access", {
   // Un utilisateur ou une entreprise ne peut avoir qu'un seul niveau d'accès par type de réunion
   uniqueUserAccess: unique().on(table.meetingTypeId, table.userId),
   uniqueCompanyAccess: unique().on(table.meetingTypeId, table.companyId),
+}));
+
+// Meeting type roles table - associe les types de réunions aux rôles
+export const meetingTypeRoles = pgTable("meeting_type_roles", {
+  id: serial("id").primaryKey(),
+  meetingTypeId: integer("meeting_type_id").references(() => meetingTypes.id, { onDelete: "cascade" }).notNull(),
+  role: varchar("role", { length: 50 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueRoleAccess: unique().on(table.meetingTypeId, table.role),
 }));
 
 // Meetings table
@@ -175,6 +186,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
 export const meetingTypesRelations = relations(meetingTypes, ({ many }) => ({
   meetings: many(meetings),
   accessControls: many(meetingTypeAccess),
+  roleAccess: many(meetingTypeRoles),
 }));
 
 export const meetingTypeAccessRelations = relations(meetingTypeAccess, ({ one }) => ({
@@ -189,6 +201,13 @@ export const meetingTypeAccessRelations = relations(meetingTypeAccess, ({ one })
   company: one(companies, {
     fields: [meetingTypeAccess.companyId],
     references: [companies.id],
+  }),
+}));
+
+export const meetingTypeRolesRelations = relations(meetingTypeRoles, ({ one }) => ({
+  meetingType: one(meetingTypes, {
+    fields: [meetingTypeRoles.meetingTypeId],
+    references: [meetingTypes.id],
   }),
 }));
 
