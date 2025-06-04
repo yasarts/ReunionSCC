@@ -150,6 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
+      console.log("Login attempt with:", req.body.email);
       const { email, password } = req.body;
       
       if (!email || !password) {
@@ -157,24 +158,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.getUserByEmail(email);
+      console.log("User found:", user ? `ID: ${user.id}, Email: ${user.email}` : "Not found");
+      
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       const isValid = await bcrypt.compare(password, user.password);
+      console.log("Password valid:", isValid);
+      
       if (!isValid) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       req.session.userId = user.id;
+      console.log("Session before save:", req.session);
+      
       await new Promise((resolve, reject) => {
         req.session.save((err) => {
-          if (err) reject(err);
-          else resolve(undefined);
+          if (err) {
+            console.error("Session save error:", err);
+            reject(err);
+          } else {
+            console.log("Session saved successfully");
+            resolve(undefined);
+          }
         });
       });
-      console.log("User logged in, session userId set to:", user.id);
+      
       console.log("Session after save:", req.session);
+      console.log("Session ID:", req.sessionID);
       
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
