@@ -853,14 +853,14 @@ export default function AdminPanel() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Entreprise</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : null)} value={field.value?.toString() || ""}>
+                      <Select onValueChange={(value) => field.onChange(value === "none" ? null : parseInt(value))} value={field.value?.toString() || "none"}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Sélectionner une entreprise" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Aucune entreprise</SelectItem>
+                          <SelectItem value="none">Aucune entreprise</SelectItem>
                           {companies?.map((company: Company) => (
                             <SelectItem key={company.id} value={company.id.toString()}>
                               {company.name}
@@ -975,14 +975,14 @@ export default function AdminPanel() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Entreprise</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(value ? parseInt(value) : null)} value={field.value?.toString() || ""}>
+                        <Select onValueChange={(value) => field.onChange(value === "none" ? null : parseInt(value))} value={field.value?.toString() || "none"}>
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Sélectionner une entreprise" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">Aucune entreprise</SelectItem>
+                            <SelectItem value="none">Aucune entreprise</SelectItem>
                             {companies?.map((company: Company) => (
                               <SelectItem key={company.id} value={company.id.toString()}>
                                 {company.name}
