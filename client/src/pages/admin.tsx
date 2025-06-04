@@ -50,20 +50,25 @@ export default function AdminPanel() {
   const [editingRole, setEditingRole] = useState<string | null>(null);
 
   // Requêtes pour récupérer les données
-  const { data: companies, isLoading: companiesLoading } = useQuery({
+  const { data: companies = [], isLoading: companiesLoading } = useQuery({
     queryKey: ['/api/companies'],
   });
 
-  const { data: users, isLoading: usersLoading } = useQuery({
+  const { data: users = [], isLoading: usersLoading } = useQuery({
     queryKey: ['/api/users'],
   });
 
-  const { data: meetingTypes, isLoading: meetingTypesLoading } = useQuery({
+  const { data: meetingTypes = [], isLoading: meetingTypesLoading } = useQuery({
     queryKey: ['/api/meeting-types'],
   });
 
-  const { data: meetingTypeAccess, isLoading: accessLoading } = useQuery({
+  const { data: meetingTypeAccess = [], isLoading: accessLoading } = useQuery({
     queryKey: ['/api/meeting-types', selectedMeetingType?.id, 'access'],
+    enabled: !!selectedMeetingType?.id,
+  });
+
+  const { data: meetingTypeRoles = [], isLoading: rolesLoading } = useQuery({
+    queryKey: ['/api/meeting-types', selectedMeetingType?.id, 'roles'],
     enabled: !!selectedMeetingType?.id,
   });
 
@@ -272,6 +277,48 @@ export default function AdminPanel() {
       toast({
         title: "Erreur",
         description: "Impossible de supprimer l'accès",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutations pour gérer les rôles des types de réunions
+  const addMeetingTypeRoleMutation = useMutation({
+    mutationFn: async ({ meetingTypeId, role }: { meetingTypeId: number; role: string }) => {
+      return await apiRequest('POST', `/api/meeting-types/${meetingTypeId}/roles`, { role });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types', selectedMeetingType?.id, 'roles'] });
+      setShowCreateRoleModal(false);
+      toast({
+        title: "Succès",
+        description: "Rôle ajouté avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le rôle",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeMeetingTypeRoleMutation = useMutation({
+    mutationFn: async (roleId: number) => {
+      return await apiRequest('DELETE', `/api/meeting-type-roles/${roleId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types', selectedMeetingType?.id, 'roles'] });
+      toast({
+        title: "Succès",
+        description: "Rôle supprimé avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le rôle",
         variant: "destructive",
       });
     },

@@ -522,7 +522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/meeting-types/:id", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+  app.put("/api/meeting-types/:id", async (req: any, res: Response) => {
     try {
       const id = parseInt(req.params.id);
       const meetingType = await storage.updateMeetingType(id, req.body);
@@ -587,6 +587,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user accessible meeting types:", error);
       res.status(500).json({ message: "Failed to fetch accessible meeting types" });
+    }
+  });
+
+  // Meeting type roles routes
+  app.get("/api/meeting-types/:id/roles", async (req: any, res: Response) => {
+    try {
+      const meetingTypeId = parseInt(req.params.id);
+      const roles = await storage.getMeetingTypeRoles(meetingTypeId);
+      res.json(roles);
+    } catch (error) {
+      console.error("Error fetching meeting type roles:", error);
+      res.status(500).json({ message: "Failed to fetch meeting type roles" });
+    }
+  });
+
+  app.post("/api/meeting-types/:id/roles", async (req: any, res: Response) => {
+    try {
+      const meetingTypeId = parseInt(req.params.id);
+      const { role } = req.body;
+      const newRole = await storage.createMeetingTypeRole({ meetingTypeId, role });
+      res.status(201).json(newRole);
+    } catch (error) {
+      console.error("Error creating meeting type role:", error);
+      res.status(500).json({ message: "Failed to create meeting type role" });
+    }
+  });
+
+  app.delete("/api/meeting-type-roles/:id", async (req: any, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteMeetingTypeRole(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting meeting type role:", error);
+      res.status(500).json({ message: "Failed to delete meeting type role" });
     }
   });
 
