@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'wouter';
-import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown, Move, Save, X, FileText } from 'lucide-react';
+import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown, Move, Save, X, FileText, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -409,15 +409,29 @@ export default function SimpleMeetingPresenter() {
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-gray-900">Ordre du jour</h2>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setIsEditMode(!isEditMode)}
-                className="flex items-center gap-1"
-              >
-                <Edit3 className="h-3 w-3" />
-                {isEditMode ? 'Terminer' : 'Modifier'}
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsEditMode(!isEditMode)}
+                  className="flex items-center gap-1"
+                >
+                  <Edit3 className="h-3 w-3" />
+                  {isEditMode ? 'Terminer' : 'Modifier'}
+                </Button>
+                
+                {isEditMode && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setShowAddItemModal(true)}
+                    className="flex items-center gap-1"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Ajouter
+                  </Button>
+                )}
+              </div>
             </div>
             <div className="mt-2 text-sm text-gray-600">
               <div>Réunion: {formatDisplayDate(meetingInfo.date)}</div>
@@ -431,17 +445,37 @@ export default function SimpleMeetingPresenter() {
               {agenda.map((item, index) => (
                 <div
                   key={item.id}
+                  draggable={isEditMode}
+                  onDragStart={() => setDraggedItem(item.id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => {
+                    if (draggedItem && draggedItem !== item.id) {
+                      const draggedIndex = agenda.findIndex(a => a.id === draggedItem);
+                      const targetIndex = agenda.findIndex(a => a.id === item.id);
+                      moveItemWithChildren(draggedIndex, targetIndex);
+                    }
+                  }}
                   className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                    item.level === 1 ? 'ml-4' : ''
+                  } ${
                     index === currentItemIndex
                       ? 'bg-blue-50 border-blue-300'
                       : itemStates[item.id]?.completed
                       ? 'bg-green-50 border-green-300'
                       : 'bg-white border-gray-200 hover:bg-gray-50'
+                  } ${
+                    isEditMode ? 'cursor-move' : 'cursor-pointer'
                   }`}
-                  onClick={() => setCurrentItemIndex(index)}
+                  onClick={() => !isEditMode && setCurrentItemIndex(index)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
+                      {isEditMode && (
+                        <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />
+                      )}
+                      <span className="text-xs font-mono text-gray-500 min-w-[2rem]">
+                        {getItemNumber(item, index)}
+                      </span>
                       {itemStates[item.id]?.completed ? (
                         <CheckCircle className="h-4 w-4 text-green-600" />
                       ) : index === currentItemIndex ? (
@@ -449,11 +483,27 @@ export default function SimpleMeetingPresenter() {
                       ) : (
                         <Circle className="h-4 w-4 text-gray-400" />
                       )}
-                      <span className="font-medium text-sm">{item.title}</span>
+                      <span className={`font-medium text-sm ${item.level === 1 ? 'text-gray-700' : 'text-gray-900'}`}>
+                        {item.title}
+                      </span>
                     </div>
-                    <Badge variant="outline" className={getTypeColor(item.type)}>
-                      {getTypeLabel(item.type)}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className={getTypeColor(item.type)}>
+                        {getTypeLabel(item.type)}
+                      </Badge>
+                      {isEditMode && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const newAgenda = agenda.filter(a => a.id !== item.id);
+                            setAgenda(newAgenda);
+                          }}
+                          className="p-1 text-red-500 hover:bg-red-50 rounded"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="mt-1 text-xs text-gray-500 flex items-center gap-2">
                     {isEditMode ? (
@@ -811,6 +861,99 @@ export default function SimpleMeetingPresenter() {
         meetingId={1} // ID fixe pour la démonstration
         meetingTitle={meetingInfo.title}
       />
+
+      {/* Modal d'ajout d'élément */}
+      {showAddItemModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-lg font-semibold mb-4">Ajouter un nouvel élément</h3>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target as HTMLFormElement);
+              const title = formData.get('title') as string;
+              const duration = parseInt(formData.get('duration') as string);
+              const parentId = newItemType === 'subsection' ? selectedParentId : undefined;
+              
+              if (title && duration) {
+                addNewItem(title, duration, newItemType, parentId);
+              }
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Type d'élément</label>
+                  <select 
+                    value={newItemType} 
+                    onChange={(e) => setNewItemType(e.target.value as 'section' | 'subsection' | 'break')}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="section">Section principale</option>
+                    <option value="subsection">Sous-section</option>
+                    <option value="break">Pause</option>
+                  </select>
+                </div>
+
+                {newItemType === 'subsection' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Section parente</label>
+                    <select 
+                      value={selectedParentId} 
+                      onChange={(e) => setSelectedParentId(e.target.value)}
+                      className="w-full p-2 border rounded-md"
+                      required
+                    >
+                      <option value="">Sélectionner une section</option>
+                      {getParentSections().map(section => (
+                        <option key={section.id} value={section.id}>
+                          {section.title}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Titre</label>
+                  <input
+                    type="text"
+                    name="title"
+                    placeholder={newItemType === 'break' ? 'Pause' : 'Titre de l\'élément'}
+                    defaultValue={newItemType === 'break' ? 'Pause' : ''}
+                    className="w-full p-2 border rounded-md"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Durée (minutes)</label>
+                  <input
+                    type="number"
+                    name="duration"
+                    placeholder="15"
+                    defaultValue={newItemType === 'break' ? '15' : '10'}
+                    min="1"
+                    className="w-full p-2 border rounded-md"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowAddItemModal(false)}
+                >
+                  Annuler
+                </Button>
+                <Button type="submit">
+                  Ajouter
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
