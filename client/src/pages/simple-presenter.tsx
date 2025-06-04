@@ -986,16 +986,10 @@ export default function SimpleMeetingPresenter() {
                 <Card>
                   <CardHeader>
                     <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-4">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setCurrentItemIndex(-1)}
-                          className="text-gray-600 hover:text-gray-900"
-                        >
-                          <Home className="h-4 w-4 mr-2" />
-                          Retour à l'aperçu
-                        </Button>
+                      <div className="flex items-center gap-3">
+                        {showAdvancedMode && (
+                          <Edit className="h-5 w-5 text-blue-600" />
+                        )}
                         <Button
                           variant={showAdvancedMode ? "default" : "outline"}
                           size="sm"
@@ -1016,6 +1010,26 @@ export default function SimpleMeetingPresenter() {
                         {/* Titre principal */}
                         <div>
                           <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentItem.title}</h1>
+                          {currentItem.level === 0 && (
+                            <div className="mb-3">
+                              <p className="text-lg text-blue-600 font-medium">
+                                Heure de début prévue : {(() => {
+                                  const sectionIndex = agenda.filter(item => item.level === 0).findIndex(section => section.id === currentItem.id);
+                                  if (sectionIndex === 0) {
+                                    return meetingInfo.time;
+                                  } else {
+                                    const startTime = new Date(`${meetingInfo.date} ${meetingInfo.time}`);
+                                    const previousSections = agenda.filter(item => item.level === 0).slice(0, sectionIndex);
+                                    const totalPreviousDuration = previousSections.reduce((acc, section) => 
+                                      acc + getSectionTotalDuration(section.id), 0
+                                    );
+                                    startTime.setMinutes(startTime.getMinutes() + totalPreviousDuration);
+                                    return startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                                  }
+                                })()}
+                              </p>
+                            </div>
+                          )}
                           <div className="flex items-center gap-4 text-sm text-gray-600">
                             {currentItem.presenter && (
                               <div className="flex items-center gap-1">
