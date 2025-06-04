@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'wouter';
-import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown, Move, Save, X, FileText, GripVertical } from 'lucide-react';
+import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown, Move, Save, X, FileText, GripVertical, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -987,16 +987,15 @@ export default function SimpleMeetingPresenter() {
                   <CardHeader>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        {showAdvancedMode && (
-                          <Edit className="h-5 w-5 text-blue-600" />
-                        )}
+                        <h1 className="text-3xl font-bold text-gray-900">{currentItem.title}</h1>
                         <Button
-                          variant={showAdvancedMode ? "default" : "outline"}
+                          variant="ghost"
                           size="sm"
                           onClick={() => setShowAdvancedMode(!showAdvancedMode)}
+                          className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                          title={showAdvancedMode ? "Mode simple" : "Mode édition"}
                         >
-                          <Settings className="h-4 w-4 mr-2" />
-                          {showAdvancedMode ? "Mode simple" : "Mode édition"}
+                          <Edit3 className="h-4 w-4" />
                         </Button>
                       </div>
                       <Badge className={getTypeColor(currentItem.type)}>
@@ -1004,45 +1003,45 @@ export default function SimpleMeetingPresenter() {
                       </Badge>
                     </div>
 
+                    {/* Informations complémentaires sous l'en-tête */}
+                    <div className="mb-6">
+                      {currentItem.level === 0 && (
+                        <div className="mb-3">
+                          <p className="text-lg text-blue-600 font-medium">
+                            Heure de début prévue : {(() => {
+                              const sectionIndex = agenda.filter(item => item.level === 0).findIndex(section => section.id === currentItem.id);
+                              if (sectionIndex === 0) {
+                                return meetingInfo.time;
+                              } else {
+                                const startTime = new Date(`${meetingInfo.date} ${meetingInfo.time}`);
+                                const previousSections = agenda.filter(item => item.level === 0).slice(0, sectionIndex);
+                                const totalPreviousDuration = previousSections.reduce((acc, section) => 
+                                  acc + getSectionTotalDuration(section.id), 0
+                                );
+                                startTime.setMinutes(startTime.getMinutes() + totalPreviousDuration);
+                                return startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                              }
+                            })()}
+                          </p>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                        {currentItem.presenter && (
+                          <div className="flex items-center gap-1">
+                            <Users className="h-4 w-4" />
+                            <span>Présenté par: {currentItem.presenter}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>Durée: {currentItem.duration} min</span>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Mode simple - Vue épurée */}
                     {!showAdvancedMode ? (
                       <div className="space-y-6">
-                        {/* Titre principal */}
-                        <div>
-                          <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentItem.title}</h1>
-                          {currentItem.level === 0 && (
-                            <div className="mb-3">
-                              <p className="text-lg text-blue-600 font-medium">
-                                Heure de début prévue : {(() => {
-                                  const sectionIndex = agenda.filter(item => item.level === 0).findIndex(section => section.id === currentItem.id);
-                                  if (sectionIndex === 0) {
-                                    return meetingInfo.time;
-                                  } else {
-                                    const startTime = new Date(`${meetingInfo.date} ${meetingInfo.time}`);
-                                    const previousSections = agenda.filter(item => item.level === 0).slice(0, sectionIndex);
-                                    const totalPreviousDuration = previousSections.reduce((acc, section) => 
-                                      acc + getSectionTotalDuration(section.id), 0
-                                    );
-                                    startTime.setMinutes(startTime.getMinutes() + totalPreviousDuration);
-                                    return startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-                                  }
-                                })()}
-                              </p>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            {currentItem.presenter && (
-                              <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4" />
-                                <span>Présenté par: {currentItem.presenter}</span>
-                              </div>
-                            )}
-                            <div className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              <span>Durée: {currentItem.duration} min</span>
-                            </div>
-                          </div>
-                        </div>
 
                         {/* Tags visuels */}
                         {currentItem.tags && currentItem.tags.length > 0 && (
