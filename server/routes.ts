@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { insertUserSchema, insertMeetingSchema, insertAgendaItemSchema, insertVoteSchema, insertVoteResponseSchema } from "@shared/schema";
+import { insertUserSchema, insertMeetingSchema, insertAgendaItemSchema, insertVoteSchema, insertVoteResponseSchema, insertStructureSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 

@@ -100,10 +100,7 @@ export default function AdminPanel() {
   // Mutations pour créer/modifier des structures
   const createStructureMutation = useMutation({
     mutationFn: async (data: CreateStructureFormData) => {
-      await apiRequest('/api/admin/structures', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
+      return await apiRequest('/api/admin/structures', 'POST', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/structures'] });

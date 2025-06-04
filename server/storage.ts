@@ -5,8 +5,11 @@ import {
   votes,
   voteResponses,
   meetingParticipants,
+  structures,
   type User,
   type InsertUser,
+  type Structure,
+  type InsertStructure,
   type Meeting,
   type InsertMeeting,
   type AgendaItem,
@@ -25,6 +28,15 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getAllUsers(): Promise<User[]>;
+  updateUser(id: number, updates: Partial<User>): Promise<User>;
+  deleteUser(id: number): Promise<void>;
+  
+  // Structure operations
+  getAllStructures(): Promise<Structure[]>;
+  createStructure(structure: InsertStructure): Promise<Structure>;
+  updateStructure(id: number, updates: Partial<Structure>): Promise<Structure>;
+  deleteStructure(id: number): Promise<void>;
   
   // Meeting operations
   getMeeting(id: number): Promise<Meeting | undefined>;
@@ -72,6 +84,49 @@ export class DatabaseStorage implements IStorage {
       .values(insertUser)
       .returning();
     return user;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(asc(users.firstName), asc(users.lastName));
+  }
+
+  async updateUser(id: number, updates: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(id: number): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  // Structure operations
+  async getAllStructures(): Promise<Structure[]> {
+    return await db.select().from(structures).orderBy(asc(structures.name));
+  }
+
+  async createStructure(insertStructure: InsertStructure): Promise<Structure> {
+    const [structure] = await db
+      .insert(structures)
+      .values(insertStructure)
+      .returning();
+    return structure;
+  }
+
+  async updateStructure(id: number, updates: Partial<Structure>): Promise<Structure> {
+    const [structure] = await db
+      .update(structures)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(structures.id, id))
+      .returning();
+    return structure;
+  }
+
+  async deleteStructure(id: number): Promise<void> {
+    await db.delete(structures).where(eq(structures.id, id));
   }
 
   // Meeting operations

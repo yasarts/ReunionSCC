@@ -229,9 +229,17 @@ export const insertVoteResponseSchema = createInsertSchema(voteResponses).omit({
   createdAt: true,
 });
 
+export const insertStructureSchema = createInsertSchema(structures).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Structure = typeof structures.$inferSelect;
+export type InsertStructure = z.infer<typeof insertStructureSchema>;
 export type Meeting = typeof meetings.$inferSelect;
 export type InsertMeeting = z.infer<typeof insertMeetingSchema>;
 export type AgendaItem = typeof agendaItems.$inferSelect;
