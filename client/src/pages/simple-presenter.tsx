@@ -148,7 +148,12 @@ export default function SimpleMeetingPresenter() {
     const infoKey = `meeting-info-${meetingId || 'default'}`;
     localStorage.removeItem(agendaKey);
     localStorage.removeItem(infoKey);
-    window.location.reload();
+    
+    // Recharger les données spécifiques à cette réunion
+    const freshData = getMeetingData(meetingId || 'conseil-national-2025');
+    setAgenda(freshData.agendaItems);
+    setMeetingInfo(freshData.meetingInfo);
+    setCurrentItemIndex(-1);
   };
 
   const formatDisplayDate = (dateString: string) => {
