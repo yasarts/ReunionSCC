@@ -15,7 +15,7 @@ export interface AgendaItem {
 
 export const meetingInfo = {
   title: "Conseil National SCC",
-  date: "5 juin 2025",
+  date: "2025-06-05",
   time: "10:00",
   participants: [
     "Christine Nissim",

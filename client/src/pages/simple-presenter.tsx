@@ -55,6 +55,47 @@ export default function SimpleMeetingPresenter() {
     return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Fonction pour valider et formater les dates
+  const formatDate = (dateString: string): string => {
+    try {
+      // Si c'est déjà au format ISO (YYYY-MM-DD), on le garde
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+          return new Date().toISOString().split('T')[0];
+        }
+        return dateString;
+      }
+      
+      // Si c'est un format français, on le convertit
+      if (dateString.includes('juin') || dateString.includes('mai') || dateString.includes('avril')) {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+      }
+      
+      // Par défaut, retourner la date d'aujourd'hui
+      return new Date().toISOString().split('T')[0];
+    } catch {
+      return new Date().toISOString().split('T')[0];
+    }
+  };
+
+  const formatDisplayDate = (dateString: string): string => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Date non valide';
+      }
+      return date.toLocaleDateString('fr-FR', { 
+        day: 'numeric', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+    } catch {
+      return 'Date non valide';
+    }
+  };
+
   // Fonction d'export PDF
   const exportToPDF = async () => {
     const { jsPDF } = await import('jspdf');
@@ -67,7 +108,7 @@ export default function SimpleMeetingPresenter() {
     doc.setFontSize(20);
     doc.text(meetingInfo.title, 20, 30);
     doc.setFontSize(12);
-    doc.text(`Date: ${meetingInfo.date} à ${meetingInfo.time}`, 20, 45);
+    doc.text(`Date: ${formatDisplayDate(meetingInfo.date)} à ${meetingInfo.time}`, 20, 45);
     doc.text(`Participants: ${meetingInfo.participants.length}`, 20, 55);
     
     // Ordre du jour
@@ -457,7 +498,7 @@ export default function SimpleMeetingPresenter() {
                 </div>
               </div>
             </div>
-            <span className="text-sm text-gray-600">{meetingInfo.date} - {formatTime(currentTime)}</span>
+            <span className="text-sm text-gray-600">{formatDisplayDate(meetingInfo.date)} - {formatTime(currentTime)}</span>
             <span className="text-sm text-gray-600">Durée: {getMeetingDuration()}</span>
           </div>
           
@@ -1051,8 +1092,8 @@ export default function SimpleMeetingPresenter() {
                   <Input
                     id="meetingDate"
                     type="date"
-                    value={meetingInfo.date}
-                    onChange={(e) => setMeetingInfo({...meetingInfo, date: e.target.value})}
+                    value={formatDate(meetingInfo.date)}
+                    onChange={(e) => setMeetingInfo({...meetingInfo, date: formatDate(e.target.value)})}
                   />
                 </div>
                 <div>
