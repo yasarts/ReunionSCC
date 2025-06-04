@@ -6,6 +6,8 @@ import {
   votes,
   voteResponses,
   meetingParticipants,
+  meetingTypes,
+  meetingTypeAccess,
   type Company,
   type InsertCompany,
   type User,
@@ -19,6 +21,10 @@ import {
   type VoteResponse,
   type InsertVoteResponse,
   type MeetingParticipant,
+  type MeetingType,
+  type InsertMeetingType,
+  type MeetingTypeAccess,
+  type InsertMeetingTypeAccess,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc } from "drizzle-orm";
@@ -62,6 +68,19 @@ export interface IStorage {
   castVote(voteResponse: InsertVoteResponse): Promise<void>;
   getVoteResults(voteId: number): Promise<VoteResponse[]>;
   closeVote(voteId: number): Promise<void>;
+  
+  // Meeting type operations
+  getMeetingTypes(): Promise<MeetingType[]>;
+  getMeetingType(id: number): Promise<MeetingType | undefined>;
+  createMeetingType(meetingType: InsertMeetingType): Promise<MeetingType>;
+  updateMeetingType(id: number, updates: Partial<MeetingType>): Promise<MeetingType>;
+  deleteMeetingType(id: number): Promise<void>;
+  
+  // Meeting type access operations
+  getMeetingTypeAccess(meetingTypeId: number): Promise<(MeetingTypeAccess & { user?: User, company?: Company })[]>;
+  createMeetingTypeAccess(access: InsertMeetingTypeAccess): Promise<MeetingTypeAccess>;
+  deleteMeetingTypeAccess(id: number): Promise<void>;
+  getUserAccessibleMeetingTypes(userId: number): Promise<MeetingType[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -310,6 +329,111 @@ export class DatabaseStorage implements IStorage {
       .update(votes)
       .set({ isOpen: false, closedAt: new Date() })
       .where(eq(votes.id, voteId));
+  }
+
+  // Meeting type operations
+  async getMeetingTypes(): Promise<MeetingType[]> {
+    return await db
+      .select()
+      .from(meetingTypes)
+      .where(eq(meetingTypes.isActive, true))
+      .orderBy(asc(meetingTypes.name));
+  }
+
+  async getMeetingType(id: number): Promise<MeetingType | undefined> {
+    const [meetingType] = await db
+      .select()
+      .from(meetingTypes)
+      .where(eq(meetingTypes.id, id));
+    return meetingType;
+  }
+
+  async createMeetingType(meetingType: InsertMeetingType): Promise<MeetingType> {
+    const [created] = await db
+      .insert(meetingTypes)
+      .values(meetingType)
+      .returning();
+    return created;
+  }
+
+  async updateMeetingType(id: number, updates: Partial<MeetingType>): Promise<MeetingType> {
+    const [updated] = await db
+      .update(meetingTypes)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(meetingTypes.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteMeetingType(id: number): Promise<void> {
+    await db
+      .update(meetingTypes)
+      .set({ isActive: false, updatedAt: new Date() })
+      .where(eq(meetingTypes.id, id));
+  }
+
+  // Meeting type access operations
+  async getMeetingTypeAccess(meetingTypeId: number): Promise<(MeetingTypeAccess & { user?: User, company?: Company })[]> {
+    const results = await db
+      .select({
+        id: meetingTypeAccess.id,
+        meetingTypeId: meetingTypeAccess.meetingTypeId,
+        userId: meetingTypeAccess.userId,
+        companyId: meetingTypeAccess.companyId,
+        accessLevel: meetingTypeAccess.accessLevel,
+        createdAt: meetingTypeAccess.createdAt,
+        user: users,
+        company: companies,
+      })
+      .from(meetingTypeAccess)
+      .leftJoin(users, eq(meetingTypeAccess.userId, users.id))
+      .leftJoin(companies, eq(meetingTypeAccess.companyId, companies.id))
+      .where(eq(meetingTypeAccess.meetingTypeId, meetingTypeId));
+
+    return results.map(result => ({
+      id: result.id,
+      meetingTypeId: result.meetingTypeId,
+      userId: result.userId,
+      companyId: result.companyId,
+      accessLevel: result.accessLevel,
+      createdAt: result.createdAt,
+      user: result.user || undefined,
+      company: result.company || undefined,
+    }));
+  }
+
+  async createMeetingTypeAccess(access: InsertMeetingTypeAccess): Promise<MeetingTypeAccess> {
+    const [created] = await db
+      .insert(meetingTypeAccess)
+      .values(access)
+      .returning();
+    return created;
+  }
+
+  async deleteMeetingTypeAccess(id: number): Promise<void> {
+    await db
+      .delete(meetingTypeAccess)
+      .where(eq(meetingTypeAccess.id, id));
+  }
+
+  async getUserAccessibleMeetingTypes(userId: number): Promise<MeetingType[]> {
+    const user = await this.getUser(userId);
+    if (!user) return [];
+
+    const accessibleTypes = await db
+      .select({ meetingType: meetingTypes })
+      .from(meetingTypeAccess)
+      .innerJoin(meetingTypes, eq(meetingTypeAccess.meetingTypeId, meetingTypes.id))
+      .where(
+        and(
+          eq(meetingTypes.isActive, true),
+          user.companyId 
+            ? eq(meetingTypeAccess.companyId, user.companyId)
+            : eq(meetingTypeAccess.userId, userId)
+        )
+      );
+
+    return accessibleTypes.map(result => result.meetingType);
   }
 }
 
