@@ -39,26 +39,6 @@ export default function AdminPanel() {
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  // Vérifier les permissions
-  if (!user?.permissions?.canManageUsers) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-        <div className="max-w-4xl mx-auto">
-          <Card>
-            <CardContent className="p-6 text-center">
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">Accès refusé</h2>
-              <p className="text-gray-600">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
-              <Button onClick={() => setLocation('/')} className="mt-4">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Retour au tableau de bord
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
-
   // Requêtes pour récupérer les données
   const { data: companies, isLoading: companiesLoading } = useQuery({
     queryKey: ['/api/companies'],
@@ -224,6 +204,26 @@ export default function AdminPanel() {
     const company = companies.find((c: Company) => c.id === companyId);
     return company?.name || 'Non assigné';
   };
+
+  // Vérification des permissions
+  if (!user?.permissions?.canManageUsers) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+        <div className="max-w-4xl mx-auto">
+          <Card>
+            <CardContent className="p-6 text-center">
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">Accès refusé</h2>
+              <p className="text-gray-600">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+              <Button onClick={() => setLocation('/')} className="mt-4">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Retour au tableau de bord
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
