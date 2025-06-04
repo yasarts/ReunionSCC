@@ -30,7 +30,38 @@ export default function SimpleMeetingPresenter() {
   const [agenda, setAgenda] = useState<AgendaItem[]>(() => {
     const storageKey = `meeting-agenda-${meetingId || 'default'}`;
     const savedAgenda = localStorage.getItem(storageKey);
-    return savedAgenda ? JSON.parse(savedAgenda) : initialAgenda;
+    if (savedAgenda) {
+      return JSON.parse(savedAgenda);
+    }
+    
+    // Agendas spécifiques selon l'ID de la réunion
+    if (meetingId === 'reunion-budget-2025') {
+      return [
+        { id: 'b1', title: 'Ouverture de la séance Budget', duration: 5, type: 'opening', level: 1, completed: false },
+        { id: 'b2', title: 'Présentation du budget prévisionnel 2025', duration: 15, type: 'discussion', level: 1, completed: false },
+        { id: 'b3', title: 'Analyse des dépenses', duration: 20, type: 'discussion', level: 1, completed: false },
+        { id: 'b4', title: 'Vote du budget', duration: 10, type: 'decision', level: 1, completed: false },
+        { id: 'b5', title: 'Clôture', duration: 5, type: 'closing', level: 1, completed: false }
+      ];
+    } else if (meetingId === 'conseil-national-2025') {
+      return [
+        { id: 'c1', title: 'Ouverture du Conseil National', duration: 10, type: 'opening', level: 1, completed: false },
+        { id: 'c2', title: 'Rapport d\'activité annuel', duration: 25, type: 'information', level: 1, completed: false },
+        { id: 'c3', title: 'Orientations stratégiques', duration: 30, type: 'discussion', level: 1, completed: false },
+        { id: 'c4', title: 'Questions diverses', duration: 15, type: 'discussion', level: 1, completed: false },
+        { id: 'c5', title: 'Clôture du Conseil', duration: 5, type: 'closing', level: 1, completed: false }
+      ];
+    } else if (meetingId === 'assemblee-generale-ordinaire') {
+      return [
+        { id: 'a1', title: 'Ouverture de l\'AG', duration: 10, type: 'opening', level: 1, completed: false },
+        { id: 'a2', title: 'Rapport moral du Président', duration: 20, type: 'information', level: 1, completed: false },
+        { id: 'a3', title: 'Rapport financier', duration: 15, type: 'information', level: 1, completed: false },
+        { id: 'a4', title: 'Élections', duration: 30, type: 'decision', level: 1, completed: false },
+        { id: 'a5', title: 'Clôture de l\'AG', duration: 5, type: 'closing', level: 1, completed: false }
+      ];
+    }
+    
+    return initialAgenda;
   });
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo>(() => {
     const storageKey = `meeting-info-${meetingId || 'default'}`;
