@@ -1024,11 +1024,29 @@ export default function AdminPanel() {
                   className="bg-blue-600 hover:bg-blue-700"
                   onClick={() => {
                     console.log('Role save button clicked!');
-                    // Ici on sauvegarderait les permissions du rôle
-                    // Pour le moment, on ferme juste la modale
+                    
+                    // Collecter les valeurs des permissions depuis les checkboxes
+                    const permissions = {
+                      canView: (document.getElementById('edit-canView') as HTMLInputElement)?.checked || false,
+                      canEdit: (document.getElementById('edit-canEdit') as HTMLInputElement)?.checked || false,
+                      canVote: (document.getElementById('edit-canVote') as HTMLInputElement)?.checked || false,
+                      canSeeVoteResults: (document.getElementById('edit-canSeeVoteResults') as HTMLInputElement)?.checked || false,
+                      canManageAgenda: (document.getElementById('edit-canManageAgenda') as HTMLInputElement)?.checked || false,
+                      canManageParticipants: (document.getElementById('edit-canManageParticipants') as HTMLInputElement)?.checked || false,
+                      canCreateMeetings: (document.getElementById('edit-canCreateMeetings') as HTMLInputElement)?.checked || false,
+                      canManageUsers: (document.getElementById('edit-canManageUsers') as HTMLInputElement)?.checked || false,
+                    };
+                    
+                    console.log('Permissions sauvegardées:', permissions);
+                    console.log('Pour le rôle:', editingRole);
+                    
+                    // Stocker les permissions dans le localStorage pour simulation
+                    const roleKey = `permissions_${editingRole}`;
+                    localStorage.setItem(roleKey, JSON.stringify(permissions));
+                    
                     toast({
                       title: "Succès",
-                      description: "Permissions du rôle sauvegardées",
+                      description: `Permissions du rôle ${editingRole === "salarie" ? "Salarié·es SCC" : "Elu·es"} sauvegardées`,
                     });
                     setEditingRole(null);
                   }}
