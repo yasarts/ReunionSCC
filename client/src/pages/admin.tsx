@@ -206,13 +206,14 @@ export default function AdminPanel() {
                             </p>
                           )}
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {Object.entries(userItem.permissions)
-                              .filter(([, value]) => value)
-                              .map(([key]) => (
-                                <Badge key={key} variant="outline" className="text-xs">
-                                  {key.replace('can', '').replace(/([A-Z])/g, ' $1').toLowerCase()}
-                                </Badge>
-                              ))
+                            {userItem.permissions && typeof userItem.permissions === 'object' && 
+                              Object.entries(userItem.permissions)
+                                .filter(([, value]) => value)
+                                .map(([key]) => (
+                                  <Badge key={key} variant="outline" className="text-xs">
+                                    {key.replace('can', '').replace(/([A-Z])/g, ' $1').toLowerCase()}
+                                  </Badge>
+                                ))
                             }
                           </div>
                         </div>
@@ -263,9 +264,9 @@ export default function AdminPanel() {
                       <div className="flex justify-between items-start">
                         <div className="space-y-2">
                           <h3 className="font-semibold text-lg">{structure.name}</h3>
-                          <p className="text-gray-600">
-                            {structure.userCount} utilisateur{structure.userCount > 1 ? 's' : ''}
-                          </p>
+                          {structure.description && (
+                            <p className="text-gray-600">{structure.description}</p>
+                          )}
                           <p className="text-sm text-gray-500">
                             Créée le {new Date(structure.createdAt).toLocaleDateString('fr-FR')}
                           </p>

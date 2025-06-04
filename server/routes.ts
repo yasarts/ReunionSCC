@@ -38,7 +38,15 @@ const requirePermission = (permission: string) => {
   return async (req: any, res: Response, next: any) => {
     try {
       const user = await storage.getUser(req.session.userId);
-      if (!user || !user.permissions[permission]) {
+      if (!user) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      
+      const permissions = typeof user.permissions === 'string' 
+        ? JSON.parse(user.permissions) 
+        : user.permissions;
+      
+      if (!permissions || !permissions[permission]) {
         return res.status(403).json({ message: "Forbidden" });
       }
       req.user = user;
