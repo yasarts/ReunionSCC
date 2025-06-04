@@ -57,6 +57,9 @@ export default function SimpleMeetingPresenter() {
   const [editingPresentation, setEditingPresentation] = useState<string | null>(null);
   const [editedPresentationLink, setEditedPresentationLink] = useState('');
   const [editedPresentationTitle, setEditedPresentationTitle] = useState('');
+  const [editingPresenter, setEditingPresenter] = useState<string | null>(null);
+  const [editedPresenter, setEditedPresenter] = useState('');
+  const [showAdvancedMode, setShowAdvancedMode] = useState<boolean>(false);
 
 
   useEffect(() => {
@@ -446,6 +449,38 @@ export default function SimpleMeetingPresenter() {
     );
     setAgenda(updatedAgenda);
     setEditingPresentation(null);
+  };
+
+  const savePresenter = (itemId: string) => {
+    const updatedAgenda = agenda.map(item => 
+      item.id === itemId 
+        ? { ...item, presenter: editedPresenter }
+        : item
+    );
+    setAgenda(updatedAgenda);
+    setEditingPresenter(null);
+  };
+
+  const convertToSection = (itemId: string) => {
+    const updatedAgenda = agenda.map(item => 
+      item.id === itemId 
+        ? { ...item, level: 0, parentSectionId: undefined, isSubsection: false }
+        : item
+    );
+    setAgenda(updatedAgenda);
+  };
+
+  const convertToSubsection = (itemId: string, parentId: string) => {
+    const updatedAgenda = agenda.map(item => 
+      item.id === itemId 
+        ? { ...item, level: 1, parentSectionId: parentId, isSubsection: true }
+        : item
+    );
+    setAgenda(updatedAgenda);
+  };
+
+  const getAvailableParentSections = () => {
+    return agenda.filter(item => item.level === 0 && !item.isSubsection);
   };
 
   // Ajouter une pause
@@ -970,328 +1005,501 @@ export default function SimpleMeetingPresenter() {
               <div className="p-8">
                 <Card>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      {editingTitle === currentItem.id ? (
-                        <div className="flex items-center gap-2 flex-1">
-                          <Input
-                            value={editedTitle}
-                            onChange={(e) => setEditedTitle(e.target.value)}
-                            className="flex-1 text-xl font-semibold"
-                            placeholder="Titre de la section"
-                          />
-                          <Button size="sm" onClick={() => saveTitle(currentItem.id)}>
-                            <Save className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditingTitle(null)}>
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-3 flex-1">
-                          <CardTitle className="text-2xl">{currentItem.title}</CardTitle>
-                          <button
-                            onClick={() => {
-                              setEditingTitle(currentItem.id);
-                              setEditedTitle(currentItem.title);
-                            }}
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Modifier le titre"
-                          >
-                            <Edit3 className="h-4 w-4 text-gray-600" />
-                          </button>
-                        </div>
-                      )}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCurrentItemIndex(-1)}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          <Home className="h-4 w-4 mr-2" />
+                          Retour à l'aperçu
+                        </Button>
+                        <Button
+                          variant={showAdvancedMode ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setShowAdvancedMode(!showAdvancedMode)}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          {showAdvancedMode ? "Mode simple" : "Mode édition"}
+                        </Button>
+                      </div>
                       <Badge className={getTypeColor(currentItem.type)}>
                         {getTypeLabel(currentItem.type)}
                       </Badge>
                     </div>
-                    {currentItem.presenter && (
-                      <p className="text-gray-600">Présenté par: {currentItem.presenter}</p>
-                    )}
-                    
-                    {/* Section Tags */}
-                    <div className="mt-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="text-sm font-medium text-gray-700">Tags</h4>
-                        {editingTags === currentItem.id ? (
-                          <div className="flex items-center gap-2 flex-1">
-                            <Input
-                              value={editedTags}
-                              onChange={(e) => setEditedTags(e.target.value)}
-                              placeholder="Tags séparés par des virgules"
-                              className="flex-1"
-                            />
-                            <Button size="sm" onClick={() => saveTags(currentItem.id)}>
-                              <Save className="h-3 w-3" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => setEditingTags(null)}>
-                              <X className="h-3 w-3" />
-                            </Button>
+
+                    {/* Mode simple - Vue épurée */}
+                    {!showAdvancedMode ? (
+                      <div className="space-y-6">
+                        {/* Titre principal */}
+                        <div>
+                          <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentItem.title}</h1>
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            {currentItem.presenter && (
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                <span>Présenté par: {currentItem.presenter}</span>
+                              </div>
+                            )}
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-4 w-4" />
+                              <span>Durée: {currentItem.duration} min</span>
+                            </div>
                           </div>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setEditingTags(currentItem.id);
-                              setEditedTags(currentItem.tags ? currentItem.tags.join(', ') : '');
-                            }}
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Modifier les tags"
-                          >
-                            <Edit3 className="h-3 w-3 text-gray-600" />
-                          </button>
-                        )}
-                      </div>
-                      {!editingTags && (
-                        <div className="flex flex-wrap gap-1">
-                          {currentItem.tags && currentItem.tags.length > 0 ? (
-                            currentItem.tags.map(tag => (
-                              <Badge key={tag} variant="secondary" className="text-xs">
+                        </div>
+
+                        {/* Tags visuels */}
+                        {currentItem.tags && currentItem.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {currentItem.tags.map(tag => (
+                              <Badge key={tag} variant="secondary" className="text-sm">
                                 {tag}
                               </Badge>
-                            ))
-                          ) : (
-                            <span className="text-xs text-gray-400">Aucun tag</span>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                            ))}
+                          </div>
+                        )}
 
-                    {/* Section Présentation */}
-                    <div className="mt-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <h4 className="text-sm font-medium text-gray-700">Présentation visuelle</h4>
-                        {editingPresentation === currentItem.id ? (
-                          <Button size="sm" variant="ghost" onClick={() => setEditingPresentation(null)}>
-                            <X className="h-3 w-3" />
-                          </Button>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setEditingPresentation(currentItem.id);
-                              setEditedPresentationLink(currentItem.presentationLink || '');
-                              setEditedPresentationTitle(currentItem.presentationTitle || '');
-                            }}
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Modifier le lien de présentation"
-                          >
-                            <Edit3 className="h-3 w-3 text-gray-600" />
-                          </button>
+                        {/* Présentation visuelle */}
+                        {currentItem.presentationLink && (
+                          <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-6">
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                                <Link2 className="h-5 w-5 text-white" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-blue-900">
+                                  {currentItem.presentationTitle || 'Présentation visuelle'}
+                                </h3>
+                                <p className="text-sm text-blue-700">Cliquez pour ouvrir dans un nouvel onglet</p>
+                              </div>
+                            </div>
+                            <a 
+                              href={currentItem.presentationLink} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+                            >
+                              <Link2 className="h-4 w-4" />
+                              Ouvrir la présentation
+                            </a>
+                          </div>
                         )}
                       </div>
-                      
-                      {editingPresentation === currentItem.id ? (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Link2 className="h-4 w-4 text-blue-600" />
-                            <span className="text-sm font-medium text-blue-800">Édition du lien de présentation</span>
+                    ) : (
+                      /* Mode édition avancée */
+                      <div className="space-y-6">
+                        {/* Édition du titre */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <h3 className="font-semibold text-gray-900">Titre et informations</h3>
                           </div>
-                          <Input
-                            value={editedPresentationTitle}
-                            onChange={(e) => setEditedPresentationTitle(e.target.value)}
-                            placeholder="Titre de la présentation"
-                            className="text-sm"
-                          />
-                          <Input
-                            value={editedPresentationLink}
-                            onChange={(e) => setEditedPresentationLink(e.target.value)}
-                            placeholder="URL de la présentation"
-                            className="text-sm"
-                          />
-                          <div className="flex gap-2">
-                            <Button size="sm" onClick={() => savePresentation(currentItem.id)}>
-                              <Save className="h-3 w-3" />
-                            </Button>
-                            <Button size="sm" variant="ghost" onClick={() => setEditingPresentation(null)}>
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div>
-                          {currentItem.presentationLink ? (
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                              <div className="flex items-center gap-2">
-                                <Link2 className="h-4 w-4 text-blue-600" />
-                                <span className="text-sm font-medium text-blue-800">
-                                  {currentItem.presentationTitle || 'Présentation visuelle'}
-                                </span>
+                          
+                          {editingTitle === currentItem.id ? (
+                            <div className="space-y-2">
+                              <Input
+                                value={editedTitle}
+                                onChange={(e) => setEditedTitle(e.target.value)}
+                                className="text-lg font-semibold"
+                                placeholder="Titre de la section"
+                              />
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={() => saveTitle(currentItem.id)}>
+                                  <Save className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => setEditingTitle(null)}>
+                                  <X className="h-4 w-4" />
+                                </Button>
                               </div>
-                              <a 
-                                href={currentItem.presentationLink} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="text-sm text-blue-600 hover:underline"
-                              >
-                                Ouvrir la présentation
-                              </a>
                             </div>
                           ) : (
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                              <span className="text-sm text-gray-500">Aucune présentation associée</span>
+                            <div className="flex items-center justify-between">
+                              <h2 className="text-xl font-semibold">{currentItem.title}</h2>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingTitle(currentItem.id);
+                                  setEditedTitle(currentItem.title);
+                                }}
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+
+                          {/* Édition du présentateur */}
+                          <div className="mt-4">
+                            {editingPresenter === currentItem.id ? (
+                              <div className="space-y-2">
+                                <Input
+                                  value={editedPresenter}
+                                  onChange={(e) => setEditedPresenter(e.target.value)}
+                                  placeholder="Nom du présentateur"
+                                />
+                                <div className="flex gap-2">
+                                  <Button size="sm" onClick={() => savePresenter(currentItem.id)}>
+                                    <Save className="h-4 w-4" />
+                                  </Button>
+                                  <Button size="sm" variant="ghost" onClick={() => setEditingPresenter(null)}>
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4 text-gray-500" />
+                                  <span className="text-gray-700">
+                                    {currentItem.presenter || "Aucun présentateur défini"}
+                                  </span>
+                                  <span className="text-gray-400">•</span>
+                                  <Clock className="h-4 w-4 text-gray-500" />
+                                  <span className="text-gray-700">{currentItem.duration} min</span>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    setEditingPresenter(currentItem.id);
+                                    setEditedPresenter(currentItem.presenter || '');
+                                  }}
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Conversion section/sous-section */}
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <h4 className="text-sm font-medium text-gray-700 mb-2">Structure</h4>
+                            <div className="flex items-center gap-2">
+                              {currentItem.level === 0 ? (
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline">Section principale</Badge>
+                                  <Select
+                                    onValueChange={(parentId) => convertToSubsection(currentItem.id, parentId)}
+                                  >
+                                    <SelectTrigger className="w-48">
+                                      <SelectValue placeholder="Convertir en sous-section" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {getAvailableParentSections()
+                                        .filter(section => section.id !== currentItem.id)
+                                        .map(section => (
+                                        <SelectItem key={section.id} value={section.id}>
+                                          {section.title}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary">Sous-section</Badge>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => convertToSection(currentItem.id)}
+                                  >
+                                    Convertir en section
+                                  </Button>
+                                  <Select
+                                    value={currentItem.parentSectionId || ''}
+                                    onValueChange={(parentId) => convertToSubsection(currentItem.id, parentId)}
+                                  >
+                                    <SelectTrigger className="w-48">
+                                      <SelectValue placeholder="Changer de section parent" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {getAvailableParentSections().map(section => (
+                                        <SelectItem key={section.id} value={section.id}>
+                                          {section.title}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Édition des tags */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-semibold text-gray-900">Tags</h3>
+                            {editingTags !== currentItem.id && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingTags(currentItem.id);
+                                  setEditedTags(currentItem.tags ? currentItem.tags.join(', ') : '');
+                                }}
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {editingTags === currentItem.id ? (
+                            <div className="space-y-2">
+                              <Input
+                                value={editedTags}
+                                onChange={(e) => setEditedTags(e.target.value)}
+                                placeholder="Tags séparés par des virgules"
+                              />
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={() => saveTags(currentItem.id)}>
+                                  <Save className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => setEditingTags(null)}>
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap gap-1">
+                              {currentItem.tags && currentItem.tags.length > 0 ? (
+                                currentItem.tags.map(tag => (
+                                  <Badge key={tag} variant="secondary">
+                                    {tag}
+                                  </Badge>
+                                ))
+                              ) : (
+                                <span className="text-gray-500">Aucun tag défini</span>
+                              )}
                             </div>
                           )}
                         </div>
-                      )}
-                    </div>
+
+                        {/* Édition de la présentation */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-semibold text-gray-900">Présentation visuelle</h3>
+                            {editingPresentation !== currentItem.id && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingPresentation(currentItem.id);
+                                  setEditedPresentationLink(currentItem.presentationLink || '');
+                                  setEditedPresentationTitle(currentItem.presentationTitle || '');
+                                }}
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {editingPresentation === currentItem.id ? (
+                            <div className="space-y-3">
+                              <Input
+                                value={editedPresentationTitle}
+                                onChange={(e) => setEditedPresentationTitle(e.target.value)}
+                                placeholder="Titre de la présentation"
+                              />
+                              <Input
+                                value={editedPresentationLink}
+                                onChange={(e) => setEditedPresentationLink(e.target.value)}
+                                placeholder="URL de la présentation"
+                              />
+                              <div className="flex gap-2">
+                                <Button size="sm" onClick={() => savePresentation(currentItem.id)}>
+                                  <Save className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="ghost" onClick={() => setEditingPresentation(null)}>
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              {currentItem.presentationLink ? (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Link2 className="h-4 w-4 text-blue-600" />
+                                    <span className="font-medium text-blue-800">
+                                      {currentItem.presentationTitle || 'Présentation visuelle'}
+                                    </span>
+                                  </div>
+                                  <a 
+                                    href={currentItem.presentationLink} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline text-sm"
+                                  >
+                                    Ouvrir la présentation
+                                  </a>
+                                </div>
+                              ) : (
+                                <span className="text-gray-500">Aucune présentation associée</span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-6">
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-semibold">Contenu</h3>
-                          <button
-                            onClick={() => {
-                              setIsEditingContent(true);
-                              setEditedContent(currentItem.content || '');
-                            }}
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Modifier le contenu"
-                          >
-                            <Edit3 className="h-4 w-4 text-gray-600" />
-                          </button>
-                        </div>
-                        {isEditingContent ? (
-                          <div className="space-y-2">
-                            <div className="text-xs text-gray-500 mb-2">
-                              Support Markdown: **gras**, *italique*, `code`, - listes
-                            </div>
-                            <textarea
-                              value={editedContent}
-                              onChange={(e) => setEditedContent(e.target.value)}
-                              className="w-full h-32 p-2 border rounded-md resize-none font-mono text-sm"
-                              placeholder="Contenu de l'élément (support Markdown)..."
-                            />
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  const updatedAgenda = agenda.map(item => 
-                                    item.id === currentItem.id 
-                                      ? { ...item, content: editedContent }
-                                      : item
-                                  );
-                                  setAgenda(updatedAgenda);
-                                  setIsEditingContent(false);
-                                }}
-                              >
-                                Sauvegarder
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setIsEditingContent(false)}
-                              >
-                                Annuler
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div>
-                            {generateSectionMenu(currentItem)}
-                            <div className="prose prose-gray max-w-none">
-                              <div 
-                                className="whitespace-pre-wrap"
-                                dangerouslySetInnerHTML={{ 
-                                  __html: formatContentWithAnchors(currentItem.content || 'Aucun contenu défini')
-                                }}
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {currentItem.visualLink && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">Résumé visuel</h3>
-                          <Button
-                            variant="outline"
-                            onClick={() => window.open(currentItem.visualLink, '_blank')}
-                            className="flex items-center gap-2"
-                          >
-                            <Link2 className="w-4 h-4" />
-                            Ouvrir le résumé visuel
-                          </Button>
-                        </div>
-                      )}
-                      
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="text-lg font-semibold">Durée prévue</h3>
-                          <button
-                            onClick={() => {
-                              setIsEditingDuration(true);
-                              setEditedDuration(currentItem.duration);
-                            }}
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Modifier la durée"
-                          >
-                            <Edit3 className="h-4 w-4 text-gray-600" />
-                          </button>
-                        </div>
-                        {isEditingDuration ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4" />
-                              <input
-                                type="number"
-                                value={editedDuration}
-                                onChange={(e) => setEditedDuration(parseInt(e.target.value) || 0)}
-                                className="w-20 p-1 border rounded text-center"
-                                min="1"
-                                max="240"
-                              />
-                              <span>minutes</span>
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  const updatedAgenda = agenda.map(item => 
-                                    item.id === currentItem.id 
-                                      ? { ...item, duration: editedDuration }
-                                      : item
-                                  );
-                                  setAgenda(updatedAgenda);
-                                  setIsEditingDuration(false);
-                                }}
-                              >
-                                Sauvegarder
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setIsEditingDuration(false)}
-                              >
-                                Annuler
-                              </Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            <span 
-                              className="cursor-pointer hover:bg-gray-100 px-2 py-1 rounded"
-                              onClick={() => {
-                                setIsEditingDuration(true);
-                                setEditedDuration(currentItem.duration);
+                    {!showAdvancedMode ? (
+                      /* Mode simple - Contenu épuré */
+                      <div className="space-y-6">
+                        {/* Contenu principal */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-6">
+                          {generateSectionMenu(currentItem)}
+                          <div className="prose prose-gray max-w-none prose-lg">
+                            <div 
+                              className="whitespace-pre-wrap leading-relaxed text-gray-800"
+                              dangerouslySetInnerHTML={{ 
+                                __html: formatContentWithAnchors(currentItem.content || 'Aucun contenu défini pour cette section')
                               }}
-                              title="Cliquer pour modifier"
-                            >
-                              {currentItem.duration} minutes
-                            </span>
+                            />
                           </div>
-                        )}
-                      </div>
-                      
-                      {itemStates[currentItem.id]?.notes && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2">Notes</h3>
-                          <p className="text-gray-700 bg-gray-50 p-3 rounded">
-                            {itemStates[currentItem.id].notes}
-                          </p>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    ) : (
+                      /* Mode édition - Contenu détaillé */
+                      <div className="space-y-6">
+                        {/* Édition du contenu */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-semibold text-gray-900">Contenu</h3>
+                            {!isEditingContent && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setIsEditingContent(true);
+                                  setEditedContent(currentItem.content || '');
+                                }}
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {isEditingContent ? (
+                            <div className="space-y-3">
+                              <div className="text-xs text-gray-500 bg-blue-50 border border-blue-200 rounded p-2">
+                                Support Markdown: **gras**, *italique*, `code`, - listes, ## titres
+                              </div>
+                              <textarea
+                                value={editedContent}
+                                onChange={(e) => setEditedContent(e.target.value)}
+                                className="w-full h-40 p-3 border rounded-lg resize-none font-mono text-sm"
+                                placeholder="Contenu de l'élément (support Markdown)..."
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    const updatedAgenda = agenda.map(item => 
+                                      item.id === currentItem.id 
+                                        ? { ...item, content: editedContent }
+                                        : item
+                                    );
+                                    setAgenda(updatedAgenda);
+                                    setIsEditingContent(false);
+                                  }}
+                                >
+                                  <Save className="h-4 w-4 mr-2" />
+                                  Sauvegarder
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setIsEditingContent(false)}
+                                >
+                                  <X className="h-4 w-4 mr-2" />
+                                  Annuler
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="bg-white border border-gray-200 rounded-lg p-4">
+                              {generateSectionMenu(currentItem)}
+                              <div className="prose prose-gray max-w-none">
+                                <div 
+                                  className="whitespace-pre-wrap"
+                                  dangerouslySetInnerHTML={{ 
+                                    __html: formatContentWithAnchors(currentItem.content || 'Aucun contenu défini')
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Édition de la durée */}
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="font-semibold text-gray-900">Durée prévue</h3>
+                            {!isEditingDuration && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => {
+                                  setIsEditingDuration(true);
+                                  setEditedDuration(currentItem.duration);
+                                }}
+                              >
+                                <Edit3 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          
+                          {isEditingDuration ? (
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  type="number"
+                                  value={editedDuration}
+                                  onChange={(e) => setEditedDuration(parseInt(e.target.value) || 0)}
+                                  className="w-20"
+                                  min="1"
+                                />
+                                <span className="text-gray-600">minutes</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => {
+                                    const updatedAgenda = agenda.map(item => 
+                                      item.id === currentItem.id 
+                                        ? { ...item, duration: editedDuration }
+                                        : item
+                                    );
+                                    setAgenda(updatedAgenda);
+                                    setIsEditingDuration(false);
+                                  }}
+                                >
+                                  <Save className="h-4 w-4 mr-2" />
+                                  Sauvegarder
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setIsEditingDuration(false)}
+                                >
+                                  <X className="h-4 w-4 mr-2" />
+                                  Annuler
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-lg">
+                              <Clock className="h-5 w-5 text-blue-600" />
+                              <span className="font-semibold text-gray-900">{currentItem.duration}</span>
+                              <span className="text-gray-600">minutes</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
