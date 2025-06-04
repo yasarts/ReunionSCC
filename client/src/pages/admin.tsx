@@ -39,6 +39,7 @@ export default function AdminPanel() {
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 
   // Requêtes pour récupérer les données
   const { data: companies, isLoading: companiesLoading } = useQuery({
@@ -247,6 +248,11 @@ export default function AdminPanel() {
     }
   }, [editingUser, editUserForm]);
 
+  // Fonction pour obtenir les utilisateurs d'une entreprise
+  const getUsersByCompany = (companyId: number) => {
+    return users?.filter(user => user.companyId === companyId) || [];
+  };
+
   const onCreateCompany = (data: z.infer<typeof createCompanyFormSchema>) => {
     createCompanyMutation.mutate(data);
   };
@@ -352,29 +358,40 @@ export default function AdminPanel() {
             ) : (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {companies?.map((company: Company) => (
-                  <Card key={company.id} className="bg-white shadow-sm hover:shadow-md transition-shadow">
+                  <Card key={company.id} className="bg-white shadow-sm hover:shadow-md transition-shadow cursor-pointer">
                     <CardHeader className="pb-3">
                       <div className="flex justify-between items-start">
-                        <CardTitle className="text-lg text-gray-800">{company.name}</CardTitle>
+                        <div onClick={() => setSelectedCompany(company)} className="flex-1">
+                          <CardTitle className="text-lg text-gray-800">{company.name}</CardTitle>
+                          <p className="text-xs text-blue-600 mt-1">
+                            {getUsersByCompany(company.id).length} utilisateur(s) rattaché(s) • Cliquer pour voir le détail
+                          </p>
+                        </div>
                         <div className="flex gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => setEditingCompany(company)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingCompany(company);
+                            }}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteCompanyMutation.mutate(company.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteCompanyMutation.mutate(company.id);
+                            }}
                           >
                             <Trash2 className="w-4 h-4 text-red-500" />
                           </Button>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-2">
+                    <CardContent className="space-y-2" onClick={() => setSelectedCompany(company)}>
                       {company.siret && (
                         <p className="text-sm text-gray-600">SIRET: {company.siret}</p>
                       )}
@@ -483,6 +500,110 @@ export default function AdminPanel() {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Modal de vue détaillée d'entreprise */}
+        <Dialog open={!!selectedCompany} onOpenChange={() => setSelectedCompany(null)}>
+          <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                {selectedCompany?.name}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedCompany && (
+              <div className="space-y-6">
+                {/* Informations entreprise */}
+                <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">SIRET</p>
+                    <p className="text-sm text-gray-600">{selectedCompany.siret || "Non renseigné"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Secteur</p>
+                    <p className="text-sm text-gray-600">{selectedCompany.sector || "Non renseigné"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Adresse</p>
+                    <p className="text-sm text-gray-600">{selectedCompany.address || "Non renseignée"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-700">Téléphone</p>
+                    <p className="text-sm text-gray-600">{selectedCompany.phone || "Non renseigné"}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-gray-700">Email</p>
+                    <p className="text-sm text-gray-600">{selectedCompany.email || "Non renseigné"}</p>
+                  </div>
+                  {selectedCompany.description && (
+                    <div className="col-span-2">
+                      <p className="text-sm font-medium text-gray-700">Description</p>
+                      <p className="text-sm text-gray-600">{selectedCompany.description}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Liste des utilisateurs */}
+                <div>
+                  <h3 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Utilisateurs rattachés ({getUsersByCompany(selectedCompany.id).length})
+                  </h3>
+                  
+                  {getUsersByCompany(selectedCompany.id).length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                      <p>Aucun utilisateur rattaché à cette entreprise</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {getUsersByCompany(selectedCompany.id).map((user) => (
+                        <Card key={user.id} className="p-4">
+                          <div className="flex justify-between items-start">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <p className="font-medium text-gray-800">
+                                  {user.firstName} {user.lastName}
+                                </p>
+                                <Badge className={getRoleColor(user.role)}>
+                                  {user.role}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-600">{user.email}</p>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {user.permissions?.canEdit && (
+                                  <Badge variant="secondary" className="text-xs">Modification</Badge>
+                                )}
+                                {user.permissions?.canManageAgenda && (
+                                  <Badge variant="secondary" className="text-xs">Gestion agenda</Badge>
+                                )}
+                                {user.permissions?.canManageUsers && (
+                                  <Badge variant="secondary" className="text-xs">Gestion utilisateurs</Badge>
+                                )}
+                                {user.permissions?.canCreateMeetings && (
+                                  <Badge variant="secondary" className="text-xs">Création réunions</Badge>
+                                )}
+                              </div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedCompany(null);
+                                setEditingUser(user);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
         {/* Modal de création d'entreprise */}
         <Dialog open={showCreateCompanyModal} onOpenChange={setShowCreateCompanyModal}>
