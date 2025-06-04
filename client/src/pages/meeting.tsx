@@ -273,17 +273,6 @@ export default function MeetingView() {
                   <RotateCcw className="h-4 w-4" />
                 </Button>
               </div>
-              
-              {/* Progress */}
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Progression:</span>
-                <div className="w-20">
-                  <Progress value={progressPercent} className="h-2" />
-                </div>
-                <span className="text-sm font-medium text-gray-900">
-                  {completedCount}/{totalCount}
-                </span>
-              </div>
             </div>
           </div>
         </div>
