@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -47,6 +48,13 @@ export default function SimpleMeetingPresenter() {
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [newItemType, setNewItemType] = useState<'section' | 'subsection' | 'break'>('section');
   const [selectedParentId, setSelectedParentId] = useState<string>('');
+  const [editingTitle, setEditingTitle] = useState<string | null>(null);
+  const [editedTitle, setEditedTitle] = useState('');
+  const [editingTags, setEditingTags] = useState<string | null>(null);
+  const [editedTags, setEditedTags] = useState('');
+  const [editingPresentation, setEditingPresentation] = useState<string | null>(null);
+  const [editedPresentationLink, setEditedPresentationLink] = useState('');
+  const [editedPresentationTitle, setEditedPresentationTitle] = useState('');
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -326,6 +334,64 @@ export default function SimpleMeetingPresenter() {
     if (index !== -1) {
       setCurrentItemIndex(index);
     }
+  };
+
+  // Fonctions d'édition pour l'aperçu général
+  const saveTitle = (itemId: string) => {
+    const updatedAgenda = agenda.map(item => 
+      item.id === itemId 
+        ? { ...item, title: editedTitle }
+        : item
+    );
+    setAgenda(updatedAgenda);
+    setEditingTitle(null);
+    setEditedTitle('');
+  };
+
+  const saveTags = (itemId: string) => {
+    const tags = editedTags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+    const updatedAgenda = agenda.map(item => 
+      item.id === itemId 
+        ? { ...item, tags: tags }
+        : item
+    );
+    setAgenda(updatedAgenda);
+    setEditingTags(null);
+    setEditedTags('');
+  };
+
+  const savePresentation = (itemId: string) => {
+    const updatedAgenda = agenda.map(item => 
+      item.id === itemId 
+        ? { 
+            ...item, 
+            presentationLink: editedPresentationLink,
+            presentationTitle: editedPresentationTitle || 'Présentation visuelle'
+          }
+        : item
+    );
+    setAgenda(updatedAgenda);
+    setEditingPresentation(null);
+    setEditedPresentationLink('');
+    setEditedPresentationTitle('');
+  };
+
+  const convertToSection = (itemId: string) => {
+    const updatedAgenda = agenda.map(item => 
+      item.id === itemId 
+        ? { ...item, level: 0, parentSectionId: undefined }
+        : item
+    );
+    setAgenda(updatedAgenda);
+  };
+
+  const convertToSubsection = (itemId: string, parentId: string) => {
+    const updatedAgenda = agenda.map(item => 
+      item.id === itemId 
+        ? { ...item, level: 1, parentSectionId: parentId }
+        : item
+    );
+    setAgenda(updatedAgenda);
   };;
 
   // Ajouter une pause
@@ -697,7 +763,7 @@ export default function SimpleMeetingPresenter() {
                       const isCompleted = itemStates[section.id]?.completed;
 
                       return (
-                        <Card key={section.id} className={`transition-all hover:shadow-md cursor-pointer ${isCompleted ? 'bg-green-50 border-green-200' : ''}`}>
+                        <Card key={section.id} className={`group transition-all hover:shadow-md cursor-pointer ${isCompleted ? 'bg-green-50 border-green-200' : ''}`}>
                           <CardHeader onClick={() => navigateToItem(section.id)}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
@@ -707,8 +773,40 @@ export default function SimpleMeetingPresenter() {
                                 ) : (
                                   <Circle className="h-6 w-6 text-gray-400" />
                                 )}
-                                <div>
-                                  <CardTitle className="text-xl hover:text-blue-600 transition-colors">{section.title}</CardTitle>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2">
+                                    {editingTitle === section.id ? (
+                                      <div className="flex items-center gap-2 flex-1">
+                                        <Input
+                                          value={editedTitle}
+                                          onChange={(e) => setEditedTitle(e.target.value)}
+                                          className="flex-1"
+                                          placeholder="Titre de la section"
+                                        />
+                                        <Button size="sm" onClick={() => saveTitle(section.id)}>
+                                          <Save className="h-3 w-3" />
+                                        </Button>
+                                        <Button size="sm" variant="ghost" onClick={() => setEditingTitle(null)}>
+                                          <X className="h-3 w-3" />
+                                        </Button>
+                                      </div>
+                                    ) : (
+                                      <>
+                                        <CardTitle className="text-xl hover:text-blue-600 transition-colors">{section.title}</CardTitle>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setEditingTitle(section.id);
+                                            setEditedTitle(section.title);
+                                          }}
+                                          className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                          title="Modifier le titre"
+                                        >
+                                          <Edit3 className="h-3 w-3 text-gray-500" />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
                                   {section.presenter && (
                                     <p className="text-sm text-gray-600 mt-1">Présenté par: {section.presenter}</p>
                                   )}
@@ -721,36 +819,131 @@ export default function SimpleMeetingPresenter() {
                                 <Badge variant="outline">
                                   {totalDuration} min
                                 </Badge>
-                                {section.tags && section.tags.length > 0 && (
-                                  <div className="flex gap-1">
-                                    {section.tags.map(tag => (
-                                      <Badge key={tag} variant="secondary" className="text-xs">
-                                        {tag}
-                                      </Badge>
-                                    ))}
+                                {editingTags === section.id ? (
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      value={editedTags}
+                                      onChange={(e) => setEditedTags(e.target.value)}
+                                      placeholder="Tags séparés par des virgules"
+                                      className="w-48"
+                                    />
+                                    <Button size="sm" onClick={() => saveTags(section.id)}>
+                                      <Save className="h-3 w-3" />
+                                    </Button>
+                                    <Button size="sm" variant="ghost" onClick={() => setEditingTags(null)}>
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    {section.tags && section.tags.length > 0 ? (
+                                      <div className="flex gap-1">
+                                        {section.tags.map(tag => (
+                                          <Badge key={tag} variant="secondary" className="text-xs">
+                                            {tag}
+                                          </Badge>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <span className="text-xs text-gray-400">Aucun tag</span>
+                                    )}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingTags(section.id);
+                                        setEditedTags(section.tags ? section.tags.join(', ') : '');
+                                      }}
+                                      className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                      title="Modifier les tags"
+                                    >
+                                      <Edit3 className="h-3 w-3 text-gray-500" />
+                                    </button>
                                   </div>
                                 )}
                               </div>
                             </div>
                             
-                            {section.presentationLink && (
+                            {editingPresentation === section.id ? (
                               <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
                                   <div className="flex items-center gap-2">
                                     <Link2 className="h-4 w-4 text-blue-600" />
-                                    <span className="text-sm font-medium text-blue-800">
-                                      {section.presentationTitle || 'Présentation visuelle'}
-                                    </span>
+                                    <span className="text-sm font-medium text-blue-800">Édition du lien de présentation</span>
                                   </div>
-                                  <a 
-                                    href={section.presentationLink} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-sm text-blue-600 hover:underline"
-                                  >
-                                    Ouvrir la présentation
-                                  </a>
+                                  <Input
+                                    value={editedPresentationTitle}
+                                    onChange={(e) => setEditedPresentationTitle(e.target.value)}
+                                    placeholder="Titre de la présentation"
+                                    className="text-sm"
+                                  />
+                                  <Input
+                                    value={editedPresentationLink}
+                                    onChange={(e) => setEditedPresentationLink(e.target.value)}
+                                    placeholder="URL de la présentation"
+                                    className="text-sm"
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button size="sm" onClick={() => savePresentation(section.id)}>
+                                      <Save className="h-3 w-3" />
+                                    </Button>
+                                    <Button size="sm" variant="ghost" onClick={() => setEditingPresentation(null)}>
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
                                 </div>
+                              </div>
+                            ) : (
+                              <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                                {section.presentationLink ? (
+                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <Link2 className="h-4 w-4 text-blue-600" />
+                                        <span className="text-sm font-medium text-blue-800">
+                                          {section.presentationTitle || 'Présentation visuelle'}
+                                        </span>
+                                      </div>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setEditingPresentation(section.id);
+                                          setEditedPresentationLink(section.presentationLink || '');
+                                          setEditedPresentationTitle(section.presentationTitle || '');
+                                        }}
+                                        className="p-1 hover:bg-blue-200 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="Modifier le lien de présentation"
+                                      >
+                                        <Edit3 className="h-3 w-3 text-blue-600" />
+                                      </button>
+                                    </div>
+                                    <a 
+                                      href={section.presentationLink} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-sm text-blue-600 hover:underline"
+                                    >
+                                      Ouvrir la présentation
+                                    </a>
+                                  </div>
+                                ) : (
+                                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm text-gray-500">Aucune présentation associée</span>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setEditingPresentation(section.id);
+                                          setEditedPresentationLink('');
+                                          setEditedPresentationTitle('');
+                                        }}
+                                        className="p-1 hover:bg-gray-200 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="Ajouter un lien de présentation"
+                                      >
+                                        <Plus className="h-3 w-3 text-gray-500" />
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </CardHeader>
