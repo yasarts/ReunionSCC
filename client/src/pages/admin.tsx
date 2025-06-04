@@ -31,6 +31,34 @@ const createUserFormSchema = insertUserSchema.extend({
 
 const createMeetingTypeFormSchema = insertMeetingTypeSchema;
 
+// Composant pour afficher les rôles d'un type de réunion
+function MeetingTypeRoles({ meetingTypeId }: { meetingTypeId: number }) {
+  const { data: roles, isLoading } = useQuery({
+    queryKey: ['/api/meeting-types', meetingTypeId, 'roles'],
+  });
+
+  if (isLoading) {
+    return <div className="text-xs text-gray-400">Chargement...</div>;
+  }
+
+  if (!roles || roles.length === 0) {
+    return <div className="text-xs text-gray-400">Tous les rôles</div>;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {roles.map((role: any) => (
+        <span 
+          key={role.id} 
+          className="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+        >
+          {role.role}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function AdminPanel() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
@@ -719,14 +747,9 @@ export default function AdminPanel() {
                       <p className="text-sm text-gray-600 mb-3">
                         {meetingType.description || "Aucune description"}
                       </p>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedMeetingType(meetingType)}
-                        >
-                          Gérer les accès
-                        </Button>
+                      <div className="mb-3">
+                        <div className="text-xs font-medium text-gray-500 mb-1">Rôles autorisés :</div>
+                        <MeetingTypeRoles meetingTypeId={meetingType.id} />
                       </div>
                     </CardContent>
                   </Card>
