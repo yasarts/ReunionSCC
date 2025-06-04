@@ -34,7 +34,7 @@ const createMeetingTypeFormSchema = insertMeetingTypeSchema;
 // Composant pour afficher les rôles d'un type de réunion
 function MeetingTypeRoles({ meetingTypeId }: { meetingTypeId: number }) {
   const { data: roles, isLoading } = useQuery({
-    queryKey: ['/api/meeting-types', meetingTypeId, 'roles'],
+    queryKey: [`/api/meeting-types/${meetingTypeId}/roles`],
   });
 
   if (isLoading) {
@@ -96,7 +96,7 @@ export default function AdminPanel() {
   });
 
   const { data: meetingTypeRoles = [], isLoading: rolesLoading } = useQuery({
-    queryKey: ['/api/meeting-types', editingMeetingType?.id, 'roles'],
+    queryKey: [`/api/meeting-types/${editingMeetingType?.id}/roles`],
     enabled: !!editingMeetingType?.id,
   });
 
@@ -316,7 +316,7 @@ export default function AdminPanel() {
       return await apiRequest('POST', `/api/meeting-types/${meetingTypeId}/roles`, { role });
     },
     onSuccess: (_, { meetingTypeId }) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types', meetingTypeId, 'roles'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/meeting-types/${meetingTypeId}/roles`] });
       setShowCreateRoleModal(false);
       toast({
         title: "Succès",
@@ -337,7 +337,7 @@ export default function AdminPanel() {
       return await apiRequest('DELETE', `/api/meeting-type-roles/${roleId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types', editingMeetingType?.id, 'roles'] });
+      queryClient.invalidateQueries({ queryKey: [`/api/meeting-types/${editingMeetingType?.id}/roles`] });
       toast({
         title: "Succès",
         description: "Rôle supprimé avec succès",
