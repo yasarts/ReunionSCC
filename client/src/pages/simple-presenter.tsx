@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'wouter';
-import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown, Move, Save, X, FileText, GripVertical, Edit } from 'lucide-react';
+import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown, Move, Save, X, FileText, GripVertical, Edit, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -30,8 +30,21 @@ export default function SimpleMeetingPresenter() {
   const [agenda, setAgenda] = useState<AgendaItem[]>(() => {
     const storageKey = `meeting-agenda-${meetingId || 'default'}`;
     const savedAgenda = localStorage.getItem(storageKey);
+    
+    // Vérifier si les données sauvegardées correspondent à la réunion actuelle
     if (savedAgenda) {
-      return JSON.parse(savedAgenda);
+      const parsedAgenda = JSON.parse(savedAgenda);
+      // Si l'agenda sauvegardé a des IDs qui correspondent à la réunion, l'utiliser
+      if (parsedAgenda.length > 0) {
+        const firstId = parsedAgenda[0].id;
+        const expectedPrefix = meetingId === 'reunion-budget-2025' ? 'b' : 
+                             meetingId === 'conseil-national-2025' ? 'c' : 
+                             meetingId === 'assemblee-generale-ordinaire' ? 'a' : 'default';
+        
+        if (firstId && firstId.startsWith(expectedPrefix)) {
+          return parsedAgenda;
+        }
+      }
     }
     
     // Agendas spécifiques selon l'ID de la réunion
@@ -157,6 +170,15 @@ export default function SimpleMeetingPresenter() {
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
+  // Fonction de débogage pour réinitialiser les données
+  const resetMeetingData = () => {
+    const agendaKey = `meeting-agenda-${meetingId || 'default'}`;
+    const infoKey = `meeting-info-${meetingId || 'default'}`;
+    localStorage.removeItem(agendaKey);
+    localStorage.removeItem(infoKey);
+    window.location.reload();
   };
 
   const formatDisplayDate = (dateString: string) => {
@@ -649,6 +671,12 @@ export default function SimpleMeetingPresenter() {
               <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => setShowEditModal(true)}>
                 <Settings className="h-4 w-4" />
                 Configuration
+              </Button>
+
+              {/* Debug Button - Temporary */}
+              <Button variant="outline" size="sm" className="flex items-center gap-2 border-red-200 text-red-600" onClick={resetMeetingData}>
+                <RotateCcw className="h-4 w-4" />
+                Reset
               </Button>
 
               {/* Participants Button - Icon + Count */}
