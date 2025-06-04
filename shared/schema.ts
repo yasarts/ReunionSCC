@@ -199,6 +199,12 @@ export const voteResponsesRelations = relations(voteResponses, ({ one }) => ({
 }));
 
 // Insert schemas
+export const insertCompanySchema = createInsertSchema(companies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -232,6 +238,8 @@ export const insertVoteResponseSchema = createInsertSchema(voteResponses).omit({
 });
 
 // Types
+export type Company = typeof companies.$inferSelect;
+export type InsertCompany = z.infer<typeof insertCompanySchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Meeting = typeof meetings.$inferSelect;
