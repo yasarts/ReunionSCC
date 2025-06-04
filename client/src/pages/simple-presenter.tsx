@@ -28,12 +28,45 @@ export default function SimpleMeetingPresenter() {
   
   const [currentItemIndex, setCurrentItemIndex] = useState(-1);
   const [agenda, setAgenda] = useState<AgendaItem[]>(() => {
-    const savedAgenda = localStorage.getItem('meeting-agenda');
+    const storageKey = `meeting-agenda-${meetingId || 'default'}`;
+    const savedAgenda = localStorage.getItem(storageKey);
     return savedAgenda ? JSON.parse(savedAgenda) : initialAgenda;
   });
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo>(() => {
-    const savedMeetingInfo = localStorage.getItem('meeting-info');
-    return savedMeetingInfo ? JSON.parse(savedMeetingInfo) : initialMeetingInfo;
+    const storageKey = `meeting-info-${meetingId || 'default'}`;
+    const savedMeetingInfo = localStorage.getItem(storageKey);
+    if (savedMeetingInfo) {
+      return JSON.parse(savedMeetingInfo);
+    }
+    
+    // Données spécifiques selon l'ID de la réunion
+    if (meetingId === 'reunion-budget-2025') {
+      return {
+        title: "Réunion Budget 2025",
+        date: "15 janvier 2025",
+        time: "14h00",
+        participants: ["Marie Dubois", "Jean Martin", "Sophie Leroy", "Pierre Durand"],
+        pouvoir: "Marie Dubois donne pouvoir à Jean Martin"
+      };
+    } else if (meetingId === 'conseil-national-2025') {
+      return {
+        title: "Conseil National 2025",
+        date: "28 février 2025", 
+        time: "10h00",
+        participants: ["Christine Nissim", "Marc Laurent", "Annie Bertrand", "Claire Moreau"],
+        pouvoir: "Christine Nissim donne pouvoir à Marc Laurent"
+      };
+    } else if (meetingId === 'assemblee-generale-ordinaire') {
+      return {
+        title: "Assemblée Générale Ordinaire",
+        date: "20 mars 2025",
+        time: "09h30",
+        participants: ["Directeur Général", "Présidente", "Secrétaire Général", "Trésorier"],
+        pouvoir: "Directeur Général donne pouvoir à la Présidente"
+      };
+    }
+    
+    return initialMeetingInfo;
   });
   const [itemStates, setItemStates] = useState<Record<string, { completed: boolean; notes: string; startTime?: Date; }>>({});
   const [meetingStartTime] = useState(new Date());
@@ -77,12 +110,14 @@ export default function SimpleMeetingPresenter() {
 
   // Sauvegarde automatique des données dans localStorage
   useEffect(() => {
-    localStorage.setItem('meeting-agenda', JSON.stringify(agenda));
-  }, [agenda]);
+    const storageKey = `meeting-agenda-${meetingId || 'default'}`;
+    localStorage.setItem(storageKey, JSON.stringify(agenda));
+  }, [agenda, meetingId]);
 
   useEffect(() => {
-    localStorage.setItem('meeting-info', JSON.stringify(meetingInfo));
-  }, [meetingInfo]);
+    const storageKey = `meeting-info-${meetingId || 'default'}`;
+    localStorage.setItem(storageKey, JSON.stringify(meetingInfo));
+  }, [meetingInfo, meetingId]);
 
   const currentItem = agenda[currentItemIndex];
   const totalItems = agenda.length;
