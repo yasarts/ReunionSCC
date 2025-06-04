@@ -37,6 +37,49 @@ const editMeetingTypeFormSchema = insertMeetingTypeSchema.pick({
   color: true,
 });
 
+// Composant pour gérer les permissions avec persistance
+function PermissionCheckbox({ 
+  id, 
+  label, 
+  defaultChecked, 
+  roleKey, 
+  permission 
+}: { 
+  id: string; 
+  label: string; 
+  defaultChecked: boolean; 
+  roleKey: string | null; 
+  permission: string; 
+}) {
+  const [checked, setChecked] = React.useState(defaultChecked);
+
+  // Charger les permissions sauvegardées au montage du composant
+  React.useEffect(() => {
+    if (roleKey) {
+      const savedPermissions = localStorage.getItem(`permissions_${roleKey}`);
+      if (savedPermissions) {
+        const permissions = JSON.parse(savedPermissions);
+        setChecked(permissions[permission] ?? defaultChecked);
+      } else {
+        setChecked(defaultChecked);
+      }
+    }
+  }, [roleKey, permission, defaultChecked]);
+
+  return (
+    <div className="flex items-center space-x-2">
+      <input 
+        type="checkbox" 
+        id={id} 
+        className="rounded" 
+        checked={checked}
+        onChange={(e) => setChecked(e.target.checked)}
+      />
+      <Label htmlFor={id} className="text-sm">{label}</Label>
+    </div>
+  );
+}
+
 // Composant pour afficher les rôles d'un type de réunion
 function MeetingTypeRoles({ meetingTypeId }: { meetingTypeId: number }) {
   const { data: roles, isLoading } = useQuery({
@@ -970,44 +1013,68 @@ export default function AdminPanel() {
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Permissions de base</h4>
                     <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="edit-canView" className="rounded" defaultChecked />
-                        <Label htmlFor="edit-canView" className="text-sm">Lecture des réunions</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="edit-canEdit" className="rounded" />
-                        <Label htmlFor="edit-canEdit" className="text-sm">Édition des contenus</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="edit-canVote" className="rounded" defaultChecked />
-                        <Label htmlFor="edit-canVote" className="text-sm">Droit de vote</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="edit-canSeeVoteResults" className="rounded" defaultChecked />
-                        <Label htmlFor="edit-canSeeVoteResults" className="text-sm">Voir les résultats de vote</Label>
-                      </div>
+                      <PermissionCheckbox 
+                        id="edit-canView" 
+                        label="Lecture des réunions"
+                        defaultChecked={true}
+                        roleKey={editingRole}
+                        permission="canView"
+                      />
+                      <PermissionCheckbox 
+                        id="edit-canEdit" 
+                        label="Édition des contenus"
+                        defaultChecked={false}
+                        roleKey={editingRole}
+                        permission="canEdit"
+                      />
+                      <PermissionCheckbox 
+                        id="edit-canVote" 
+                        label="Droit de vote"
+                        defaultChecked={true}
+                        roleKey={editingRole}
+                        permission="canVote"
+                      />
+                      <PermissionCheckbox 
+                        id="edit-canSeeVoteResults" 
+                        label="Voir les résultats de vote"
+                        defaultChecked={true}
+                        roleKey={editingRole}
+                        permission="canSeeVoteResults"
+                      />
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     <h4 className="font-medium text-sm">Permissions avancées</h4>
                     <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="edit-canManageAgenda" className="rounded" defaultChecked={editingRole === "elu"} />
-                        <Label htmlFor="edit-canManageAgenda" className="text-sm">Gérer l'agenda</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="edit-canManageParticipants" className="rounded" defaultChecked={editingRole === "elu"} />
-                        <Label htmlFor="edit-canManageParticipants" className="text-sm">Gérer les participants</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="edit-canCreateMeetings" className="rounded" defaultChecked={editingRole === "elu"} />
-                        <Label htmlFor="edit-canCreateMeetings" className="text-sm">Créer des réunions</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input type="checkbox" id="edit-canManageUsers" className="rounded" defaultChecked={editingRole === "elu"} />
-                        <Label htmlFor="edit-canManageUsers" className="text-sm">Gérer les utilisateurs</Label>
-                      </div>
+                      <PermissionCheckbox 
+                        id="edit-canManageAgenda" 
+                        label="Gérer l'agenda"
+                        defaultChecked={editingRole === "elu"}
+                        roleKey={editingRole}
+                        permission="canManageAgenda"
+                      />
+                      <PermissionCheckbox 
+                        id="edit-canManageParticipants" 
+                        label="Gérer les participants"
+                        defaultChecked={editingRole === "elu"}
+                        roleKey={editingRole}
+                        permission="canManageParticipants"
+                      />
+                      <PermissionCheckbox 
+                        id="edit-canCreateMeetings" 
+                        label="Créer des réunions"
+                        defaultChecked={editingRole === "elu"}
+                        roleKey={editingRole}
+                        permission="canCreateMeetings"
+                      />
+                      <PermissionCheckbox 
+                        id="edit-canManageUsers" 
+                        label="Gérer les utilisateurs"
+                        defaultChecked={editingRole === "elu"}
+                        roleKey={editingRole}
+                        permission="canManageUsers"
+                      />
                     </div>
                   </div>
                 </div>
