@@ -401,6 +401,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin routes for user and structure management
+  app.get("/api/admin/users", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/admin/users", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const userData = insertUserSchema.parse(req.body);
+      
+      // Hash password if provided
+      if (userData.password) {
+        userData.password = await bcrypt.hash(userData.password, 10);
+      }
+      
+      const user = await storage.createUser(userData);
+      res.json(user);
+    } catch (error) {
+      console.error("Error creating user:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid user data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create user" });
+    }
+  });
+
+  app.get("/api/admin/structures", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const structures = await storage.getAllStructures();
+      res.json(structures);
+    } catch (error) {
+      console.error("Error fetching structures:", error);
+      res.status(500).json({ message: "Failed to fetch structures" });
+    }
+  });
+
+  app.post("/api/admin/structures", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const structureData = insertStructureSchema.parse(req.body);
+      const structure = await storage.createStructure(structureData);
+      res.json(structure);
+    } catch (error) {
+      console.error("Error creating structure:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid structure data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create structure" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket server for real-time features

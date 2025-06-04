@@ -17,30 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-
-interface User {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: 'Salarié·es SCC' | 'Elu·es';
-  structure: string | null;
-  permissions: {
-    canEdit: boolean;
-    canManageAgenda: boolean;
-    canManageUsers: boolean;
-    canCreateMeetings: boolean;
-    canExport: boolean;
-  };
-  createdAt: string;
-}
-
-interface Structure {
-  id: number;
-  name: string;
-  userCount: number;
-  createdAt: string;
-}
+import type { User, Structure } from '@shared/schema';
 
 const createUserSchema = z.object({
   email: z.string().email('Email invalide'),
@@ -68,12 +45,12 @@ export default function AdminPanel() {
   const [editingStructure, setEditingStructure] = useState<Structure | null>(null);
 
   // Requêtes pour récupérer les données
-  const { data: users = [], isLoading: usersLoading } = useQuery({
+  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ['/api/admin/users'],
     enabled: user?.permissions?.canManageUsers
   });
 
-  const { data: structures = [], isLoading: structuresLoading } = useQuery({
+  const { data: structures = [], isLoading: structuresLoading } = useQuery<Structure[]>({
     queryKey: ['/api/admin/structures'],
     enabled: user?.permissions?.canManageUsers
   });
