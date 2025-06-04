@@ -70,10 +70,7 @@ export function ParticipantsModal({ isOpen, onClose, meetingId, meetingTitle }: 
   const addParticipantsMutation = useMutation({
     mutationFn: async (userIds: number[]) => {
       const promises = userIds.map(userId =>
-        apiRequest(`/api/meetings/${meetingId}/participants`, {
-          method: "POST",
-          body: JSON.stringify({ userId }),
-        })
+        apiRequest(`/api/meetings/${meetingId}/participants`, "POST", { userId })
       );
       await Promise.all(promises);
     },
@@ -97,9 +94,7 @@ export function ParticipantsModal({ isOpen, onClose, meetingId, meetingTitle }: 
   // Mutation pour supprimer un participant
   const removeParticipantMutation = useMutation({
     mutationFn: async (userId: number) => {
-      await apiRequest(`/api/meetings/${meetingId}/participants/${userId}`, {
-        method: "DELETE",
-      });
+      await apiRequest(`/api/meetings/${meetingId}/participants/${userId}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/meetings/${meetingId}/participants`] });
@@ -120,10 +115,7 @@ export function ParticipantsModal({ isOpen, onClose, meetingId, meetingTitle }: 
   // Mutation pour mettre à jour le statut d'un participant
   const updateStatusMutation = useMutation({
     mutationFn: async ({ userId, status, proxyCompanyId }: { userId: number; status: string; proxyCompanyId?: number }) => {
-      await apiRequest(`/api/meetings/${meetingId}/participants/${userId}/status`, {
-        method: "PUT",
-        body: JSON.stringify({ status, proxyCompanyId }),
-      });
+      await apiRequest(`/api/meetings/${meetingId}/participants/${userId}/status`, "PUT", { status, proxyCompanyId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/meetings/${meetingId}/participants`] });
