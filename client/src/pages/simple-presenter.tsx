@@ -255,7 +255,10 @@ export default function SimpleMeetingPresenter() {
       level: type === 'subsection' ? 1 : 0,
       completed: false,
       content: "",
-      parentSectionId: parentId
+      parentSectionId: parentId,
+      tags: [],
+      presentationLink: "",
+      presentationTitle: ""
     };
 
     const newAgenda = [...agenda];
@@ -278,6 +281,51 @@ export default function SimpleMeetingPresenter() {
     
     setAgenda(newAgenda);
     setShowAddItemModal(false);
+  };
+
+  // Calculer la durée totale d'une section (incluant ses sous-sections)
+  const getSectionTotalDuration = (sectionId: string): number => {
+    const section = agenda.find(item => item.id === sectionId);
+    if (!section || section.level !== 0) return 0;
+    
+    const sectionIndex = agenda.findIndex(item => item.id === sectionId);
+    let totalDuration = section.duration;
+    
+    // Ajouter la durée de toutes les sous-sections
+    for (let i = sectionIndex + 1; i < agenda.length; i++) {
+      const item = agenda[i];
+      if (item.level === 0) break; // Nouvelle section, arrêter
+      if (item.level === 1) {
+        totalDuration += item.duration;
+      }
+    }
+    
+    return totalDuration;
+  };
+
+  // Obtenir les sous-sections d'une section
+  const getSubsections = (sectionId: string): AgendaItem[] => {
+    const sectionIndex = agenda.findIndex(item => item.id === sectionId);
+    if (sectionIndex === -1) return [];
+    
+    const subsections: AgendaItem[] = [];
+    for (let i = sectionIndex + 1; i < agenda.length; i++) {
+      const item = agenda[i];
+      if (item.level === 0) break; // Nouvelle section, arrêter
+      if (item.level === 1) {
+        subsections.push(item);
+      }
+    }
+    
+    return subsections;
+  };
+
+  // Navigation vers un élément spécifique
+  const navigateToItem = (itemId: string) => {
+    const index = agenda.findIndex(item => item.id === itemId);
+    if (index !== -1) {
+      setCurrentItemIndex(index);
+    }
   };;
 
   // Ajouter une pause
@@ -358,6 +406,17 @@ export default function SimpleMeetingPresenter() {
             
             {/* Right side - Action buttons */}
             <div className="flex items-center space-x-3">
+              {/* Aperçu général Button */}
+              <Button 
+                variant={currentItemIndex === -1 ? "default" : "ghost"} 
+                size="sm" 
+                className="flex items-center gap-2" 
+                onClick={() => setCurrentItemIndex(-1)}
+              >
+                <FileText className="h-4 w-4" />
+                Aperçu général
+              </Button>
+
               {/* Home Button */}
               <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => setLocation('/')}>
                 <Home className="h-4 w-4" />
@@ -621,52 +680,157 @@ export default function SimpleMeetingPresenter() {
           {/* Main content display */}
           <div className="flex-1 overflow-y-auto">
             {currentItemIndex === -1 ? (
-              // Page d'aperçu automatique de l'ordre du jour
+              // Aperçu général interactif avec navigation hiérarchique
               <div className="p-8">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-2xl">Ordre du jour - Aperçu général</CardTitle>
+                <div className="max-w-4xl mx-auto">
+                  <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Aperçu général de l'ordre du jour</h1>
                     <p className="text-gray-600">{meetingInfo.title} - {formatDisplayDate(meetingInfo.date)}</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {calculateScheduledTimes().map((item, index) => (
-                        <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm">
-                                {getItemNumber(item, index)} {item.title}
-                              </span>
-                              <Badge variant={item.type === 'break' ? 'secondary' : 'outline'} className="text-xs">
-                                {getTypeLabel(item.type)}
-                              </Badge>
+                    <p className="text-sm text-gray-500 mt-1">Cliquez sur une section pour y accéder directement</p>
+                  </div>
+
+                  <div className="space-y-6">
+                    {agenda.filter(item => item.level === 0).map((section, sectionIndex) => {
+                      const subsections = getSubsections(section.id);
+                      const totalDuration = getSectionTotalDuration(section.id);
+                      const sectionNumber = sectionIndex + 1;
+                      const isCompleted = itemStates[section.id]?.completed;
+
+                      return (
+                        <Card key={section.id} className={`transition-all hover:shadow-md cursor-pointer ${isCompleted ? 'bg-green-50 border-green-200' : ''}`}>
+                          <CardHeader onClick={() => navigateToItem(section.id)}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <span className="text-lg font-mono text-gray-500 min-w-[2rem]">{sectionNumber}.</span>
+                                {isCompleted ? (
+                                  <CheckCircle className="h-6 w-6 text-green-600" />
+                                ) : (
+                                  <Circle className="h-6 w-6 text-gray-400" />
+                                )}
+                                <div>
+                                  <CardTitle className="text-xl hover:text-blue-600 transition-colors">{section.title}</CardTitle>
+                                  {section.presenter && (
+                                    <p className="text-sm text-gray-600 mt-1">Présenté par: {section.presenter}</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <Badge variant="outline" className={getTypeColor(section.type)}>
+                                  {getTypeLabel(section.type)}
+                                </Badge>
+                                <Badge variant="outline">
+                                  {totalDuration} min
+                                </Badge>
+                                {section.tags && section.tags.length > 0 && (
+                                  <div className="flex gap-1">
+                                    {section.tags.map(tag => (
+                                      <Badge key={tag} variant="secondary" className="text-xs">
+                                        {tag}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                            {item.presenter && (
-                              <p className="text-xs text-gray-500 mt-1">Présenté par: {item.presenter}</p>
+                            
+                            {section.presentationLink && (
+                              <div className="mt-3" onClick={(e) => e.stopPropagation()}>
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                  <div className="flex items-center gap-2">
+                                    <Link2 className="h-4 w-4 text-blue-600" />
+                                    <span className="text-sm font-medium text-blue-800">
+                                      {section.presentationTitle || 'Présentation visuelle'}
+                                    </span>
+                                  </div>
+                                  <a 
+                                    href={section.presentationLink} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue-600 hover:underline"
+                                  >
+                                    Ouvrir la présentation
+                                  </a>
+                                </div>
+                              </div>
                             )}
-                          </div>
-                          <div className="text-right">
-                            <div className="text-sm font-medium">{item.scheduledStart} - {item.scheduledEnd}</div>
-                            <div className="text-xs text-gray-500">{item.duration} min</div>
-                          </div>
-                        </div>
-                      ))}
-                      <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                        <div className="text-sm text-blue-800">
-                          <strong>Durée totale estimée:</strong> {getMeetingDuration()}
-                        </div>
-                        <div className="text-xs text-blue-600 mt-1">
+                          </CardHeader>
+                          
+                          {subsections.length > 0 && (
+                            <CardContent>
+                              <div className="space-y-2">
+                                <h4 className="font-semibold text-gray-700 mb-3">Sous-sections :</h4>
+                                {subsections.map((subsection, subIndex) => {
+                                  const isSubCompleted = itemStates[subsection.id]?.completed;
+                                  return (
+                                    <div 
+                                      key={subsection.id} 
+                                      onClick={() => navigateToItem(subsection.id)}
+                                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors hover:bg-gray-50 cursor-pointer ${isSubCompleted ? 'bg-green-50 border-green-200' : 'bg-white'}`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-sm font-mono text-gray-500 min-w-[3rem]">{sectionNumber}.{subIndex + 1}</span>
+                                        {isSubCompleted ? (
+                                          <CheckCircle className="h-4 w-4 text-green-600" />
+                                        ) : (
+                                          <Circle className="h-4 w-4 text-gray-400" />
+                                        )}
+                                        <div>
+                                          <span className="font-medium hover:text-blue-600 transition-colors">{subsection.title}</span>
+                                          {subsection.presenter && (
+                                            <p className="text-xs text-gray-500 mt-1">Présenté par: {subsection.presenter}</p>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="outline" className={getTypeColor(subsection.type)}>
+                                          {getTypeLabel(subsection.type)}
+                                        </Badge>
+                                        <Badge variant="outline">
+                                          {subsection.duration} min
+                                        </Badge>
+                                        {subsection.tags && subsection.tags.length > 0 && (
+                                          <div className="flex gap-1">
+                                            {subsection.tags.map(tag => (
+                                              <Badge key={tag} variant="secondary" className="text-xs">
+                                                {tag}
+                                              </Badge>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </CardContent>
+                          )}
+                        </Card>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-8 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Résumé de la réunion</h3>
+                        <p className="text-sm text-gray-600">Durée totale estimée: {getMeetingDuration()}</p>
+                        <p className="text-xs text-gray-500 mt-1">
                           Fin prévue: {(() => {
                             const totalDuration = agenda.reduce((acc, item) => acc + item.duration, 0);
                             const endTime = new Date(`${meetingInfo.date} ${meetingInfo.time}`);
                             endTime.setMinutes(endTime.getMinutes() + totalDuration);
                             return endTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
                           })()}
-                        </div>
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-600">Points traités</div>
+                        <div className="text-2xl font-bold text-gray-900">{completedItems}/{totalItems}</div>
+                        <Progress value={progress} className="w-32 h-2 mt-2" />
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
             ) : currentItem ? (
               <div className="p-8">

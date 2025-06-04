@@ -12,6 +12,9 @@ export interface AgendaItem {
   isSubsection?: boolean;
   parentSectionId?: string;
   startTime?: string;
+  tags?: string[];
+  presentationLink?: string;
+  presentationTitle?: string;
 }
 
 export const meetingInfo = {
