@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { agendaItems as initialAgenda, meetingInfo as initialMeetingInfo, type AgendaItem } from '@/data/agenda';
+import { getMeetingData, type AgendaItem } from '@/data/agenda';
 import { ParticipantsModal } from '@/components/ParticipantsModal';
 
 interface MeetingInfo {
@@ -27,6 +27,9 @@ export default function SimpleMeetingPresenter() {
   const meetingId = params.meetingId;
   
   const [currentItemIndex, setCurrentItemIndex] = useState(-1);
+  // Chargement des données spécifiques à la réunion
+  const meetingData = getMeetingData(meetingId || 'conseil-national-2025');
+  
   const [agenda, setAgenda] = useState<AgendaItem[]>(() => {
     const storageKey = `meeting-agenda-${meetingId || 'default'}`;
     const savedAgenda = localStorage.getItem(storageKey);
@@ -34,47 +37,14 @@ export default function SimpleMeetingPresenter() {
     // Vérifier si les données sauvegardées correspondent à la réunion actuelle
     if (savedAgenda) {
       const parsedAgenda = JSON.parse(savedAgenda);
-      // Si l'agenda sauvegardé a des IDs qui correspondent à la réunion, l'utiliser
-      if (parsedAgenda.length > 0) {
-        const firstId = parsedAgenda[0].id;
-        const expectedPrefix = meetingId === 'reunion-budget-2025' ? 'b' : 
-                             meetingId === 'conseil-national-2025' ? 'c' : 
-                             meetingId === 'assemblee-generale-ordinaire' ? 'a' : 'default';
-        
-        if (firstId && firstId.startsWith(expectedPrefix)) {
-          return parsedAgenda;
-        }
+      // Valider que les données correspondent au bon meeting
+      if (parsedAgenda.length > 0 && parsedAgenda.length === meetingData.agendaItems.length) {
+        return parsedAgenda;
       }
     }
     
-    // Agendas spécifiques selon l'ID de la réunion
-    if (meetingId === 'reunion-budget-2025') {
-      return [
-        { id: 'b1', title: 'Ouverture de la séance Budget', duration: 5, type: 'opening', level: 1, completed: false },
-        { id: 'b2', title: 'Présentation du budget prévisionnel 2025', duration: 15, type: 'discussion', level: 1, completed: false },
-        { id: 'b3', title: 'Analyse des dépenses', duration: 20, type: 'discussion', level: 1, completed: false },
-        { id: 'b4', title: 'Vote du budget', duration: 10, type: 'decision', level: 1, completed: false },
-        { id: 'b5', title: 'Clôture', duration: 5, type: 'closing', level: 1, completed: false }
-      ];
-    } else if (meetingId === 'conseil-national-2025') {
-      return [
-        { id: 'c1', title: 'Ouverture du Conseil National', duration: 10, type: 'opening', level: 1, completed: false },
-        { id: 'c2', title: 'Rapport d\'activité annuel', duration: 25, type: 'information', level: 1, completed: false },
-        { id: 'c3', title: 'Orientations stratégiques', duration: 30, type: 'discussion', level: 1, completed: false },
-        { id: 'c4', title: 'Questions diverses', duration: 15, type: 'discussion', level: 1, completed: false },
-        { id: 'c5', title: 'Clôture du Conseil', duration: 5, type: 'closing', level: 1, completed: false }
-      ];
-    } else if (meetingId === 'assemblee-generale-ordinaire') {
-      return [
-        { id: 'a1', title: 'Ouverture de l\'AG', duration: 10, type: 'opening', level: 1, completed: false },
-        { id: 'a2', title: 'Rapport moral du Président', duration: 20, type: 'information', level: 1, completed: false },
-        { id: 'a3', title: 'Rapport financier', duration: 15, type: 'information', level: 1, completed: false },
-        { id: 'a4', title: 'Élections', duration: 30, type: 'decision', level: 1, completed: false },
-        { id: 'a5', title: 'Clôture de l\'AG', duration: 5, type: 'closing', level: 1, completed: false }
-      ];
-    }
-    
-    return initialAgenda;
+    // Retourner l'agenda spécifique à cette réunion
+    return meetingData.agendaItems;
   });
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo>(() => {
     const storageKey = `meeting-info-${meetingId || 'default'}`;

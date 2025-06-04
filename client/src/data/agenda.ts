@@ -17,21 +17,39 @@ export interface AgendaItem {
   presentationTitle?: string;
 }
 
-export const meetingInfo = {
-  title: "Conseil National SCC",
-  date: "2025-06-05",
-  time: "10:00",
-  participants: [
-    "Christine Nissim",
-    "Valeria Vukadin", 
-    "Pauline BARBOUX",
-    "Sabrina SOW",
-    "Alexandrine BIANCO"
-  ],
-  pouvoir: "POUVOIRS : Galapiat à la Volte."
+// Configuration des réunions par ID
+export const meetingConfigs = {
+  "conseil-national-2025": {
+    title: "Conseil National SCC",
+    date: "2025-06-05",
+    time: "14:00",
+    participants: [
+      "Christine Nissim",
+      "Valeria Vukadin", 
+      "Pauline BARBOUX",
+      "Sabrina SOW",
+      "Alexandrine BIANCO"
+    ],
+    pouvoir: "POUVOIRS : Galapiat à la Volte."
+  },
+  "reunion-budget-2025": {
+    title: "Réunion Budget 2025",
+    date: "2025-06-08",
+    time: "09:30",
+    participants: [
+      "Directeur Financier",
+      "Responsable Comptabilité",
+      "Chef de Projet"
+    ],
+    pouvoir: ""
+  }
 };
 
-export const agendaItems: AgendaItem[] = [
+export const meetingInfo = meetingConfigs["conseil-national-2025"];
+
+// Agendas spécifiques par réunion
+export const agendaConfigs = {
+  "conseil-national-2025": [
   {
     id: "timeline",
     title: "Ordre du jour complet - Timeline de la réunion",
@@ -292,4 +310,71 @@ export const agendaItems: AgendaItem[] = [
     level: 1,
     completed: false
   }
-];
+  ],
+  "reunion-budget-2025": [
+    {
+      id: "budget-ouverture",
+      title: "Ouverture de la séance",
+      duration: 5,
+      type: "opening",
+      level: 0,
+      completed: false,
+      presenter: "Président",
+      content: "Ouverture officielle de la réunion budget 2025"
+    },
+    {
+      id: "budget-presentation",
+      title: "Présentation du budget prévisionnel 2025",
+      duration: 30,
+      type: "discussion",
+      level: 0,
+      completed: false,
+      presenter: "Directeur Financier",
+      content: "Présentation détaillée du budget prévisionnel avec analyse des postes"
+    },
+    {
+      id: "budget-analyse",
+      title: "Analyse des dépenses par poste",
+      duration: 25,
+      type: "discussion",
+      level: 0,
+      completed: false,
+      presenter: "Responsable Comptabilité",
+      content: "Analyse détaillée des dépenses prévisionnelles par catégorie"
+    },
+    {
+      id: "budget-vote",
+      title: "Vote du budget 2025",
+      duration: 15,
+      type: "decision",
+      level: 0,
+      completed: false,
+      presenter: "Président",
+      content: "Vote officiel pour l'adoption du budget 2025"
+    },
+    {
+      id: "budget-cloture",
+      title: "Clôture de la séance",
+      duration: 5,
+      type: "closing",
+      level: 0,
+      completed: false,
+      presenter: "Président",
+      content: "Clôture officielle de la réunion"
+    }
+  ]
+};
+
+// Fonction pour récupérer les données d'une réunion spécifique
+export function getMeetingData(meetingId: string) {
+  const config = meetingConfigs[meetingId as keyof typeof meetingConfigs];
+  const agenda = agendaConfigs[meetingId as keyof typeof agendaConfigs];
+  
+  return {
+    meetingInfo: config || meetingConfigs["conseil-national-2025"],
+    agendaItems: agenda || agendaConfigs["conseil-national-2025"]
+  };
+}
+
+// Exports par défaut pour compatibilité
+export const agendaItems = agendaConfigs["conseil-national-2025"];
