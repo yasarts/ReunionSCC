@@ -27,8 +27,14 @@ export default function SimpleMeetingPresenter() {
   const meetingId = params.meetingId;
   
   const [currentItemIndex, setCurrentItemIndex] = useState(-1);
-  const [agenda, setAgenda] = useState<AgendaItem[]>(initialAgenda);
-  const [meetingInfo, setMeetingInfo] = useState<MeetingInfo>(initialMeetingInfo);
+  const [agenda, setAgenda] = useState<AgendaItem[]>(() => {
+    const savedAgenda = localStorage.getItem('meeting-agenda');
+    return savedAgenda ? JSON.parse(savedAgenda) : initialAgenda;
+  });
+  const [meetingInfo, setMeetingInfo] = useState<MeetingInfo>(() => {
+    const savedMeetingInfo = localStorage.getItem('meeting-info');
+    return savedMeetingInfo ? JSON.parse(savedMeetingInfo) : initialMeetingInfo;
+  });
   const [itemStates, setItemStates] = useState<Record<string, { completed: boolean; notes: string; startTime?: Date; }>>({});
   const [meetingStartTime] = useState(new Date());
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -68,6 +74,15 @@ export default function SimpleMeetingPresenter() {
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // Sauvegarde automatique des données dans localStorage
+  useEffect(() => {
+    localStorage.setItem('meeting-agenda', JSON.stringify(agenda));
+  }, [agenda]);
+
+  useEffect(() => {
+    localStorage.setItem('meeting-info', JSON.stringify(meetingInfo));
+  }, [meetingInfo]);
 
   const currentItem = agenda[currentItemIndex];
   const totalItems = agenda.length;
