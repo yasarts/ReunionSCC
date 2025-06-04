@@ -487,6 +487,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Meeting types routes
+  app.get("/api/meeting-types", requireAuth, async (req: any, res: Response) => {
+    try {
+      const meetingTypes = await storage.getMeetingTypes();
+      res.json(meetingTypes);
+    } catch (error) {
+      console.error("Error fetching meeting types:", error);
+      res.status(500).json({ message: "Failed to fetch meeting types" });
+    }
+  });
+
+  app.get("/api/meeting-types/:id", requireAuth, async (req: any, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const meetingType = await storage.getMeetingType(id);
+      if (!meetingType) {
+        return res.status(404).json({ message: "Meeting type not found" });
+      }
+      res.json(meetingType);
+    } catch (error) {
+      console.error("Error fetching meeting type:", error);
+      res.status(500).json({ message: "Failed to fetch meeting type" });
+    }
+  });
+
+  app.post("/api/meeting-types", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const meetingType = await storage.createMeetingType(req.body);
+      res.status(201).json(meetingType);
+    } catch (error) {
+      console.error("Error creating meeting type:", error);
+      res.status(500).json({ message: "Failed to create meeting type" });
+    }
+  });
+
+  app.put("/api/meeting-types/:id", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const meetingType = await storage.updateMeetingType(id, req.body);
+      res.json(meetingType);
+    } catch (error) {
+      console.error("Error updating meeting type:", error);
+      res.status(500).json({ message: "Failed to update meeting type" });
+    }
+  });
+
+  app.delete("/api/meeting-types/:id", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteMeetingType(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting meeting type:", error);
+      res.status(500).json({ message: "Failed to delete meeting type" });
+    }
+  });
+
+  // Meeting type access routes
+  app.get("/api/meeting-types/:id/access", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const meetingTypeId = parseInt(req.params.id);
+      const access = await storage.getMeetingTypeAccess(meetingTypeId);
+      res.json(access);
+    } catch (error) {
+      console.error("Error fetching meeting type access:", error);
+      res.status(500).json({ message: "Failed to fetch meeting type access" });
+    }
+  });
+
+  app.post("/api/meeting-types/:id/access", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const meetingTypeId = parseInt(req.params.id);
+      const accessData = { ...req.body, meetingTypeId };
+      const access = await storage.createMeetingTypeAccess(accessData);
+      res.status(201).json(access);
+    } catch (error) {
+      console.error("Error creating meeting type access:", error);
+      res.status(500).json({ message: "Failed to create meeting type access" });
+    }
+  });
+
+  app.delete("/api/meeting-type-access/:id", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteMeetingTypeAccess(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting meeting type access:", error);
+      res.status(500).json({ message: "Failed to delete meeting type access" });
+    }
+  });
+
+  app.get("/api/users/:id/accessible-meeting-types", requireAuth, async (req: any, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const meetingTypes = await storage.getUserAccessibleMeetingTypes(userId);
+      res.json(meetingTypes);
+    } catch (error) {
+      console.error("Error fetching user accessible meeting types:", error);
+      res.status(500).json({ message: "Failed to fetch accessible meeting types" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket server for real-time features

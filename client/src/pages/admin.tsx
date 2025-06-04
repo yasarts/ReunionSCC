@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { insertCompanySchema, insertUserSchema, type Company, type User } from '@shared/schema';
+import { insertCompanySchema, insertUserSchema, insertMeetingTypeSchema, type Company, type User, type MeetingType, type MeetingTypeAccess } from '@shared/schema';
 import { z } from 'zod';
 
 const createCompanyFormSchema = insertCompanySchema;
@@ -29,6 +29,8 @@ const createUserFormSchema = insertUserSchema.extend({
   path: ["confirmPassword"],
 });
 
+const createMeetingTypeFormSchema = insertMeetingTypeSchema;
+
 export default function AdminPanel() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
@@ -37,9 +39,12 @@ export default function AdminPanel() {
   
   const [showCreateCompanyModal, setShowCreateCompanyModal] = useState(false);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [showCreateMeetingTypeModal, setShowCreateMeetingTypeModal] = useState(false);
   const [editingCompany, setEditingCompany] = useState<Company | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingMeetingType, setEditingMeetingType] = useState<MeetingType | null>(null);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [selectedMeetingType, setSelectedMeetingType] = useState<MeetingType | null>(null);
 
   // Requêtes pour récupérer les données
   const { data: companies, isLoading: companiesLoading } = useQuery({
@@ -48,6 +53,15 @@ export default function AdminPanel() {
 
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ['/api/users'],
+  });
+
+  const { data: meetingTypes, isLoading: meetingTypesLoading } = useQuery({
+    queryKey: ['/api/meeting-types'],
+  });
+
+  const { data: meetingTypeAccess, isLoading: accessLoading } = useQuery({
+    queryKey: ['/api/meeting-types', selectedMeetingType?.id, 'access'],
+    enabled: !!selectedMeetingType?.id,
   });
 
   // Mutations pour créer/modifier/supprimer des entreprises
@@ -155,6 +169,109 @@ export default function AdminPanel() {
       toast({
         title: "Erreur",
         description: "Impossible de modifier l'utilisateur",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutations pour créer/modifier/supprimer des types de réunions
+  const createMeetingTypeMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof createMeetingTypeFormSchema>) => {
+      return await apiRequest('POST', '/api/meeting-types', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types'] });
+      setShowCreateMeetingTypeModal(false);
+      toast({
+        title: "Succès",
+        description: "Type de réunion créé avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer le type de réunion",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMeetingTypeMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<MeetingType> }) => {
+      return await apiRequest('PUT', `/api/meeting-types/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types'] });
+      setEditingMeetingType(null);
+      toast({
+        title: "Succès",
+        description: "Type de réunion modifié avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de modifier le type de réunion",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMeetingTypeMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest('DELETE', `/api/meeting-types/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types'] });
+      toast({
+        title: "Succès",
+        description: "Type de réunion supprimé avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer le type de réunion",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const addMeetingTypeAccessMutation = useMutation({
+    mutationFn: async ({ meetingTypeId, data }: { meetingTypeId: number; data: any }) => {
+      return await apiRequest('POST', `/api/meeting-types/${meetingTypeId}/access`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types', selectedMeetingType?.id, 'access'] });
+      toast({
+        title: "Succès",
+        description: "Accès ajouté avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter l'accès",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeMeetingTypeAccessMutation = useMutation({
+    mutationFn: async (accessId: number) => {
+      return await apiRequest('DELETE', `/api/meeting-type-access/${accessId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/meeting-types', selectedMeetingType?.id, 'access'] });
+      toast({
+        title: "Succès",
+        description: "Accès supprimé avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'accès",
         variant: "destructive",
       });
     },
