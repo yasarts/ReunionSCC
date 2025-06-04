@@ -5,11 +5,8 @@ import {
   votes,
   voteResponses,
   meetingParticipants,
-  structures,
   type User,
   type InsertUser,
-  type Structure,
-  type InsertStructure,
   type Meeting,
   type InsertMeeting,
   type AgendaItem,
@@ -21,22 +18,13 @@ import {
   type MeetingParticipant,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, isNotNull } from "drizzle-orm";
+import { eq, and, desc, asc } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  getAllUsers(): Promise<User[]>;
-  updateUser(id: number, updates: Partial<User>): Promise<User>;
-  deleteUser(id: number): Promise<void>;
-  
-  // Structure operations
-  getAllStructures(): Promise<Structure[]>;
-  createStructure(structure: InsertStructure): Promise<Structure>;
-  updateStructure(id: number, updates: Partial<Structure>): Promise<Structure>;
-  deleteStructure(id: number): Promise<void>;
   
   // Meeting operations
   getMeeting(id: number): Promise<Meeting | undefined>;
@@ -48,9 +36,7 @@ export interface IStorage {
   addParticipant(meetingId: number, userId: number): Promise<void>;
   removeParticipant(meetingId: number, userId: number): Promise<void>;
   getMeetingParticipants(meetingId: number): Promise<(MeetingParticipant & { user: User })[]>;
-  updateParticipantStatus(meetingId: number, userId: number, status: string, proxyToUserId?: number, proxyToStructure?: string, updatedBy?: number): Promise<void>;
-  getElectedMembers(): Promise<User[]>;
-  getStructures(): Promise<string[]>;
+  updateParticipantPresence(meetingId: number, userId: number, isPresent: boolean): Promise<void>;
   
   // Agenda operations
   getAgendaItems(meetingId: number): Promise<AgendaItem[]>;
@@ -84,49 +70,6 @@ export class DatabaseStorage implements IStorage {
       .values(insertUser)
       .returning();
     return user;
-  }
-
-  async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users).orderBy(asc(users.firstName), asc(users.lastName));
-  }
-
-  async updateUser(id: number, updates: Partial<User>): Promise<User> {
-    const [user] = await db
-      .update(users)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return user;
-  }
-
-  async deleteUser(id: number): Promise<void> {
-    await db.delete(users).where(eq(users.id, id));
-  }
-
-  // Structure operations
-  async getAllStructures(): Promise<Structure[]> {
-    return await db.select().from(structures).orderBy(asc(structures.name));
-  }
-
-  async createStructure(insertStructure: InsertStructure): Promise<Structure> {
-    const [structure] = await db
-      .insert(structures)
-      .values(insertStructure)
-      .returning();
-    return structure;
-  }
-
-  async updateStructure(id: number, updates: Partial<Structure>): Promise<Structure> {
-    const [structure] = await db
-      .update(structures)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(structures.id, id))
-      .returning();
-    return structure;
-  }
-
-  async deleteStructure(id: number): Promise<void> {
-    await db.delete(structures).where(eq(structures.id, id));
   }
 
   // Meeting operations
@@ -207,11 +150,8 @@ export class DatabaseStorage implements IStorage {
       .select({
         meetingId: meetingParticipants.meetingId,
         userId: meetingParticipants.userId,
-        status: meetingParticipants.status,
-        proxyToUserId: meetingParticipants.proxyToUserId,
-        proxyToStructure: meetingParticipants.proxyToStructure,
-        updatedAt: meetingParticipants.updatedAt,
-        updatedBy: meetingParticipants.updatedBy,
+        isPresent: meetingParticipants.isPresent,
+        joinedAt: meetingParticipants.joinedAt,
         user: users
       })
       .from(meetingParticipants)
@@ -219,22 +159,12 @@ export class DatabaseStorage implements IStorage {
       .where(eq(meetingParticipants.meetingId, meetingId));
   }
 
-  async updateParticipantStatus(
-    meetingId: number, 
-    userId: number, 
-    status: string,
-    proxyToUserId?: number,
-    proxyToStructure?: string,
-    updatedBy?: number
-  ): Promise<void> {
+  async updateParticipantPresence(meetingId: number, userId: number, isPresent: boolean): Promise<void> {
     await db
       .update(meetingParticipants)
       .set({ 
-        status,
-        proxyToUserId: proxyToUserId || null,
-        proxyToStructure: proxyToStructure || null,
-        updatedAt: new Date(),
-        updatedBy: updatedBy || null
+        isPresent, 
+        joinedAt: isPresent ? new Date() : null 
       })
       .where(
         and(
@@ -242,25 +172,6 @@ export class DatabaseStorage implements IStorage {
           eq(meetingParticipants.userId, userId)
         )
       );
-  }
-
-  async getElectedMembers(): Promise<User[]> {
-    return await db
-      .select()
-      .from(users)
-      .where(eq(users.role, "Elu·es"));
-  }
-
-  async getStructures(): Promise<string[]> {
-    const result = await db
-      .selectDistinct({ structure: users.structure })
-      .from(users)
-      .where(and(
-        eq(users.role, "Elu·es"),
-        isNotNull(users.structure)
-      ));
-    
-    return result.map(r => r.structure).filter(Boolean) as string[];
   }
 
   // Agenda operations

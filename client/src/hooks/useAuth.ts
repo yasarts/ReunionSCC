@@ -13,7 +13,6 @@ interface User {
     canManageUsers: boolean;
     canCreateMeetings: boolean;
     canExport: boolean;
-    canManageParticipants: boolean;
   };
 }
 

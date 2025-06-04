@@ -1,368 +1,282 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
-import { useAuth } from "@/hooks/useAuth";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-// Form schemas
-const createUserSchema = z.object({
-  email: z.string().email("Email invalide"),
-  password: z.string().min(6, "Le mot de passe doit contenir au moins 6 caractères"),
-  firstName: z.string().min(1, "Le prénom est requis"),
-  lastName: z.string().min(1, "Le nom est requis"),
-  role: z.string().min(1, "Le rôle est requis"),
-  structure: z.string().optional(),
-});
-
-const createStructureSchema = z.object({
-  name: z.string().min(1, "Le nom de l'entreprise est requis"),
-});
-
-type CreateUserFormData = z.infer<typeof createUserSchema>;
-type CreateStructureFormData = z.infer<typeof createStructureSchema>;
+import { useState } from 'react';
+import { useLocation } from 'wouter';
+import { ArrowLeft, Users, Plus, Edit, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useAuth } from '@/hooks/useAuth';
 
 interface User {
   id: number;
   email: string;
   firstName: string;
   lastName: string;
-  role: string;
-  structure?: string;
-  createdAt: string;
-}
-
-interface Structure {
-  id: number;
-  name: string;
-  type: string;
-  description?: string;
+  role: 'Salarié·es SCC' | 'Elu·es';
+  permissions: {
+    canEdit: boolean;
+    canManageAgenda: boolean;
+    canManageUsers: boolean;
+    canCreateMeetings: boolean;
+    canExport: boolean;
+  };
   createdAt: string;
 }
 
 export default function AdminPanel() {
-  const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("users");
-
-  // Create a simple test function for enterprises
-  const testCreateEnterprise = async (name: string) => {
-    try {
-      const response = await fetch("/api/admin/structures", {
-        method: "POST",
-        body: JSON.stringify({ name }),
-        headers: { "Content-Type": "application/json" },
-        credentials: "include"
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Erreur ${response.status}: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      toast({
-        title: "Succès",
-        description: "Entreprise créée avec succès",
-      });
-      return result;
-    } catch (error) {
-      console.error("Erreur création entreprise:", error);
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : "Erreur lors de la création",
-        variant: "destructive",
-      });
-      throw error;
+  const [, setLocation] = useLocation();
+  const { user, requirePermission } = useAuth();
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [users, setUsers] = useState<User[]>([
+    {
+      id: 1,
+      email: 'salarie@scc.fr',
+      firstName: 'Marie',
+      lastName: 'Dupont',
+      role: 'Salarié·es SCC',
+      permissions: {
+        canEdit: true,
+        canManageAgenda: true,
+        canManageUsers: true,
+        canCreateMeetings: true,
+        canExport: true
+      },
+      createdAt: '2024-01-15'
+    },
+    {
+      id: 2,
+      email: 'elu@scc.fr',
+      firstName: 'Jean',
+      lastName: 'Martin',
+      role: 'Elu·es',
+      permissions: {
+        canEdit: false,
+        canManageAgenda: false,
+        canManageUsers: false,
+        canCreateMeetings: false,
+        canExport: false
+      },
+      createdAt: '2024-02-01'
     }
-  };
+  ]);
 
-  // Form configuration
-  const userForm = useForm<CreateUserFormData>({
-    resolver: zodResolver(createUserSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-      firstName: "",
-      lastName: "",
-      role: "",
-      structure: "",
-    },
+  const [newUser, setNewUser] = useState({
+    email: '',
+    firstName: '',
+    lastName: '',
+    role: 'Elu·es' as 'Salarié·es SCC' | 'Elu·es'
   });
 
-  const structureForm = useForm<CreateStructureFormData>({
-    resolver: zodResolver(createStructureSchema),
-    defaultValues: {
-      name: "",
-    },
-  });
-
-  // Mutations
-  const createUserMutation = useMutation({
-    mutationFn: async (data: CreateUserFormData) => {
-      return await apiRequest("/api/admin/users", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Utilisateur créé",
-        description: "Le nouvel utilisateur a été créé avec succès.",
-      });
-      userForm.reset();
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Erreur",
-        description: "Erreur lors de la création de l'utilisateur.",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const createStructureMutation = useMutation({
-    mutationFn: async (data: CreateStructureFormData) => {
-      return await testCreateEnterprise(data.name);
-    },
-    onSuccess: () => {
-      toast({
-        title: "Entreprise créée",
-        description: "La nouvelle entreprise a été créée avec succès.",
-      });
-      structureForm.reset();
-    },
-    onError: (error) => {
-      console.error("Erreur mutation:", error);
-    },
-  });
-
-  // Event handlers
-  const handleCreateUser = (data: CreateUserFormData) => {
-    createUserMutation.mutate(data);
-  };
-
-  const handleCreateStructure = (data: CreateStructureFormData) => {
-    createStructureMutation.mutate(data);
-  };
-
-  if (!isAuthenticated) {
+  if (!requirePermission('canManageUsers')) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">Accès non autorisé</h2>
-          <p>Vous devez être connecté pour accéder à cette page.</p>
-        </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-xl font-semibold mb-2">Accès non autorisé</h2>
+            <p className="text-gray-600 mb-4">Vous n'avez pas les permissions pour accéder à cette page.</p>
+            <Button onClick={() => setLocation('/')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour à l'accueil
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
+  const createUser = () => {
+    const permissions = newUser.role === 'Salarié·es SCC' ? {
+      canEdit: true,
+      canManageAgenda: true,
+      canManageUsers: true,
+      canCreateMeetings: true,
+      canExport: true
+    } : {
+      canEdit: false,
+      canManageAgenda: false,
+      canManageUsers: false,
+      canCreateMeetings: false,
+      canExport: false
+    };
+
+    const user: User = {
+      id: Date.now(),
+      ...newUser,
+      permissions,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+
+    setUsers([...users, user]);
+    setShowCreateModal(false);
+    setNewUser({
+      email: '',
+      firstName: '',
+      lastName: '',
+      role: 'Elu·es'
+    });
+  };
+
+  const deleteUser = (userId: number) => {
+    setUsers(users.filter(u => u.id !== userId));
+  };
+
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Administration</h1>
-          <p className="text-muted-foreground">
-            Gestion des utilisateurs et des entreprises
-          </p>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setLocation('/')}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Administration des utilisateurs</h1>
+              <p className="text-gray-600">Gérez les accès et permissions des utilisateurs</p>
+            </div>
+          </div>
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="users">Utilisateurs</TabsTrigger>
-          <TabsTrigger value="structures">Entreprises</TabsTrigger>
-        </TabsList>
+      <div className="max-w-7xl mx-auto p-6">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-2">
+            <Users className="w-5 h-5" />
+            <h2 className="text-xl font-semibold">Utilisateurs ({users.length})</h2>
+          </div>
+          
+          <Button onClick={() => setShowCreateModal(true)}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nouvel utilisateur
+          </Button>
+        </div>
 
-        <TabsContent value="users" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ajouter un Utilisateur</CardTitle>
-              <CardDescription>
-                Créer un nouveau compte utilisateur
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...userForm}>
-                <form onSubmit={userForm.handleSubmit(handleCreateUser)} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                      control={userForm.control}
-                      name="firstName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Prénom</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Prénom" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={userForm.control}
-                      name="lastName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nom</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Nom" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+        <div className="grid gap-4">
+          {users.map((user) => (
+            <Card key={user.id}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="font-semibold">{user.firstName} {user.lastName}</h3>
+                      <Badge variant={user.role === 'Salarié·es SCC' ? 'default' : 'secondary'}>
+                        {user.role}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-1">{user.email}</p>
+                    <p className="text-xs text-gray-500">Créé le {user.createdAt}</p>
                   </div>
                   
-                  <FormField
-                    control={userForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" placeholder="email@exemple.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={userForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Mot de passe</FormLabel>
-                        <FormControl>
-                          <Input type="password" placeholder="Mot de passe" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={userForm.control}
-                    name="role"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Rôle</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Sélectionner un rôle" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="salaried">Salarié·es</SelectItem>
-                            <SelectItem value="elected">Elu·es</SelectItem>
-                            <SelectItem value="external">Externe</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={userForm.control}
-                    name="structure"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Entreprise (optionnel)</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nom de l'entreprise" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <Button type="submit" disabled={createUserMutation.isPending}>
-                    {createUserMutation.isPending ? "Création..." : "Créer l'utilisateur"}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+                  <div className="flex items-center gap-2">
+                    <div className="text-right text-xs text-gray-500">
+                      <div>Permissions:</div>
+                      <div className="space-x-1 mt-1">
+                        {user.permissions.canCreateMeetings && <span className="bg-green-100 text-green-800 px-1 rounded">Créer</span>}
+                        {user.permissions.canManageAgenda && <span className="bg-blue-100 text-blue-800 px-1 rounded">Agenda</span>}
+                        {user.permissions.canEdit && <span className="bg-orange-100 text-orange-800 px-1 rounded">Éditer</span>}
+                        {user.permissions.canExport && <span className="bg-purple-100 text-purple-800 px-1 rounded">Export</span>}
+                        {user.permissions.canManageUsers && <span className="bg-red-100 text-red-800 px-1 rounded">Admin</span>}
+                      </div>
+                    </div>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deleteUser(user.id)}
+                      disabled={user.id === 1} // Protéger le compte admin principal
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Utilisateurs</CardTitle>
-              <CardDescription>
-                Liste de tous les utilisateurs du système
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <p>Chargement des utilisateurs temporairement désactivé</p>
-                <p className="text-sm mt-2">En cours de résolution des problèmes de session</p>
+      {/* Modal de création d'utilisateur */}
+      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Créer un nouvel utilisateur</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="firstName">Prénom</Label>
+              <Input
+                id="firstName"
+                value={newUser.firstName}
+                onChange={(e) => setNewUser({...newUser, firstName: e.target.value})}
+                placeholder="Prénom"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="lastName">Nom</Label>
+              <Input
+                id="lastName"
+                value={newUser.lastName}
+                onChange={(e) => setNewUser({...newUser, lastName: e.target.value})}
+                placeholder="Nom"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={newUser.email}
+                onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                placeholder="email@scc.fr"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="role">Rôle</Label>
+              <select
+                id="role"
+                value={newUser.role}
+                onChange={(e) => setNewUser({...newUser, role: e.target.value as 'Salarié·es SCC' | 'Elu·es'})}
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+              >
+                <option value="Elu·es">Elu·es</option>
+                <option value="Salarié·es SCC">Salarié·es SCC</option>
+              </select>
+            </div>
+            
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <h4 className="font-medium mb-2">Permissions automatiques :</h4>
+              <div className="text-sm text-gray-600">
+                {newUser.role === 'Salarié·es SCC' ? (
+                  <p>Accès complet : création, édition, gestion agenda, administration, export</p>
+                ) : (
+                  <p>Accès en lecture seule : consultation uniquement</p>
+                )}
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="structures" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Ajouter une Entreprise</CardTitle>
-              <CardDescription>
-                Créer une nouvelle entreprise
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...structureForm}>
-                <form onSubmit={structureForm.handleSubmit(handleCreateStructure)} className="space-y-4">
-                  <FormField
-                    control={structureForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nom de l'entreprise</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Nom de l'entreprise" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <Button type="submit" disabled={createStructureMutation.isPending}>
-                    {createStructureMutation.isPending ? "Création..." : "Créer l'entreprise"}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Entreprises</CardTitle>
-              <CardDescription>
-                Liste de toutes les entreprises
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-gray-500">
-                <p>Aucune entreprise créée pour le moment</p>
-                <p className="text-sm mt-2">Utilisez le formulaire ci-dessus pour ajouter des entreprises</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </div>
+            
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+                Annuler
+              </Button>
+              <Button 
+                onClick={createUser}
+                disabled={!newUser.email || !newUser.firstName || !newUser.lastName}
+              >
+                Créer l'utilisateur
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -26,15 +26,6 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// Structures table
-export const structures = pgTable("structures", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull().unique(),
-  description: text("description"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
 // Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -42,8 +33,7 @@ export const users = pgTable("users", {
   password: varchar("password", { length: 255 }).notNull(),
   firstName: varchar("first_name", { length: 100 }).notNull(),
   lastName: varchar("last_name", { length: 100 }).notNull(),
-  role: varchar("role", { length: 50 }).notNull(), // 'Salarié·es SCC' | 'Elu·es'
-  structure: varchar("structure", { length: 200 }), // Structure représentée pour les élus
+  role: varchar("role", { length: 50 }).notNull(), // 'salaried' | 'council_member'
   permissions: jsonb("permissions").notNull(),
   profileImageUrl: varchar("profile_image_url", { length: 500 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -66,13 +56,10 @@ export const meetings = pgTable("meetings", {
 export const meetingParticipants = pgTable(
   "meeting_participants",
   {
-    meetingId: integer("meeting_id").references(() => meetings.id, { onDelete: "cascade" }).notNull(),
-    userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-    status: varchar("status", { length: 20 }).default("pending").notNull(), // 'present' | 'absent' | 'excused' | 'proxy' | 'pending'
-    proxyToUserId: integer("proxy_to_user_id").references(() => users.id),
-    proxyToStructure: varchar("proxy_to_structure", { length: 200 }),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
-    updatedBy: integer("updated_by").references(() => users.id),
+    meetingId: integer("meeting_id").references(() => meetings.id).notNull(),
+    userId: integer("user_id").references(() => users.id).notNull(),
+    isPresent: boolean("is_present").default(false),
+    joinedAt: timestamp("joined_at"),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.meetingId, table.userId] }),
@@ -150,14 +137,6 @@ export const meetingParticipantsRelations = relations(meetingParticipants, ({ on
     fields: [meetingParticipants.userId],
     references: [users.id],
   }),
-  proxyToUser: one(users, {
-    fields: [meetingParticipants.proxyToUserId],
-    references: [users.id],
-  }),
-  updatedByUser: one(users, {
-    fields: [meetingParticipants.updatedBy],
-    references: [users.id],
-  }),
 }));
 
 export const agendaItemsRelations = relations(agendaItems, ({ one, many }) => ({
@@ -229,17 +208,9 @@ export const insertVoteResponseSchema = createInsertSchema(voteResponses).omit({
   createdAt: true,
 });
 
-export const insertStructureSchema = createInsertSchema(structures).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type Structure = typeof structures.$inferSelect;
-export type InsertStructure = z.infer<typeof insertStructureSchema>;
 export type Meeting = typeof meetings.$inferSelect;
 export type InsertMeeting = z.infer<typeof insertMeetingSchema>;
 export type AgendaItem = typeof agendaItems.$inferSelect;

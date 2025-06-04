@@ -4,29 +4,22 @@ import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { insertUserSchema, insertMeetingSchema, insertAgendaItemSchema, insertVoteSchema, insertVoteResponseSchema, insertStructureSchema } from "@shared/schema";
+import { insertUserSchema, insertMeetingSchema, insertAgendaItemSchema, insertVoteSchema, insertVoteResponseSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
-
-// Extend session type
-declare module 'express-session' {
-  interface SessionData {
-    userId?: number;
-  }
-}
 
 // Session configuration
 const MemStore = MemoryStore(session);
 
 const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || "dev-secret-key-that-is-long-enough-for-session-security",
+  secret: process.env.SESSION_SECRET || "dev-secret-key",
   store: new MemStore({
     checkPeriod: 86400000 // prune expired entries every 24h
   }),
-  resave: true,
-  saveUninitialized: true,
+  resave: false,
+  saveUninitialized: false,
   cookie: {
-    secure: false, // Désactiver pour le développement
+    secure: process.env.NODE_ENV === "production",
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
@@ -34,18 +27,9 @@ const sessionMiddleware = session({
 
 // Authentication middleware
 const requireAuth = (req: any, res: Response, next: any) => {
-  console.log("=== AUTH CHECK ===");
-  console.log("Session ID:", req.sessionID);
-  console.log("Session data:", req.session);
-  console.log("Session userId:", req.session?.userId);
-  console.log("Request path:", req.path);
-  console.log("==================");
-  
   if (!req.session?.userId) {
-    console.log("AUTH FAILED: No userId in session");
     return res.status(401).json({ message: "Unauthorized" });
   }
-  console.log("AUTH SUCCESS: User ID", req.session.userId);
   next();
 };
 
@@ -54,15 +38,7 @@ const requirePermission = (permission: string) => {
   return async (req: any, res: Response, next: any) => {
     try {
       const user = await storage.getUser(req.session.userId);
-      if (!user) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-      
-      const permissions = typeof user.permissions === 'string' 
-        ? JSON.parse(user.permissions) 
-        : user.permissions;
-      
-      if (!permissions || !permissions[permission]) {
+      if (!user || !user.permissions[permission]) {
         return res.status(403).json({ message: "Forbidden" });
       }
       req.user = user;
@@ -102,38 +78,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const salarieExists = await storage.getUserByEmail("salarie@scc.fr");
-      if (!salarieExists) {
-        const hashedPassword = await bcrypt.hash("password", 10);
+      const memberExists = await storage.getUserByEmail("christine.nissim@scc-cirque.org");
+      if (!memberExists) {
+        const hashedPassword = await bcrypt.hash("membre123", 10);
         await storage.createUser({
-          email: "salarie@scc.fr",
+          email: "christine.nissim@scc-cirque.org",
           password: hashedPassword,
-          firstName: "Salarié",
-          lastName: "SCC",
-          role: "Salarié·es SCC",
-          permissions: {
-            canView: true,
-            canEdit: true,
-            canManageAgenda: true,
-            canManageParticipants: true,
-            canCreateMeetings: true,
-            canManageUsers: true,
-            canVote: true,
-            canSeeVoteResults: true
-          }
-        });
-      }
-
-      const eluExists = await storage.getUserByEmail("elu@scc.fr");
-      if (!eluExists) {
-        const hashedPassword = await bcrypt.hash("password", 10);
-        await storage.createUser({
-          email: "elu@scc.fr",
-          password: hashedPassword,
-          firstName: "Elu",
-          lastName: "SCC",
-          role: "Elu·es",
-          structure: "Conseil National",
+          firstName: "Christine",
+          lastName: "Nissim",
+          role: "council_member",
           permissions: {
             canView: true,
             canEdit: false,
@@ -156,7 +109,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     try {
-      console.log("Login attempt with:", req.body.email);
       const { email, password } = req.body;
       
       if (!email || !password) {
@@ -164,37 +116,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const user = await storage.getUserByEmail(email);
-      console.log("User found:", user ? `ID: ${user.id}, Email: ${user.email}` : "Not found");
-      
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       const isValid = await bcrypt.compare(password, user.password);
-      console.log("Password valid:", isValid);
-      
       if (!isValid) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      req.session.userId = user.id;
-      console.log("Session before save:", req.session);
-      
-      await new Promise((resolve, reject) => {
-        req.session.save((err) => {
-          if (err) {
-            console.error("Session save error:", err);
-            reject(err);
-          } else {
-            console.log("Session saved successfully");
-            resolve(undefined);
-          }
-        });
-      });
-      
-      console.log("Session after save:", req.session);
-      console.log("Session ID:", req.sessionID);
-      
+      (req.session as any).userId = user.id;
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {
@@ -213,25 +144,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  app.get("/api/auth/me", async (req: any, res: Response) => {
-    console.log("=== GET /api/auth/me ===");
-    console.log("Session ID:", req.sessionID);
-    console.log("Session data:", req.session);
-    console.log("Session userId:", req.session?.userId);
-    
-    if (!req.session?.userId) {
-      console.log("No userId in session, returning 401");
-      return res.status(401).json({ message: "Not authenticated" });
-    }
-
+  app.get("/api/auth/me", requireAuth, async (req: any, res: Response) => {
     try {
       const user = await storage.getUser(req.session.userId);
-      console.log("User found:", user ? `ID: ${user.id}, Email: ${user.email}` : "Not found");
-      
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
       const { password: _, ...userWithoutPassword } = user;
       res.json(userWithoutPassword);
     } catch (error) {
@@ -449,92 +367,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/meetings/:meetingId/participants/:userId/status", requireAuth, async (req: any, res: Response) => {
+  app.put("/api/meetings/:meetingId/participants/:userId/presence", requireAuth, async (req: any, res: Response) => {
     try {
       const meetingId = parseInt(req.params.meetingId);
       const userId = parseInt(req.params.userId);
-      const { status, proxyToUserId, proxyToStructure, updatedBy } = req.body;
+      const { isPresent } = req.body;
 
-      await storage.updateParticipantStatus(meetingId, userId, status, proxyToUserId, proxyToStructure, updatedBy);
-      res.json({ message: "Status updated successfully" });
+      await storage.updateParticipantPresence(meetingId, userId, isPresent);
+      res.json({ message: "Presence updated successfully" });
     } catch (error) {
-      console.error("Update status error:", error);
+      console.error("Update presence error:", error);
       res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.get("/api/users/elected", requireAuth, async (req: any, res: Response) => {
-    try {
-      const electedMembers = await storage.getElectedMembers();
-      res.json(electedMembers);
-    } catch (error) {
-      console.error("Get elected members error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  app.get("/api/structures", requireAuth, async (req: any, res: Response) => {
-    try {
-      const structures = await storage.getStructures();
-      res.json(structures);
-    } catch (error) {
-      console.error("Get structures error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Admin routes for user and structure management
-  app.get("/api/admin/users", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
-    try {
-      const users = await storage.getAllUsers();
-      res.json(users);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      res.status(500).json({ message: "Failed to fetch users" });
-    }
-  });
-
-  app.post("/api/admin/users", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
-    try {
-      const userData = insertUserSchema.parse(req.body);
-      
-      // Hash password if provided
-      if (userData.password) {
-        userData.password = await bcrypt.hash(userData.password, 10);
-      }
-      
-      const user = await storage.createUser(userData);
-      res.json(user);
-    } catch (error) {
-      console.error("Error creating user:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid user data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create user" });
-    }
-  });
-
-  app.get("/api/admin/structures", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
-    try {
-      const structures = await storage.getAllStructures();
-      res.json(structures);
-    } catch (error) {
-      console.error("Error fetching structures:", error);
-      res.status(500).json({ message: "Failed to fetch structures" });
-    }
-  });
-
-  app.post("/api/admin/structures", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
-    try {
-      const structureData = insertStructureSchema.parse(req.body);
-      const structure = await storage.createStructure(structureData);
-      res.json(structure);
-    } catch (error) {
-      console.error("Error creating structure:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid structure data", errors: error.errors });
-      }
-      res.status(500).json({ message: "Failed to create structure" });
     }
   });
 
