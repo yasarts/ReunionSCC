@@ -13,6 +13,10 @@ interface Meeting {
   status: 'draft' | 'scheduled' | 'in_progress' | 'completed';
   description?: string;
   duration?: number;
+  pouvoir?: string;
+  agendaItemsCount?: number;
+  totalDuration?: number;
+  createdAt?: string;
 }
 
 interface MiniCalendarProps {

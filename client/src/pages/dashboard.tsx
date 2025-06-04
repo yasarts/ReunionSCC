@@ -195,6 +195,8 @@ export default function Dashboard() {
     setMeetings([...meetings, duplicated]);
   };
 
+
+
   const addParticipant = () => {
     if (newParticipant.trim()) {
       setNewMeeting({
@@ -461,10 +463,7 @@ export default function Dashboard() {
           {/* Mini-calendrier - 1 colonne */}
           <div className="lg:col-span-1">
             <MiniCalendar
-              meetings={meetings.map(m => ({
-                ...m,
-                duration: m.totalDuration
-              }))}
+              meetings={meetings}
               onMeetingSelect={handleMeetingSelect}
               onDateSelect={handleDateSelect}
               selectedDate={selectedDate}
