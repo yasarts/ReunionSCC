@@ -1801,7 +1801,7 @@ export default function AdminPanel() {
                     type="submit" 
                     disabled={updateMeetingTypeMutation.isPending}
                   >
-                    {updateMeetingTypeMutation.isPending ? 'Modification...' : 'Modifier'}
+                    {updateMeetingTypeMutation.isPending ? 'Sauvegarde...' : 'Sauvegarder'}
                   </Button>
                 </div>
               </form>
