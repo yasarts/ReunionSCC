@@ -1340,6 +1340,64 @@ export default function SimpleMeetingPresenter() {
                             />
                           </div>
                         </div>
+
+                        {/* Affichage des sous-sections si c'est une section principale */}
+                        {currentItem.level === 0 && getSubsections(currentItem.id).length > 0 && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                            <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center gap-2">
+                              <FileText className="h-5 w-5" />
+                              Sous-sections ({getSubsections(currentItem.id).length})
+                            </h3>
+                            <div className="space-y-3">
+                              {getSubsections(currentItem.id).map((subsection, index) => (
+                                <div 
+                                  key={subsection.id}
+                                  className="bg-white border border-blue-200 rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
+                                  onClick={() => {
+                                    const subsectionIndex = agenda.findIndex(item => item.id === subsection.id);
+                                    if (subsectionIndex !== -1) {
+                                      setCurrentItemIndex(subsectionIndex);
+                                    }
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                                        {index + 1}
+                                      </div>
+                                      <div>
+                                        <h4 className="font-medium text-gray-900">{subsection.title}</h4>
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                          <Clock className="h-4 w-4" />
+                                          <span>{subsection.duration} min</span>
+                                          {subsection.presenter && (
+                                            <>
+                                              <span>•</span>
+                                              <Users className="h-4 w-4" />
+                                              <span>{subsection.presenter}</span>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <Badge variant="secondary" className="text-xs">
+                                      Sous-section
+                                    </Badge>
+                                  </div>
+                                  {subsection.tags && subsection.tags.length > 0 && (
+                                    <div className="mt-2 flex flex-wrap gap-1">
+                                      {subsection.tags.map(tag => (
+                                        <Badge key={tag} variant="outline" className="text-xs">
+                                          {tag}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       /* Mode édition - Contenu détaillé */
@@ -1478,6 +1536,55 @@ export default function SimpleMeetingPresenter() {
                             </div>
                           )}
                         </div>
+
+                        {/* Affichage des sous-sections en mode édition */}
+                        {currentItem.level === 0 && getSubsections(currentItem.id).length > 0 && (
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                              <FileText className="h-4 w-4" />
+                              Sous-sections ({getSubsections(currentItem.id).length})
+                            </h3>
+                            <div className="space-y-2">
+                              {getSubsections(currentItem.id).map((subsection, index) => (
+                                <div 
+                                  key={subsection.id}
+                                  className="bg-white border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                                  onClick={() => {
+                                    const subsectionIndex = agenda.findIndex(item => item.id === subsection.id);
+                                    if (subsectionIndex !== -1) {
+                                      setCurrentItemIndex(subsectionIndex);
+                                    }
+                                  }}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-6 h-6 bg-gray-600 text-white rounded-full flex items-center justify-center text-xs font-semibold">
+                                        {index + 1}
+                                      </div>
+                                      <div>
+                                        <h4 className="font-medium text-gray-900 text-sm">{subsection.title}</h4>
+                                        <div className="flex items-center gap-2 text-xs text-gray-600">
+                                          <Clock className="h-3 w-3" />
+                                          <span>{subsection.duration} min</span>
+                                          {subsection.presenter && (
+                                            <>
+                                              <span>•</span>
+                                              <Users className="h-3 w-3" />
+                                              <span>{subsection.presenter}</span>
+                                            </>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                    <Badge variant="outline" className="text-xs">
+                                      Modifier
+                                    </Badge>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </CardContent>
