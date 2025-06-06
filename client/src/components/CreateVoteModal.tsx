@@ -44,7 +44,7 @@ export function CreateVoteModal({ isOpen, onClose, agendaItemId }: CreateVoteMod
     },
     onSuccess: () => {
       // Invalider le cache pour que les votes s'affichent immédiatement
-      queryClient.invalidateQueries({ queryKey: ["/api/agenda", agendaItemId, "votes"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/agenda/${agendaItemId}/votes`] });
       toast({
         title: "Succès",
         description: "Vote créé avec succès",
