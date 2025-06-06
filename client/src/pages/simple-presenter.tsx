@@ -1043,7 +1043,11 @@ export default function SimpleMeetingPresenter() {
 
           {/* Main content display */}
           <div className="flex-1 overflow-y-auto">
-            {currentItemIndex === -1 ? (
+            {showParticipantsView ? (
+              <div className="p-8">
+                <IntegratedParticipantsManagement meetingId={1} />
+              </div>
+            ) : currentItemIndex === -1 ? (
               // Aperçu général interactif avec navigation hiérarchique et gestion complète
               <div className="p-8">
                 <div className="max-w-4xl mx-auto">
@@ -1376,10 +1380,6 @@ export default function SimpleMeetingPresenter() {
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : showParticipantsView ? (
-              <div className="p-8">
-                <IntegratedParticipantsManagement meetingId={1} />
               </div>
             ) : currentItem ? (
               <div className="p-8">
