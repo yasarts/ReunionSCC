@@ -1830,28 +1830,9 @@ export default function SimpleMeetingPresenter() {
                             </div>
                           )}
                         </div>
-                      </div>
-                    )}
-                  </CardHeader>
-                  <CardContent>
-                    {!showAdvancedMode ? (
-                      /* Mode simple - Contenu épuré */
-                      <div className="space-y-6">
-                        {/* Contenu principal */}
-                        <div className="bg-white rounded-xl border border-gray-200 p-6">
-                          {generateSectionMenu(currentItem)}
-                          <div className="prose prose-gray max-w-none prose-lg">
-                            <div 
-                              className="whitespace-pre-wrap leading-relaxed text-gray-800"
-                              dangerouslySetInnerHTML={{ 
-                                __html: formatContentWithAnchors(currentItem.content || 'Aucun contenu défini pour cette section')
-                              }}
-                            />
-                          </div>
-                        </div>
 
-                        {/* Section de vote - Uniquement en mode édition avancée et pas pour les pauses */}
-                        {showAdvancedMode && currentItem.type !== 'break' && (
+                        {/* Section de vote - Mode édition avancée uniquement */}
+                        {currentItem.type !== 'break' && (
                           <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
                             <div className="flex items-center justify-between mb-4">
                               <h3 className="text-lg font-semibold text-purple-900 flex items-center gap-2">
@@ -1901,6 +1882,27 @@ export default function SimpleMeetingPresenter() {
                             <VoteCard agendaItemId={parseInt(currentItem.id)} />
                           </div>
                         )}
+                      </div>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {!showAdvancedMode ? (
+                      /* Mode simple - Contenu épuré */
+                      <div className="space-y-6">
+                        {/* Contenu principal */}
+                        <div className="bg-white rounded-xl border border-gray-200 p-6">
+                          {generateSectionMenu(currentItem)}
+                          <div className="prose prose-gray max-w-none prose-lg">
+                            <div 
+                              className="whitespace-pre-wrap leading-relaxed text-gray-800"
+                              dangerouslySetInnerHTML={{ 
+                                __html: formatContentWithAnchors(currentItem.content || 'Aucun contenu défini pour cette section')
+                              }}
+                            />
+                          </div>
+                        </div>
+
+
 
                         {/* Affichage des sous-sections si c'est une section principale */}
                         {currentItem.level === 0 && getSubsections(currentItem.id).length > 0 && (
