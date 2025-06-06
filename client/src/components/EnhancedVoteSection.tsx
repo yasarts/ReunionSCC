@@ -79,7 +79,10 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
       });
     },
     onSuccess: () => {
+      // Invalider plusieurs caches pour assurer la mise à jour
       queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes/enhanced`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/votes'] });
       setSelectedOptions({});
       toast({
         title: "Vote enregistré",
@@ -102,6 +105,8 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes/enhanced`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/votes'] });
       toast({
         title: "Vote supprimé",
         description: "Le vote a été supprimé avec succès",
@@ -123,6 +128,8 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes/enhanced`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/votes'] });
       toast({
         title: "Vote d'entreprise supprimé",
         description: "L'entreprise peut maintenant voter à nouveau",
@@ -144,6 +151,8 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes/enhanced`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/votes'] });
       toast({
         title: "Vote fermé",
         description: "Le vote a été fermé avec succès",
