@@ -96,7 +96,7 @@ export default function SimpleMeetingPresenter() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [itemStartTime, setItemStartTime] = useState<Date | null>(null);
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const [showParticipantsView, setShowParticipantsView] = useState(false);
+
   const [editingItem, setEditingItem] = useState<AgendaItem | null>(null);
   const [newParticipant, setNewParticipant] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -923,10 +923,10 @@ export default function SimpleMeetingPresenter() {
 
               {/* Participants Button */}
               <Button 
-                variant={showParticipantsView ? "default" : "ghost"} 
+                variant="ghost" 
                 size="sm" 
                 className="flex items-center gap-2" 
-                onClick={() => setShowParticipantsView(!showParticipantsView)}
+                onClick={() => setShowParticipantsModal(true)}
               >
                 <Users className="h-4 w-4" />
                 Participants
@@ -2210,6 +2210,14 @@ export default function SimpleMeetingPresenter() {
           </div>
         </div>
       )}
+
+      {/* Modal de gestion des participants simplifié */}
+      <SimpleParticipantsModal
+        isOpen={showParticipantsModal}
+        onClose={() => setShowParticipantsModal(false)}
+        meetingId={1}
+        meetingTitle={meetingInfo.title}
+      />
     </div>
   );
 }
