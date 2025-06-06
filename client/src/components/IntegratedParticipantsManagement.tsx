@@ -265,7 +265,54 @@ export function IntegratedParticipantsManagement({ meetingId }: IntegratedPartic
             )}
           </div>
 
-          {/* Gestion des pouvoirs */}
+          {/* Gestion des mandats - pour les entreprises donnant mandat */}
+          {participation.status === 'proxy' && (
+            <div className="pt-3 border-t border-gray-200">
+              <h5 className="text-sm font-medium text-gray-700 mb-2">Mandat donné à</h5>
+              <div className="flex items-center gap-2">
+                <Select 
+                  value={participation.proxyToCompany?.id?.toString() || ""} 
+                  onValueChange={(value) => {
+                    const newProxyCompanyId = parseInt(value);
+                    // Mettre à jour le mandat
+                    updateStatusMutation.mutate({
+                      userId: participation.representatives[0]?.id,
+                      status: 'proxy',
+                      proxyCompanyId: newProxyCompanyId
+                    });
+                  }}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Sélectionner l'entreprise mandatée..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {presentCompanies.filter(c => c.id !== participation.company.id).map((company) => (
+                      <SelectItem key={company.id} value={company.id.toString()}>
+                        {company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Changer le statut en présent (enlever le mandat)
+                    updateStatusMutation.mutate({
+                      userId: participation.representatives[0]?.id,
+                      status: 'present',
+                      proxyCompanyId: undefined
+                    });
+                  }}
+                  title="Annuler le mandat"
+                >
+                  ✕
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Gestion des pouvoirs - pour les entreprises présentes */}
           {showProxyOptions && participation.status === 'present' && (
             <div>
               <h5 className="text-sm font-medium text-gray-700 mb-2">Donner pouvoir à</h5>
@@ -288,14 +335,51 @@ export function IntegratedParticipantsManagement({ meetingId }: IntegratedPartic
     </Card>
   );
 
+  // Calcul des statistiques
+  const stats = companyParticipations.reduce((acc: {present: number, proxy: number, excused: number, absent: number}, participation: CompanyParticipation) => {
+    switch (participation.status) {
+      case 'present':
+        acc.present++;
+        break;
+      case 'proxy':
+        acc.proxy++;
+        break;
+      case 'excused':
+        acc.excused++;
+        break;
+      case 'absent':
+        acc.absent++;
+        break;
+    }
+    return acc;
+  }, { present: 0, proxy: 0, excused: 0, absent: 0 });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Gestion des participants</h2>
-        <Badge variant="outline" className="text-lg px-3 py-1">
-          <Users className="h-4 w-4 mr-2" />
-          {participants?.length || 0} participants
-        </Badge>
+        
+        {/* Compteur des statuts */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <div className="grid grid-cols-4 gap-4 text-sm">
+            <div className="text-center">
+              <div className="text-lg font-bold text-green-600">{stats.present}</div>
+              <div className="text-gray-600">Présentes</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-purple-600">{stats.proxy}</div>
+              <div className="text-gray-600">Mandats</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-orange-600">{stats.excused}</div>
+              <div className="text-gray-600">Excusées</div>
+            </div>
+            <div className="text-center">
+              <div className="text-lg font-bold text-red-600">{stats.absent}</div>
+              <div className="text-gray-600">Absentes</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Section d'ajout */}
