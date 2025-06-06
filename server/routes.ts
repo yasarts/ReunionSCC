@@ -663,7 +663,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log(`Getting votes for section: ${sectionId}`);
       
       // Créer un hash unique pour chaque section pour séparer les votes
-      function hashSectionId(sectionId: string): number {
+      const hashSectionId = (sectionId: string): number => {
         let hash = 0;
         for (let i = 0; i < sectionId.length; i++) {
           const char = sectionId.charCodeAt(i);
@@ -672,7 +672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         // Assurer un nombre positif et dans une plage raisonnable
         return Math.abs(hash) % 10000 + 1000;
-      }
+      };
       
       const agendaItemId = hashSectionId(sectionId);
       console.log(`Section: ${sectionId} -> unique agenda item: ${agendaItemId}`);
