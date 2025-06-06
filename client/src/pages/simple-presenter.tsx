@@ -876,40 +876,82 @@ export default function SimpleMeetingPresenter() {
                       return (
                         <Card 
                           key={section.id} 
-                          className={`group transition-all hover:shadow-md ${isEditMode ? 'cursor-move' : 'cursor-pointer'} ${isCompleted ? 'bg-green-50 border-green-200' : ''} ${
-                            draggedItem === section.id ? 'opacity-50' : ''
-                          }`}
-                          draggable={isEditMode}
-                          onDragStart={(e) => {
-                            if (isEditMode) {
-                              setDraggedItem(section.id);
-                              e.dataTransfer.effectAllowed = 'move';
-                            }
-                          }}
-                          onDragOver={(e) => {
-                            if (isEditMode && draggedItem && draggedItem !== section.id) {
-                              e.preventDefault();
-                              e.dataTransfer.dropEffect = 'move';
-                            }
-                          }}
-                          onDrop={(e) => {
-                            if (isEditMode && draggedItem && draggedItem !== section.id) {
-                              e.preventDefault();
-                              const draggedIndex = agenda.findIndex(a => a.id === draggedItem);
-                              const targetIndex = agenda.findIndex(a => a.id === section.id);
-                              if (draggedIndex !== -1 && targetIndex !== -1) {
-                                moveItemWithChildren(draggedIndex, targetIndex);
-                              }
-                              setDraggedItem(null);
-                            }
-                          }}
-                          onDragEnd={() => setDraggedItem(null)}
+                          className={`group transition-all hover:shadow-md ${isEditMode ? 'cursor-default' : 'cursor-pointer'} ${isCompleted ? 'bg-green-50 border-green-200' : ''}`}
                         >
                           <CardHeader onClick={() => !isEditMode && navigateToItem(section.id)}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 {isEditMode && (
-                                  <GripVertical className="h-5 w-5 text-gray-400 cursor-grab" />
+                                  <div className="flex flex-col gap-1">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (sectionIndex > 0) {
+                                          const sections = agenda.filter(item => item.level === 0);
+                                          const currentSectionItem = sections[sectionIndex];
+                                          const previousSectionItem = sections[sectionIndex - 1];
+                                          
+                                          const currentIndex = agenda.findIndex(a => a.id === currentSectionItem.id);
+                                          const previousIndex = agenda.findIndex(a => a.id === previousSectionItem.id);
+                                          
+                                          // Obtenir toutes les sous-sections de chaque section
+                                          const currentSubsections = getSubsections(currentSectionItem.id);
+                                          const previousSubsections = getSubsections(previousSectionItem.id);
+                                          
+                                          const newAgenda = [...agenda];
+                                          
+                                          // Supprimer les sections et leurs sous-sections
+                                          newAgenda.splice(currentIndex, 1 + currentSubsections.length);
+                                          const adjustedPreviousIndex = previousIndex > currentIndex ? previousIndex - (1 + currentSubsections.length) : previousIndex;
+                                          newAgenda.splice(adjustedPreviousIndex, 1 + previousSubsections.length);
+                                          
+                                          // Réinsérer dans l'ordre inverse
+                                          const insertIndex = Math.min(previousIndex, currentIndex);
+                                          newAgenda.splice(insertIndex, 0, currentSectionItem, ...currentSubsections);
+                                          newAgenda.splice(insertIndex + 1 + currentSubsections.length, 0, previousSectionItem, ...previousSubsections);
+                                          
+                                          setAgenda(newAgenda);
+                                        }
+                                      }}
+                                      disabled={sectionIndex === 0}
+                                      className={`p-0.5 rounded ${sectionIndex === 0 ? 'text-gray-300' : 'text-gray-600 hover:bg-gray-100'}`}
+                                    >
+                                      <ChevronUp className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const sections = agenda.filter(item => item.level === 0);
+                                        if (sectionIndex < sections.length - 1) {
+                                          const currentSectionItem = sections[sectionIndex];
+                                          const nextSectionItem = sections[sectionIndex + 1];
+                                          
+                                          const currentIndex = agenda.findIndex(a => a.id === currentSectionItem.id);
+                                          const nextIndex = agenda.findIndex(a => a.id === nextSectionItem.id);
+                                          
+                                          // Obtenir toutes les sous-sections de chaque section
+                                          const currentSubsections = getSubsections(currentSectionItem.id);
+                                          const nextSubsections = getSubsections(nextSectionItem.id);
+                                          
+                                          const newAgenda = [...agenda];
+                                          
+                                          // Supprimer les sections et leurs sous-sections
+                                          newAgenda.splice(nextIndex, 1 + nextSubsections.length);
+                                          newAgenda.splice(currentIndex, 1 + currentSubsections.length);
+                                          
+                                          // Réinsérer dans l'ordre inverse
+                                          newAgenda.splice(currentIndex, 0, nextSectionItem, ...nextSubsections);
+                                          newAgenda.splice(currentIndex + 1 + nextSubsections.length, 0, currentSectionItem, ...currentSubsections);
+                                          
+                                          setAgenda(newAgenda);
+                                        }
+                                      }}
+                                      disabled={sectionIndex === agenda.filter(item => item.level === 0).length - 1}
+                                      className={`p-0.5 rounded ${sectionIndex === agenda.filter(item => item.level === 0).length - 1 ? 'text-gray-300' : 'text-gray-600 hover:bg-gray-100'}`}
+                                    >
+                                      <ChevronDown className="h-4 w-4" />
+                                    </button>
+                                  </div>
                                 )}
                                 <span className="text-lg font-mono text-gray-500 min-w-[2rem]">{sectionNumber}.</span>
                                 {isCompleted ? (
