@@ -475,7 +475,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Content update route
+  // Content routes
+  app.get("/api/agenda/:id/content", requireAuth, async (req: any, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid agenda item ID" });
+      }
+
+      const agendaItem = await storage.getAgendaItem(id);
+      if (!agendaItem) {
+        return res.status(404).json({ message: "Agenda item not found" });
+      }
+
+      res.json({ content: agendaItem.content || '' });
+    } catch (error) {
+      console.error("Get agenda content error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.put("/api/agenda/:id/content", requireAuth, async (req: any, res: Response) => {
     try {
       const id = parseInt(req.params.id);

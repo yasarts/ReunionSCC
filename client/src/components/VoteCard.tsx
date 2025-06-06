@@ -41,7 +41,7 @@ export function VoteCard({ agendaItemId }: VoteCardProps) {
 
   // Récupérer les votes pour cet élément d'agenda
   const { data: votes = [], isLoading, error } = useQuery<VoteData[]>({
-    queryKey: ["/api/agenda", agendaItemId, "votes"],
+    queryKey: [`/api/agenda/${agendaItemId}/votes`],
     retry: false,
   });
 
@@ -54,7 +54,7 @@ export function VoteCard({ agendaItemId }: VoteCardProps) {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/agenda", agendaItemId, "votes"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/agenda/${agendaItemId}/votes`] });
       setSelectedOption("");
       toast({
         title: "Vote enregistré",
@@ -76,7 +76,7 @@ export function VoteCard({ agendaItemId }: VoteCardProps) {
       return await apiRequest("POST", `/api/votes/${voteId}/close`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/agenda", agendaItemId, "votes"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/agenda/${agendaItemId}/votes`] });
       toast({
         title: "Vote fermé",
         description: "Le vote a été fermé avec succès",
