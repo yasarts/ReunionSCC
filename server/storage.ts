@@ -30,7 +30,7 @@ import {
   type InsertMeetingTypeRole,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Company operations
@@ -257,8 +257,21 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(companies, eq(meetingParticipants.proxyCompanyId, companies.id))
       .where(eq(meetingParticipants.meetingId, meetingId));
 
+    // Récupérer les entreprises des utilisateurs séparément
+    const userIds = results.map(r => r.user.id);
+    const userCompanies = userIds.length > 0 ? await db
+      .select()
+      .from(companies)
+      .where(sql`${companies.id} IN (SELECT company_id FROM users WHERE id IN (${userIds.join(',')}))`) : [];
+
+    const companiesMap = new Map(userCompanies.map(c => [c.id, c]));
+
     return results.map(result => ({
       ...result,
+      user: {
+        ...result.user,
+        company: result.user.companyId ? companiesMap.get(result.user.companyId) : undefined
+      } as User & { company?: Company },
       proxyCompany: result.proxyCompany || undefined
     })) as (MeetingParticipant & { user: User, proxyCompany?: Company })[];
   }
