@@ -502,11 +502,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = parseInt(req.params.userId);
       const { status, proxyCompanyId } = req.body;
 
+      console.log(`Updating participant status: meetingId=${meetingId}, userId=${userId}, status=${status}, proxyCompanyId=${proxyCompanyId}`);
+      
+      // Vérifier si le participant existe, sinon l'ajouter
+      const participants = await storage.getMeetingParticipants(meetingId);
+      const existingParticipant = participants.find(p => p.userId === userId);
+      
+      if (!existingParticipant) {
+        console.log(`Participant ${userId} not found, adding to meeting ${meetingId}`);
+        await storage.addParticipant(meetingId, userId);
+      }
+
       await storage.updateParticipantStatus(meetingId, userId, status, proxyCompanyId);
+      console.log(`Participant status updated successfully`);
       res.json({ message: "Participant status updated successfully" });
     } catch (error) {
       console.error("Update participant status error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
 
