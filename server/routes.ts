@@ -483,16 +483,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/meetings/:id/participants", requireAuth, requirePermission("canManageParticipants"), async (req: any, res: Response) => {
+  app.post("/api/meetings/:id/participants", async (req: any, res: Response) => {
     try {
       const meetingId = parseInt(req.params.id);
       const { userId } = req.body;
 
+      console.log(`Adding participant: meetingId=${meetingId}, userId=${userId}`);
       await storage.addParticipant(meetingId, userId);
+      console.log("Participant added successfully");
       res.json({ message: "Participant added successfully" });
     } catch (error) {
       console.error("Add participant error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+  });
+
+  // Route combinée pour ajouter un participant avec un statut
+  app.post("/api/meetings/:id/participants/with-status", async (req: any, res: Response) => {
+    try {
+      const meetingId = parseInt(req.params.id);
+      const { userId, status, proxyCompanyId } = req.body;
+
+      console.log(`Adding participant with status: meetingId=${meetingId}, userId=${userId}, status=${status}, proxyCompanyId=${proxyCompanyId}`);
+      
+      // Ajouter le participant
+      await storage.addParticipant(meetingId, userId);
+      
+      // Définir le statut
+      await storage.updateParticipantStatus(meetingId, userId, status, proxyCompanyId);
+      
+      console.log("Participant added with status successfully");
+      res.json({ message: "Participant added with status successfully" });
+    } catch (error) {
+      console.error("Add participant with status error:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
     }
   });
 

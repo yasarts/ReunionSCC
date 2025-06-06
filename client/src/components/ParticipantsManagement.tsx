@@ -170,6 +170,28 @@ export function ParticipantsManagement({ meetingId }: ParticipantsManagementProp
     },
   });
 
+  // Mutation pour ajouter un participant avec statut
+  const addParticipantWithStatusMutation = useMutation({
+    mutationFn: async ({ userId, status, proxyCompanyId }: { userId: number; status: string; proxyCompanyId?: number }) => {
+      await apiRequest(`/api/meetings/${meetingId}/participants/with-status`, "POST", { userId, status, proxyCompanyId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/meetings/${meetingId}/participants`] });
+      toast({
+        title: "Participant ajouté",
+        description: "Le participant a été ajouté avec succès.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error adding participant with status:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'ajouter le participant.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleCompanyStatusChange = async (companyId: number, newStatus: CompanyParticipation['status']) => {
     const participation = companyParticipations.get(companyId);
     const company = companies?.find(c => c.id === companyId);
@@ -179,15 +201,10 @@ export function ParticipantsManagement({ meetingId }: ParticipantsManagementProp
     if (!participation || participation.representatives.length === 0) {
       const companyUsers = allUsers?.filter(user => user.companyId === companyId);
       if (companyUsers && companyUsers.length > 0) {
-        try {
-          // Ajouter le premier utilisateur comme participant
-          await addParticipantsMutation.mutateAsync([companyUsers[0].id]);
-          // Ensuite mettre à jour le statut
-          updateStatusMutation.mutate({ userId: companyUsers[0].id, status: newStatus });
-        } catch (error) {
-          console.error('Error adding participant:', error);
-          return;
-        }
+        addParticipantWithStatusMutation.mutate({
+          userId: companyUsers[0].id,
+          status: newStatus
+        });
       }
     } else {
       // Mettre à jour le statut local
