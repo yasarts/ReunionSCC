@@ -30,6 +30,7 @@ interface CompanyParticipation {
   status: 'present' | 'absent' | 'excused' | 'proxy';
   representatives: User[];
   proxyToCompany?: Company;
+  proxiesReceived?: Company[]; // Entreprises ayant donné leur pouvoir à cette entreprise
 }
 
 const statusColors = {
@@ -101,11 +102,25 @@ export function ParticipantsManagement({ meetingId }: ParticipantsManagementProp
 
           const proxyParticipant = companyParticipants.find(p => p.status === 'proxy');
           
+          // Calculer les pouvoirs reçus par cette entreprise
+          const proxiesReceived: Company[] = [];
+          participants?.forEach(participant => {
+            if (participant.status === 'proxy' && 
+                participant.proxyCompany?.id === company.id &&
+                participant.user.companyId !== company.id) {
+              const senderCompany = companies.find(c => c.id === participant.user.companyId);
+              if (senderCompany && !proxiesReceived.find(p => p.id === senderCompany.id)) {
+                proxiesReceived.push(senderCompany);
+              }
+            }
+          });
+          
           newCompanyParticipations.set(company.id, {
             company,
             status,
             representatives: companyParticipants.map(p => p.user),
-            proxyToCompany: proxyParticipant?.proxyCompany
+            proxyToCompany: proxyParticipant?.proxyCompany,
+            proxiesReceived
           });
         }
       });
@@ -332,6 +347,22 @@ export function ParticipantsManagement({ meetingId }: ParticipantsManagementProp
                       <span className="text-sm">{participation.proxyToCompany.name}</span>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Pouvoirs reçus */}
+              {participation.status === 'present' && participation.proxiesReceived && participation.proxiesReceived.length > 0 && (
+                <div className="p-3 bg-indigo-50 rounded-lg">
+                  <h5 className="text-sm font-medium text-indigo-800 mb-2">
+                    Pouvoirs reçus ({participation.proxiesReceived.length})
+                  </h5>
+                  <div className="flex flex-wrap gap-2">
+                    {participation.proxiesReceived.map((proxyCompany) => (
+                      <Badge key={proxyCompany.id} variant="secondary" className="bg-indigo-100 text-indigo-800">
+                        {proxyCompany.name}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
 

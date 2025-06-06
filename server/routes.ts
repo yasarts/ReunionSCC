@@ -449,7 +449,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Participant routes
-  app.get("/api/meetings/:id/participants", requireAuth, async (req: any, res: Response) => {
+  app.get("/api/meetings/:id/participants", async (req: any, res: Response) => {
     try {
       const meetingId = parseInt(req.params.id);
       const participants = await storage.getMeetingParticipants(meetingId);
@@ -496,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/meetings/:meetingId/participants/:userId/status", requireAuth, async (req: any, res: Response) => {
+  app.put("/api/meetings/:meetingId/participants/:userId/status", async (req: any, res: Response) => {
     try {
       const meetingId = parseInt(req.params.meetingId);
       const userId = parseInt(req.params.userId);
