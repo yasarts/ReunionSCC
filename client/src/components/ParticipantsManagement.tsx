@@ -193,20 +193,32 @@ export function ParticipantsManagement({ meetingId }: ParticipantsManagementProp
   });
 
   const handleCompanyStatusChange = async (companyId: number, newStatus: CompanyParticipation['status']) => {
+    console.log(`[Client] handleCompanyStatusChange called: companyId=${companyId}, newStatus=${newStatus}`);
+    
     const participation = companyParticipations.get(companyId);
     const company = companies?.find(c => c.id === companyId);
-    if (!company) return;
+    if (!company) {
+      console.log(`[Client] Company not found: ${companyId}`);
+      return;
+    }
 
     // Si l'entreprise n'a pas encore de participants, ajouter le premier utilisateur de l'entreprise
     if (!participation || participation.representatives.length === 0) {
+      console.log(`[Client] No existing participation, adding first user`);
       const companyUsers = allUsers?.filter(user => user.companyId === companyId);
+      console.log(`[Client] Company users found:`, companyUsers?.length);
+      
       if (companyUsers && companyUsers.length > 0) {
+        console.log(`[Client] Calling addParticipantWithStatusMutation for user ${companyUsers[0].id}`);
         addParticipantWithStatusMutation.mutate({
           userId: companyUsers[0].id,
           status: newStatus
         });
+      } else {
+        console.log(`[Client] No users found for company ${companyId}`);
       }
     } else {
+      console.log(`[Client] Updating existing participation`);
       // Mettre à jour le statut local
       const updatedParticipation = { ...participation, status: newStatus };
       const newMap = new Map(companyParticipations);
@@ -215,6 +227,7 @@ export function ParticipantsManagement({ meetingId }: ParticipantsManagementProp
 
       // Mettre à jour tous les participants de cette entreprise
       participation.representatives.forEach(user => {
+        console.log(`[Client] Updating status for user ${user.id}`);
         updateStatusMutation.mutate({ userId: user.id, status: newStatus });
       });
     }
