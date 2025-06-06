@@ -2440,6 +2440,7 @@ export default function SimpleMeetingPresenter() {
           setSelectedAgendaItemForVote(null);
         }}
         agendaItemId={selectedAgendaItemForVote}
+        sectionId={currentItem?.id}
       />
 
     </div>
