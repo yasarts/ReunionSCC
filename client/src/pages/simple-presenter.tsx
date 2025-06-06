@@ -80,23 +80,24 @@ export default function SimpleMeetingPresenter() {
     const storageKey = `meeting-agenda-${meetingId || 'default'}`;
     const deletedItemsKey = `deleted-agenda-items-${meetingId || 'default'}`;
     
-    const savedAgenda = localStorage.getItem(storageKey);
     const deletedItems = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
+    console.log('Deleted items loaded:', deletedItems);
     
     // Commencer avec l'agenda original
-    let currentAgenda = meetingData.agendaItems;
+    let currentAgenda = [...meetingData.agendaItems];
+    console.log('Original agenda length:', currentAgenda.length);
     
     // Appliquer les suppressions persistées
     if (deletedItems.length > 0) {
-      currentAgenda = currentAgenda.filter(item => !deletedItems.includes(item.id));
-    }
-    
-    // Vérifier s'il y a des données personnalisées sauvegardées
-    if (savedAgenda) {
-      const parsedAgenda = JSON.parse(savedAgenda);
-      if (parsedAgenda.length > 0) {
-        return parsedAgenda;
-      }
+      const originalLength = currentAgenda.length;
+      currentAgenda = currentAgenda.filter(item => {
+        const shouldKeep = !deletedItems.includes(item.id);
+        if (!shouldKeep) {
+          console.log('Filtering out item:', item.id, item.title);
+        }
+        return shouldKeep;
+      });
+      console.log(`Filtered agenda: ${originalLength} -> ${currentAgenda.length} items`);
     }
     
     return currentAgenda;
