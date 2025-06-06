@@ -413,7 +413,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Agenda routes
   app.get("/api/meetings/:id/agenda", requireAuth, async (req: any, res: Response) => {
     try {
-      const meetingId = parseInt(req.params.id);
+      const meetingIdParam = req.params.id;
+      
+      // Vérifier si c'est un ID numérique (vraie réunion en base) ou string (réunion de démo)
+      const meetingId = parseInt(meetingIdParam);
+      
+      if (isNaN(meetingId)) {
+        // ID string - réunion de démonstration
+        console.log(`[DEBUG] Demo meeting requested: ${meetingIdParam}`);
+        return res.status(404).json({ message: "Demo meetings use static data" });
+      }
+      
+      // ID numérique - vraie réunion en base
       const agendaItems = await storage.getAgendaItems(meetingId);
       res.json(agendaItems);
     } catch (error) {
