@@ -681,6 +681,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       await storage.castVote(voteResponse);
+      
+      // Vérifier si toutes les entreprises ont voté pour fermer automatiquement le vote
+      const currentVote = await storage.getVote(voteId);
+      if (currentVote && currentVote.isOpen) {
+        const agendaItem = await storage.getAgendaItem(currentVote.agendaItemId);
+        if (agendaItem) {
+          const participants = await storage.getMeetingParticipants(agendaItem.meetingId);
+          const presentParticipants = participants.filter(p => p.status === 'present' || p.status === 'proxy');
+          
+          // Compter les entreprises votables uniques
+          const votableCompanyIds = new Set();
+          presentParticipants.forEach(p => {
+            if (p.user.companyId) votableCompanyIds.add(p.user.companyId);
+            if (p.proxyCompanyId) votableCompanyIds.add(p.proxyCompanyId);
+          });
+          
+          // Vérifier combien d'entreprises ont voté
+          const allVoteResults = await storage.getVoteResults(voteId);
+          const votedCompanyIds = new Set();
+          allVoteResults.forEach(result => {
+            const companyId = result.votingForCompanyId || result.user?.companyId;
+            if (companyId) votedCompanyIds.add(companyId);
+          });
+          
+          // Si toutes les entreprises ont voté, fermer automatiquement le vote
+          if (votedCompanyIds.size >= votableCompanyIds.size) {
+            await storage.closeVote(voteId);
+          }
+        }
+      }
+      
       res.json({ message: "Vote cast successfully" });
     } catch (error) {
       console.error("Cast vote error:", error);
@@ -818,34 +849,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const userCompanies = userCompanyIds.length > 0 ? await storage.getCompanies() : [];
         const companiesMap = new Map(userCompanies.map(c => [c.id, c]));
 
-        // Entreprises présentes
-        const presentCompanies = presentParticipants
+        // Construire la liste des entreprises votables sans doublons
+        const companiesSet = new Map();
+        
+        // D'abord, ajouter les entreprises présentes
+        presentParticipants
           .filter(p => p.user.companyId)
-          .map(p => {
+          .forEach(p => {
             const company = companiesMap.get(p.user.companyId!);
-            return {
-              id: company?.id,
-              name: company?.name,
-              type: 'present' as const,
-              representativeId: p.userId,
-              representativeName: `${p.user.firstName} ${p.user.lastName}`
-            };
-          })
-          .filter(c => c.id && c.name);
+            if (company) {
+              companiesSet.set(company.id, {
+                id: company.id,
+                name: company.name,
+                type: 'present' as const,
+                representativeId: p.userId,
+                representativeName: `${p.user.firstName} ${p.user.lastName}`,
+                hasProxy: false,
+                proxyGivenTo: null
+              });
+            }
+          });
 
-        // Entreprises avec mandat (proxy)
-        const proxyCompanies = presentParticipants
+        // Ensuite, gérer les mandats
+        presentParticipants
           .filter(p => p.proxyCompanyId && p.proxyCompany)
-          .map(p => ({
-            id: p.proxyCompanyId,
-            name: p.proxyCompany?.name,
-            type: 'proxy' as const,
-            representativeId: p.userId,
-            representativeName: `${p.user.firstName} ${p.user.lastName}`
-          }))
-          .filter(c => c.id && c.name);
+          .forEach(p => {
+            const proxyCompany = p.proxyCompany!;
+            const representative = companiesSet.get(p.user.companyId!);
+            
+            if (representative) {
+              // L'entreprise du représentant a reçu un mandat
+              representative.hasProxy = true;
+              representative.proxyGivenTo = proxyCompany.name;
+            }
+            
+            // Ajouter l'entreprise qui a donné le mandat avec un affichage spécial
+            companiesSet.set(proxyCompany.id, {
+              id: proxyCompany.id,
+              name: proxyCompany.name,
+              type: 'proxy' as const,
+              representativeId: p.userId,
+              representativeName: `${p.user.firstName} ${p.user.lastName}`,
+              hasProxy: false,
+              proxyGivenTo: representative ? representative.name : null
+            });
+          });
 
-        votableCompanies = [...presentCompanies, ...proxyCompanies];
+        votableCompanies = Array.from(companiesSet.values());
       }
 
       // Enrichir les votes avec les détails des réponses

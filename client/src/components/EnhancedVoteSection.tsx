@@ -14,6 +14,8 @@ interface VotableCompany {
   type: 'present' | 'proxy';
   representativeId: number;
   representativeName: string;
+  hasProxy: boolean;
+  proxyGivenTo: string | null;
 }
 
 interface CompanyVote {
@@ -257,13 +259,20 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
                             <div className="text-sm text-gray-500">
                               {company.type === 'proxy' ? (
                                 <>
-                                  Entreprise mandatée - Représentée par {company.representativeName}
+                                  <span className="italic">{company.name}</span> - Mandat donné à {company.proxyGivenTo}
                                   <Badge variant="outline" className="ml-2 text-xs bg-blue-50 text-blue-700">
                                     Mandat donné
                                   </Badge>
                                 </>
                               ) : (
-                                <>Représenté par {company.representativeName}</>
+                                <>
+                                  Représenté par {company.representativeName}
+                                  {company.hasProxy && company.proxyGivenTo && (
+                                    <Badge variant="outline" className="ml-2 text-xs bg-orange-50 text-orange-700">
+                                      + Mandat de {company.proxyGivenTo}
+                                    </Badge>
+                                  )}
+                                </>
                               )}
                             </div>
                           </div>
