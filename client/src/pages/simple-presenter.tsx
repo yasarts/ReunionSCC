@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getMeetingData, type AgendaItem } from '@/data/agenda';
 import { IntegratedParticipantsManagement } from '@/components/IntegratedParticipantsManagement';
 import { VoteSection } from '@/components/VoteSection';
+import { EnhancedVoteSection } from '@/components/EnhancedVoteSection';
 import { CreateVoteModal } from '@/components/CreateVoteModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type MeetingType } from '@shared/schema';

@@ -568,7 +568,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/votes/:id/cast", requireAuth, requirePermission("canVote"), async (req: any, res: Response) => {
     try {
       const voteId = parseInt(req.params.id);
-      const { option, votingForCompanyId, userId } = req.body;
+      const { option, votingForCompanyId } = req.body;
       const currentUserId = req.session.userId;
 
       // Vérifier que le vote existe et est ouvert
@@ -593,26 +593,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Only present participants can vote" });
       }
 
-      const targetUserId = userId || currentUserId;
-      const targetParticipant = meetingParticipants.find(p => p.userId === targetUserId);
-
-      if (!targetParticipant || targetParticipant.status !== 'present') {
-        return res.status(403).json({ message: "Target user must be present to vote" });
-      }
-
-      // Vérifier les permissions de délégation (salarié peut voter pour quelqu'un d'autre)
       const currentUser = await storage.getUser(currentUserId);
-      if (targetUserId !== currentUserId && currentUser?.role !== 'salaried') {
-        return res.status(403).json({ message: "Only salaried users can vote on behalf of others" });
+      
+      // Logique de vote selon le rôle
+      if (currentUser?.role === 'salaried') {
+        // Les salariés peuvent voter pour toutes les entreprises présentes et avec mandat
+        if (!votingForCompanyId) {
+          return res.status(400).json({ message: "Salaried users must specify which company they are voting for" });
+        }
+
+        // Vérifier que l'entreprise est votable (présente ou avec mandat)
+        const companyCanVote = meetingParticipants.some(p => 
+          (p.user.companyId === votingForCompanyId && p.status === 'present') ||
+          (p.proxyCompanyId === votingForCompanyId && p.status === 'present')
+        );
+
+        if (!companyCanVote) {
+          return res.status(403).json({ message: "This company is not present or does not have a valid proxy" });
+        }
+
+        // Vérifier si cette entreprise a déjà voté
+        const existingVotes = await storage.getVoteResults(voteId);
+        const companyAlreadyVoted = existingVotes.some(v => 
+          v.votingForCompanyId === votingForCompanyId ||
+          (v.user?.companyId === votingForCompanyId && !v.votingForCompanyId)
+        );
+
+        if (companyAlreadyVoted) {
+          return res.status(403).json({ message: "This company has already voted" });
+        }
+
+      } else {
+        // Les représentants d'entreprise votent pour leur entreprise + entreprises mandatées
+        const userCompanyId = currentUser?.companyId;
+        
+        if (votingForCompanyId) {
+          // Vote pour une entreprise mandatée
+          if (votingForCompanyId !== currentUserParticipant.proxyCompanyId) {
+            return res.status(403).json({ message: "You can only vote for companies you represent or have proxy for" });
+          }
+        } else {
+          // Vote pour sa propre entreprise
+          if (!userCompanyId) {
+            return res.status(403).json({ message: "You must be associated with a company to vote" });
+          }
+          
+          // Vérifier qu'aucun autre représentant de la même entreprise n'a déjà voté
+          const existingVotes = await storage.getVoteResults(voteId);
+          const companyAlreadyVoted = existingVotes.some(v => 
+            (v.user?.companyId === userCompanyId && !v.votingForCompanyId) ||
+            v.votingForCompanyId === userCompanyId
+          );
+
+          if (companyAlreadyVoted) {
+            return res.status(403).json({ message: "Your company has already voted" });
+          }
+        }
       }
 
       // Créer la réponse de vote
       const voteResponse = {
         voteId,
-        userId: targetUserId,
+        userId: currentUserId,
         option,
         votingForCompanyId: votingForCompanyId || null,
-        castByUserId: currentUserId !== targetUserId ? currentUserId : null
+        castByUserId: null
       };
 
       await storage.castVote(voteResponse);
@@ -707,6 +752,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(votesWithResults);
     } catch (error) {
       console.error("Get section votes error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get enhanced voting information with company proxies for employees
+  app.get("/api/sections/:sectionId/votes/enhanced", requireAuth, async (req: any, res: Response) => {
+    try {
+      const sectionId = req.params.sectionId;
+      const currentUser = await storage.getUser(req.session.userId);
+      
+      // Créer un hash unique pour chaque section
+      const getAgendaItemId = (sectionId: string): number => {
+        let hash = 0;
+        for (let i = 0; i < sectionId.length; i++) {
+          const char = sectionId.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash;
+        }
+        return Math.abs(hash) % 10000 + 1000;
+      };
+
+      const agendaItemId = getAgendaItemId(sectionId);
+      const votes = await storage.getVotesByAgendaItem(agendaItemId);
+      
+      // Récupérer l'agenda item pour obtenir le meetingId
+      const agendaItem = await storage.getAgendaItem(agendaItemId);
+      if (!agendaItem) {
+        return res.json({ votes: [], votableCompanies: [] });
+      }
+
+      // Récupérer les participants de la réunion
+      const participants = await storage.getMeetingParticipants(agendaItem.meetingId);
+      const presentParticipants = participants.filter(p => p.status === 'present');
+      
+      // Pour les salariés, récupérer toutes les entreprises votables
+      let votableCompanies = [];
+      if (currentUser?.role === 'salaried') {
+        // Entreprises présentes
+        const presentCompanies = presentParticipants
+          .filter(p => p.user.companyId)
+          .map(p => ({
+            id: p.user.company?.id,
+            name: p.user.company?.name,
+            type: 'present' as const,
+            representativeId: p.userId,
+            representativeName: `${p.user.firstName} ${p.user.lastName}`
+          }));
+
+        // Entreprises avec mandat (proxy)
+        const proxyCompanies = presentParticipants
+          .filter(p => p.proxyCompanyId)
+          .map(p => ({
+            id: p.proxyCompanyId,
+            name: p.proxyCompany?.name,
+            type: 'proxy' as const,
+            representativeId: p.userId,
+            representativeName: `${p.user.firstName} ${p.user.lastName}`
+          }));
+
+        votableCompanies = [...presentCompanies, ...proxyCompanies].filter(c => c.id && c.name);
+      }
+
+      // Enrichir les votes avec les détails des réponses
+      const enhancedVotes = await Promise.all(votes.map(async (vote) => {
+        const responses = await storage.getVoteResults(vote.id);
+        
+        // Organiser les réponses par entreprise
+        const companiesVotes = new Map();
+        
+        for (const response of responses) {
+          const companyId = response.votingForCompanyId || response.user?.companyId;
+          if (companyId) {
+            if (!companiesVotes.has(companyId)) {
+              const company = await storage.getCompany(companyId);
+              companiesVotes.set(companyId, {
+                companyId,
+                companyName: company?.name,
+                votes: []
+              });
+            }
+            companiesVotes.get(companyId).votes.push({
+              option: response.option,
+              voterName: `${response.user.firstName} ${response.user.lastName}`,
+              voterId: response.userId,
+              isProxy: !!response.votingForCompanyId
+            });
+          }
+        }
+
+        const results = vote.options.map(option => {
+          const count = responses.filter(r => r.option === option).length;
+          const percentage = responses.length > 0 ? Math.round((count / responses.length) * 100) : 0;
+          return { option, count, percentage };
+        });
+
+        return {
+          ...vote,
+          results,
+          totalVotes: responses.length,
+          companiesVotes: Array.from(companiesVotes.values()),
+          userVotes: responses.filter(r => r.userId === currentUser?.id)
+        };
+      }));
+
+      res.json({
+        votes: enhancedVotes,
+        votableCompanies,
+        userRole: currentUser?.role,
+        canVoteForCompanies: currentUser?.role === 'salaried'
+      });
+    } catch (error) {
+      console.error("Get enhanced votes error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
