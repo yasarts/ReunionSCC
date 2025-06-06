@@ -546,6 +546,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/meetings/:id/participants/:userId", async (req: any, res: Response) => {
+    try {
+      const meetingId = parseInt(req.params.id);
+      const userId = parseInt(req.params.userId);
+
+      console.log(`Removing participant: meetingId=${meetingId}, userId=${userId}`);
+      await storage.removeParticipant(meetingId, userId);
+      console.log("Participant removed successfully");
+      res.json({ message: "Participant removed successfully" });
+    } catch (error) {
+      console.error("Remove participant error:", error);
+      res.status(500).json({ message: "Internal server error", error: error.message });
+    }
+  });
+
   // Meeting types routes
   app.get("/api/meeting-types", async (req: any, res: Response) => {
     try {
