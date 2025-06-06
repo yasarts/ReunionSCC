@@ -992,10 +992,40 @@ export default function SimpleMeetingPresenter() {
                                   return (
                                     <div 
                                       key={subsection.id} 
-                                      onClick={() => navigateToItem(subsection.id)}
-                                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors hover:bg-gray-50 cursor-pointer ${isSubCompleted ? 'bg-green-50 border-green-200' : 'bg-white'}`}
+                                      onClick={() => !isEditMode && navigateToItem(subsection.id)}
+                                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors hover:bg-gray-50 ${isEditMode ? 'cursor-move' : 'cursor-pointer'} ${isSubCompleted ? 'bg-green-50 border-green-200' : 'bg-white'} ${
+                                        draggedItem === subsection.id ? 'opacity-50' : ''
+                                      }`}
+                                      draggable={isEditMode}
+                                      onDragStart={(e) => {
+                                        if (isEditMode) {
+                                          setDraggedItem(subsection.id);
+                                          e.dataTransfer.effectAllowed = 'move';
+                                        }
+                                      }}
+                                      onDragOver={(e) => {
+                                        if (isEditMode && draggedItem && draggedItem !== subsection.id) {
+                                          e.preventDefault();
+                                          e.dataTransfer.dropEffect = 'move';
+                                        }
+                                      }}
+                                      onDrop={(e) => {
+                                        if (isEditMode && draggedItem && draggedItem !== subsection.id) {
+                                          e.preventDefault();
+                                          const draggedIndex = agenda.findIndex(a => a.id === draggedItem);
+                                          const targetIndex = agenda.findIndex(a => a.id === subsection.id);
+                                          if (draggedIndex !== -1 && targetIndex !== -1) {
+                                            moveItemWithChildren(draggedIndex, targetIndex);
+                                          }
+                                          setDraggedItem(null);
+                                        }
+                                      }}
+                                      onDragEnd={() => setDraggedItem(null)}
                                     >
                                       <div className="flex items-center gap-3">
+                                        {isEditMode && (
+                                          <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />
+                                        )}
                                         <span className="text-sm font-mono text-gray-500 min-w-[3rem]">{sectionNumber}.{subIndex + 1}</span>
                                         {isSubCompleted ? (
                                           <CheckCircle className="h-4 w-4 text-green-600" />
@@ -1007,7 +1037,6 @@ export default function SimpleMeetingPresenter() {
                                           {subsection.presenter && (
                                             <p className="text-xs text-gray-500 mt-1">Présenté par: {subsection.presenter}</p>
                                           )}
-
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2">
@@ -1025,6 +1054,18 @@ export default function SimpleMeetingPresenter() {
                                               </Badge>
                                             ))}
                                           </div>
+                                        )}
+                                        {isEditMode && (
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              const newAgenda = agenda.filter(a => a.id !== subsection.id);
+                                              setAgenda(newAgenda);
+                                            }}
+                                            className="p-1 text-red-500 hover:bg-red-50 rounded ml-2"
+                                          >
+                                            <Trash2 className="h-3 w-3" />
+                                          </button>
                                         )}
                                       </div>
                                     </div>
