@@ -503,18 +503,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { content } = req.body;
       
+      console.log(`[DEBUG] Updating content for agenda ID: ${id}, content length: ${content?.length || 0}`);
+      
       if (isNaN(id)) {
+        console.log(`[DEBUG] Invalid ID provided: ${req.params.id}`);
         return res.status(400).json({ message: "Invalid agenda item ID" });
       }
 
       // Vérifier si l'élément d'agenda existe
       const agendaItem = await storage.getAgendaItem(id);
       if (!agendaItem) {
+        console.log(`[DEBUG] Agenda item not found for ID: ${id}`);
         return res.status(404).json({ message: "Agenda item not found" });
       }
 
-      await storage.updateAgendaItem(id, { content });
-      res.json({ message: "Content updated successfully" });
+      console.log(`[DEBUG] Found agenda item: ${agendaItem.title}, current content length: ${agendaItem.content?.length || 0}`);
+      
+      const updatedItem = await storage.updateAgendaItem(id, { content });
+      console.log(`[DEBUG] Content updated successfully, new content length: ${updatedItem.content?.length || 0}`);
+      
+      res.json({ message: "Content updated successfully", updatedItem });
     } catch (error) {
       console.error("Update agenda content error:", error);
       res.status(500).json({ message: "Internal server error" });

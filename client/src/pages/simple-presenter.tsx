@@ -92,13 +92,12 @@ export default function SimpleMeetingPresenter() {
     mutationFn: async ({ itemId, content }: { itemId: string; content: string }) => {
       // Convertir l'ID de section en ID numérique pour l'API
       const agendaItemId = getAgendaItemId(itemId);
-      await apiRequest("PUT", `/api/agenda/${agendaItemId}/content`, { content });
+      console.log(`[CLIENT] Saving content for itemId: ${itemId}, agendaItemId: ${agendaItemId}, content length: ${content.length}`);
+      const response = await apiRequest("PUT", `/api/agenda/${agendaItemId}/content`, { content });
+      return response;
     },
-    onSuccess: (_, { itemId, content }) => {
-      // Mettre à jour l'agenda local après sauvegarde réussie
-      setAgenda(prev => prev.map(item => 
-        item.id === itemId ? { ...item, content } : item
-      ));
+    onSuccess: (response, { itemId, content }) => {
+      console.log(`[CLIENT] Content saved successfully for itemId: ${itemId}`);
       setIsEditingContent(false);
       toast({
         title: "Succès",
@@ -1997,14 +1996,12 @@ export default function SimpleMeetingPresenter() {
                                   size="sm"
                                   disabled={saveContentMutation.isPending}
                                   onClick={() => {
-                                    // Sauvegarder localement d'abord
-                                    const updatedAgenda = agenda.map(item => 
+                                    // Mettre à jour localement d'abord pour un feedback immédiat
+                                    setAgenda(prev => prev.map(item => 
                                       item.id === currentItem.id 
                                         ? { ...item, content: editedContent }
                                         : item
-                                    );
-                                    setAgenda(updatedAgenda);
-                                    setIsEditingContent(false);
+                                    ));
                                     
                                     // Sauvegarder en base de données
                                     saveContentMutation.mutate({
