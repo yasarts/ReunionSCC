@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getMeetingData, type AgendaItem } from '@/data/agenda';
-import { ParticipantsModal } from '@/components/ParticipantsModal';
+import { ParticipantsManagement } from '@/components/ParticipantsManagement';
 import { useQuery } from '@tanstack/react-query';
 import { type MeetingType } from '@shared/schema';
 
@@ -96,7 +96,7 @@ export default function SimpleMeetingPresenter() {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [itemStartTime, setItemStartTime] = useState<Date | null>(null);
   const [showConfigModal, setShowConfigModal] = useState(false);
-  const [showParticipantsModal, setShowParticipantsModal] = useState(false);
+  const [showParticipantsView, setShowParticipantsView] = useState(false);
   const [editingItem, setEditingItem] = useState<AgendaItem | null>(null);
   const [newParticipant, setNewParticipant] = useState('');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -920,14 +920,16 @@ export default function SimpleMeetingPresenter() {
                 Reset
               </Button>
 
-              {/* Participants Button - Icon + Count */}
-              <button
-                onClick={() => setShowParticipantsModal(true)}
-                className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              {/* Participants Button */}
+              <Button 
+                variant={showParticipantsView ? "default" : "ghost"} 
+                size="sm" 
+                className="flex items-center gap-2" 
+                onClick={() => setShowParticipantsView(!showParticipantsView)}
               >
-                <Users className="h-5 w-5" />
-                <span className="font-medium">{meetingInfo.participants.length}</span>
-              </button>
+                <Users className="h-4 w-4" />
+                Participants
+              </Button>
 
               {/* Tableau de bord Button - Far right */}
               <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => setLocation('/')}>
@@ -1036,7 +1038,12 @@ export default function SimpleMeetingPresenter() {
 
           {/* Main content display */}
           <div className="flex-1 overflow-y-auto">
-            {currentItemIndex === -1 ? (
+            {showParticipantsView ? (
+              // Nouvelle interface de gestion des participants
+              <div className="p-8">
+                <ParticipantsManagement meetingId={1} />
+              </div>
+            ) : currentItemIndex === -1 ? (
               // Aperçu général interactif avec navigation hiérarchique et gestion complète
               <div className="p-8">
                 <div className="max-w-4xl mx-auto">
