@@ -146,7 +146,7 @@ export function VoteSection({ sectionId, sectionTitle, isEditMode = false }: Vot
           <Vote className="h-5 w-5" />
           Votes et sondages - {sectionTitle}
         </h3>
-        {isEditMode && (
+        {user && (user.permissions as any)?.canManageAgenda && (
           <Button
             onClick={() => setShowCreateModal(true)}
             size="sm"
