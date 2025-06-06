@@ -72,6 +72,7 @@ export interface IStorage {
   castVote(voteResponse: InsertVoteResponse): Promise<void>;
   getVoteResults(voteId: number): Promise<VoteResponse[]>;
   closeVote(voteId: number): Promise<void>;
+  deleteVote(voteId: number): Promise<void>;
   getAgendaItem(id: number): Promise<AgendaItem | undefined>;
   
   // Meeting type operations
@@ -354,6 +355,18 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(votes)
       .set({ isOpen: false, closedAt: new Date() })
+      .where(eq(votes.id, voteId));
+  }
+
+  async deleteVote(voteId: number): Promise<void> {
+    // D'abord supprimer les réponses de vote
+    await db
+      .delete(voteResponses)
+      .where(eq(voteResponses.voteId, voteId));
+    
+    // Ensuite supprimer le vote
+    await db
+      .delete(votes)
       .where(eq(votes.id, voteId));
   }
 

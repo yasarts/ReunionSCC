@@ -80,9 +80,15 @@ export default function SimpleMeetingPresenter() {
       const numericId = parseInt(itemId);
       if (Number.isInteger(numericId) && numericId > 0) {
         await apiRequest("PUT", `/api/agenda/${numericId}/content`, { content });
+        
+        // Mettre à jour l'agenda local immédiatement
+        setAgenda(prev => prev.map(item => 
+          item.id === itemId ? { ...item, content } : item
+        ));
       }
     },
     onSuccess: () => {
+      setIsEditingContent(false);
       toast({
         title: "Succès",
         description: "Contenu sauvegardé avec succès.",
@@ -1983,6 +1989,20 @@ export default function SimpleMeetingPresenter() {
                                 </div>
                               ))}
                             </div>
+                          </div>
+                        )}
+
+                        {/* Section de vote - Toujours visible */}
+                        {currentItem.type !== 'break' && (
+                          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-lg font-semibold text-purple-900 flex items-center gap-2">
+                                <Vote className="h-5 w-5" />
+                                Votes et sondages
+                              </h3>
+                            </div>
+                            
+                            <VoteCard agendaItemId={parseInt(currentItem.id)} showDeleteButton={false} />
                           </div>
                         )}
                       </div>
