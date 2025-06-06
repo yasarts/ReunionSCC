@@ -522,6 +522,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedItem = await storage.updateAgendaItem(id, { content });
       console.log(`[DEBUG] Content updated successfully, new content length: ${updatedItem.content?.length || 0}`);
       
+      // Notifier tous les clients WebSocket connectés de la mise à jour
+      const meetingId = updatedItem.meetingId;
+      if (meetingId) {
+        const notificationMessage = JSON.stringify({
+          type: 'content-updated',
+          meetingId: meetingId,
+          agendaItemId: id,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Diffuser à tous les clients WebSocket connectés
+        wss.clients.forEach((client: any) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(notificationMessage);
+          }
+        });
+        console.log(`[DEBUG] WebSocket notification sent for agenda item ${id} in meeting ${meetingId}`);
+      }
+      
       res.json({ message: "Content updated successfully", updatedItem });
     } catch (error) {
       console.error("Update agenda content error:", error);

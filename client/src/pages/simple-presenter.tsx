@@ -17,7 +17,7 @@ import { EnhancedVoteSection } from '@/components/EnhancedVoteSection';
 import { CreateVoteModal } from '@/components/CreateVoteModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type MeetingType } from '@shared/schema';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 
 interface MeetingInfo {
@@ -99,12 +99,10 @@ export default function SimpleMeetingPresenter() {
     onSuccess: (response, { itemId, content }) => {
       console.log(`[CLIENT] Content saved successfully for itemId: ${itemId}`);
       
-      // Persister la modification dans le localStorage
-      const contentModificationsKey = `content-modifications-${meetingId || 'default'}`;
-      const existingModifications = JSON.parse(localStorage.getItem(contentModificationsKey) || '{}');
-      existingModifications[itemId] = content;
-      localStorage.setItem(contentModificationsKey, JSON.stringify(existingModifications));
-      console.log(`[CLIENT] Content modification persisted for itemId: ${itemId}`);
+      // Invalider le cache pour recharger les données depuis la base
+      if (meetingId && meetingId !== 'conseil-national-2025') {
+        queryClient.invalidateQueries({ queryKey: [`/api/meetings/${meetingId}/agenda`] });
+      }
       
       setIsEditingContent(false);
       toast({
@@ -126,55 +124,100 @@ export default function SimpleMeetingPresenter() {
   // Chargement des données spécifiques à la réunion
   const meetingData = getMeetingData(meetingId || 'conseil-national-2025');
   
-  const [agenda, setAgenda] = useState<AgendaItem[]>(() => {
-    const storageKey = `meeting-agenda-${meetingId || 'default'}`;
-    const deletedItemsKey = `deleted-agenda-items-${meetingId || 'default'}`;
-    const contentModificationsKey = `content-modifications-${meetingId || 'default'}`;
-    
-    // Nettoyer les doublons dans les éléments supprimés
-    const deletedItems = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
-    const uniqueDeletedItems = [...new Set(deletedItems)];
-    if (deletedItems.length !== uniqueDeletedItems.length) {
-      localStorage.setItem(deletedItemsKey, JSON.stringify(uniqueDeletedItems));
-      console.log('Cleaned up duplicates in deleted items:', deletedItems.length, '->', uniqueDeletedItems.length);
-    }
-    
-    // Charger les modifications de contenu persistées
-    const contentModifications = JSON.parse(localStorage.getItem(contentModificationsKey) || '{}');
-    
-    console.log('Deleted items loaded:', uniqueDeletedItems);
-    console.log('Content modifications loaded:', Object.keys(contentModifications).length, 'items');
-    
-    // Commencer avec l'agenda original
-    let currentAgenda = [...meetingData.agendaItems];
-    console.log('Original agenda length:', currentAgenda.length);
-    
-    // Appliquer les modifications de contenu persistées
-    if (Object.keys(contentModifications).length > 0) {
-      currentAgenda = currentAgenda.map(item => {
-        if (contentModifications[item.id]) {
-          return { ...item, content: contentModifications[item.id] };
-        }
-        return item;
-      });
-      console.log('Applied content modifications to agenda');
-    }
-    
-    // Appliquer les suppressions persistées
-    if (uniqueDeletedItems.length > 0) {
-      const originalLength = currentAgenda.length;
-      currentAgenda = currentAgenda.filter(item => {
-        const shouldKeep = !uniqueDeletedItems.includes(item.id);
-        if (!shouldKeep) {
-          console.log('Filtering out item:', item.id, item.title);
-        }
-        return shouldKeep;
-      });
-      console.log(`Filtered agenda: ${originalLength} -> ${currentAgenda.length} items`);
-    }
-    
-    return currentAgenda;
+  // Query pour charger l'agenda depuis la base de données
+  const { data: agendaFromDb, isLoading: agendaLoading } = useQuery({
+    queryKey: [`/api/meetings/${meetingId}/agenda`],
+    enabled: !!meetingId && meetingId !== 'conseil-national-2025', // Utiliser DB seulement pour vraies réunions
   });
+
+  const [agenda, setAgenda] = useState<AgendaItem[]>(() => {
+    // Pour les réunions de démo, utiliser les données statiques avec localStorage
+    if (!meetingId || meetingId === 'conseil-national-2025') {
+      const deletedItemsKey = `deleted-agenda-items-${meetingId || 'default'}`;
+      
+      // Nettoyer les doublons dans les éléments supprimés
+      const deletedItems = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
+      const uniqueDeletedItems = [...new Set(deletedItems)];
+      if (deletedItems.length !== uniqueDeletedItems.length) {
+        localStorage.setItem(deletedItemsKey, JSON.stringify(uniqueDeletedItems));
+        console.log('Cleaned up duplicates in deleted items:', deletedItems.length, '->', uniqueDeletedItems.length);
+      }
+      
+      console.log('Deleted items loaded:', uniqueDeletedItems);
+      
+      // Commencer avec l'agenda original
+      let currentAgenda = [...meetingData.agendaItems];
+      console.log('Original agenda length:', currentAgenda.length);
+      
+      // Appliquer les suppressions persistées
+      if (uniqueDeletedItems.length > 0) {
+        const originalLength = currentAgenda.length;
+        currentAgenda = currentAgenda.filter(item => {
+          const shouldKeep = !uniqueDeletedItems.includes(item.id);
+          if (!shouldKeep) {
+            console.log('Filtering out item:', item.id, item.title);
+          }
+          return shouldKeep;
+        });
+        console.log(`Filtered agenda: ${originalLength} -> ${currentAgenda.length} items`);
+      }
+      
+      return currentAgenda;
+    }
+    
+    return [];
+  });
+
+  // Mettre à jour l'agenda quand les données de la DB arrivent
+  useEffect(() => {
+    if (agendaFromDb && Array.isArray(agendaFromDb) && meetingId && meetingId !== 'conseil-national-2025') {
+      setAgenda(agendaFromDb);
+      console.log('Agenda loaded from database:', agendaFromDb.length, 'items');
+    }
+  }, [agendaFromDb, meetingId]);
+
+  // WebSocket pour la synchronisation en temps réel
+  useEffect(() => {
+    if (!meetingId || meetingId === 'conseil-national-2025') return;
+
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const socket = new WebSocket(wsUrl);
+
+    socket.onopen = () => {
+      console.log('[WEBSOCKET] Connected to real-time updates');
+      // S'abonner aux mises à jour de cette réunion
+      socket.send(JSON.stringify({
+        type: 'subscribe',
+        meetingId: meetingId
+      }));
+    };
+
+    socket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === 'content-updated' && message.meetingId === meetingId) {
+          console.log('[WEBSOCKET] Content update received:', message.agendaItemId);
+          // Recharger l'agenda pour obtenir les dernières données
+          queryClient.invalidateQueries({ queryKey: [`/api/meetings/${meetingId}/agenda`] });
+        }
+      } catch (error) {
+        console.error('[WEBSOCKET] Error parsing message:', error);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log('[WEBSOCKET] Disconnected from real-time updates');
+    };
+
+    socket.onerror = (error) => {
+      console.error('[WEBSOCKET] Connection error:', error);
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, [meetingId]);
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo>(() => {
     const storageKey = `meeting-info-${meetingId || 'default'}`;
     const savedMeetingInfo = localStorage.getItem(storageKey);
