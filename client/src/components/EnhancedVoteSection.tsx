@@ -248,18 +248,22 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
                     const selectionKey = `${vote.id}-${company.id}`;
                     
                     return (
-                      <div key={company.id} className="border rounded-lg p-3 bg-white">
+                      <div key={`${vote.id}-company-${company.id}-${company.type}`} className="border rounded-lg p-3 bg-white">
                         <div className="flex items-center justify-between mb-3">
                           <div>
                             <div className="font-medium text-gray-900">
                               {company.name}
                             </div>
                             <div className="text-sm text-gray-500">
-                              Représenté par {company.representativeName}
-                              {company.type === 'proxy' && (
-                                <Badge variant="outline" className="ml-2 text-xs">
-                                  Mandat
-                                </Badge>
+                              {company.type === 'proxy' ? (
+                                <>
+                                  Entreprise mandatée - Représentée par {company.representativeName}
+                                  <Badge variant="outline" className="ml-2 text-xs bg-blue-50 text-blue-700">
+                                    Mandat donné
+                                  </Badge>
+                                </>
+                              ) : (
+                                <>Représenté par {company.representativeName}</>
                               )}
                             </div>
                           </div>
@@ -274,9 +278,9 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
                         {!isVoted && (
                           <div className="space-y-2">
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                              {vote.options.map((option) => (
+                              {vote.options.map((option, optionIndex) => (
                                 <Button
-                                  key={option}
+                                  key={`${vote.id}-${company.id}-option-${optionIndex}-${option}`}
                                   variant={selectedOptions[selectionKey] === option ? "default" : "outline"}
                                   className="justify-start text-left h-auto p-2"
                                   onClick={() => setSelectedOptions(prev => ({

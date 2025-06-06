@@ -606,8 +606,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Vérifier que l'entreprise est votable (présente ou avec mandat)
         const companyCanVote = meetingParticipants.some(p => 
-          (p.user.companyId === votingForCompanyId && p.status === 'present') ||
-          (p.proxyCompanyId === votingForCompanyId && p.status === 'present')
+          (p.user.companyId === votingForCompanyId && (p.status === 'present' || p.status === 'proxy')) ||
+          (p.proxyCompanyId === votingForCompanyId && (p.status === 'present' || p.status === 'proxy'))
         );
 
         if (!companyCanVote) {
@@ -655,12 +655,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Créer la réponse de vote
+      // Pour les employés SCC, enregistrer le vote comme s'il était fait par le représentant de l'entreprise
+      let actualVoterId = currentUserId;
+      let castByUserId = null;
+      
+      if (currentUser?.role === 'Salarié·es SCC' && votingForCompanyId) {
+        // Trouver le représentant de l'entreprise pour laquelle on vote
+        const companyRepresentative = meetingParticipants.find(p => 
+          (p.user.companyId === votingForCompanyId && (p.status === 'present' || p.status === 'proxy')) ||
+          (p.proxyCompanyId === votingForCompanyId && (p.status === 'present' || p.status === 'proxy'))
+        );
+        
+        if (companyRepresentative) {
+          actualVoterId = companyRepresentative.userId;
+          castByUserId = currentUserId; // Garde trace de qui a réellement voté
+        }
+      }
+
       const voteResponse = {
         voteId,
-        userId: currentUserId,
+        userId: actualVoterId,
         option,
         votingForCompanyId: votingForCompanyId || null,
-        castByUserId: null
+        castByUserId
       };
 
       await storage.castVote(voteResponse);
