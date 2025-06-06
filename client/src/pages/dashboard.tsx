@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Plus, Calendar, Users, Clock, Play, Edit3, Trash2, Copy, LogOut, FileDown, Settings, Eye } from 'lucide-react';
+import { Plus, Calendar, Users, Clock, Play, Edit3, Trash2, Copy, LogOut, FileDown, Settings, Eye, Filter, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,8 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { MiniCalendar } from '@/components/MiniCalendar';
 import { getMeetingData } from '@/data/agenda';
+import { useQuery } from '@tanstack/react-query';
+import { type MeetingType } from '@shared/schema';
 
 interface Meeting {
   id: string;
@@ -23,12 +27,20 @@ interface Meeting {
   agendaItemsCount: number;
   totalDuration: number;
   createdAt: string;
+  meetingTypeId?: number;
 }
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { user, logout, requirePermission } = useAuth();
   const [viewAsElu, setViewAsElu] = useState(false);
+  const [selectedMeetingTypeFilter, setSelectedMeetingTypeFilter] = useState<string>('all');
+  const [showPastMeetings, setShowPastMeetings] = useState(false);
+  
+  // Récupérer les types de réunions disponibles
+  const { data: meetingTypes } = useQuery({
+    queryKey: ['/api/meeting-types'],
+  });
   
   // Fonction pour charger les informations de réunion depuis localStorage
   const loadMeetingInfo = (meetingId: string) => {
@@ -75,7 +87,8 @@ export default function Dashboard() {
       status: 'scheduled' as const,
       agendaItemsCount: 12,
       totalDuration: 180,
-      createdAt: '2024-12-01'
+      createdAt: '2024-12-01',
+      meetingTypeId: 1
     },
     {
       id: 'reunion-budget-2025',
@@ -92,7 +105,8 @@ export default function Dashboard() {
       status: 'scheduled',
       agendaItemsCount: 8,
       totalDuration: 120,
-      createdAt: '2024-12-02'
+      createdAt: '2024-12-02',
+      meetingTypeId: 2
     },
     {
       id: 'comite-direction-juin',
@@ -110,7 +124,8 @@ export default function Dashboard() {
       status: 'draft',
       agendaItemsCount: 6,
       totalDuration: 90,
-      createdAt: '2024-12-03'
+      createdAt: '2024-12-03',
+      meetingTypeId: 1
     },
     {
       id: 'formation-nouveaux-employes',
@@ -127,7 +142,8 @@ export default function Dashboard() {
       status: 'scheduled',
       agendaItemsCount: 4,
       totalDuration: 240,
-      createdAt: '2024-12-04'
+      createdAt: '2024-12-04',
+      meetingTypeId: 2
     },
     {
       id: 'reunion-projet-tech',
@@ -144,7 +160,8 @@ export default function Dashboard() {
       status: 'completed',
       agendaItemsCount: 10,
       totalDuration: 150,
-      createdAt: '2024-11-28'
+      createdAt: '2024-11-28',
+      meetingTypeId: 1
     }
     ];
 
