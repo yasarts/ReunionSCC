@@ -73,6 +73,30 @@ export default function SimpleMeetingPresenter() {
       console.error('Error updating agenda item:', error);
     },
   });
+
+  // Mutation pour sauvegarder le contenu
+  const saveContentMutation = useMutation({
+    mutationFn: async ({ itemId, content }: { itemId: string; content: string }) => {
+      const numericId = parseInt(itemId);
+      if (Number.isInteger(numericId) && numericId > 0) {
+        await apiRequest("PUT", `/api/agenda/${numericId}/content`, { content });
+      }
+    },
+    onSuccess: () => {
+      toast({
+        title: "Succès",
+        description: "Contenu sauvegardé avec succès.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error saving content:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de sauvegarder le contenu.",
+        variant: "destructive",
+      });
+    },
+  });
   
   const [currentItemIndex, setCurrentItemIndex] = useState(-1);
   // Chargement des données spécifiques à la réunion
@@ -1997,7 +2021,9 @@ export default function SimpleMeetingPresenter() {
                               <div className="flex gap-2">
                                 <Button
                                   size="sm"
+                                  disabled={saveContentMutation.isPending}
                                   onClick={() => {
+                                    // Sauvegarder localement d'abord
                                     const updatedAgenda = agenda.map(item => 
                                       item.id === currentItem.id 
                                         ? { ...item, content: editedContent }
@@ -2005,10 +2031,16 @@ export default function SimpleMeetingPresenter() {
                                     );
                                     setAgenda(updatedAgenda);
                                     setIsEditingContent(false);
+                                    
+                                    // Sauvegarder en base de données
+                                    saveContentMutation.mutate({
+                                      itemId: currentItem.id,
+                                      content: editedContent
+                                    });
                                   }}
                                 >
                                   <Save className="h-4 w-4 mr-2" />
-                                  Sauvegarder
+                                  {saveContentMutation.isPending ? 'Sauvegarde...' : 'Sauvegarder'}
                                 </Button>
                                 <Button
                                   variant="outline"

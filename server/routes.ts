@@ -475,6 +475,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Content update route
+  app.put("/api/agenda/:id/content", requireAuth, async (req: any, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { content } = req.body;
+      
+      if (!content && content !== '') {
+        return res.status(400).json({ message: "Content is required" });
+      }
+
+      await storage.updateAgendaItem(id, { content });
+      res.json({ message: "Content updated successfully" });
+    } catch (error) {
+      console.error("Update agenda content error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Vote routes
   app.post("/api/agenda/:id/votes", requireAuth, requirePermission("canVote"), async (req: any, res: Response) => {
     try {
@@ -503,6 +521,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (isNaN(agendaItemId)) {
         console.log("Invalid agenda item ID, returning empty array");
+        return res.json([]);
+      }
+      
+      // Pour les IDs de test (non-entiers), retourner un tableau vide
+      if (!Number.isInteger(agendaItemId) || agendaItemId <= 0) {
+        console.log("Test agenda item ID, returning empty array");
         return res.json([]);
       }
       
