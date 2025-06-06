@@ -48,21 +48,41 @@ export default function Dashboard() {
     return savedInfo ? JSON.parse(savedInfo) : null;
   };
 
+  // Fonction pour calculer le nombre réel d'éléments d'agenda après suppressions
+  const calculateRealAgendaItemsCount = (meetingId: string) => {
+    try {
+      const meetingData = getMeetingData(meetingId);
+      const deletedItemsKey = `deleted-agenda-items-${meetingId}`;
+      const deletedItems = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
+      
+      if (meetingData && meetingData.agendaItems) {
+        const activeItems = meetingData.agendaItems.filter(item => !deletedItems.includes(item.id));
+        return activeItems.length;
+      }
+      
+      return 0;
+    } catch (error) {
+      return 0;
+    }
+  };
+
   // Fonction pour calculer la durée totale réelle d'une réunion
   const calculateMeetingDuration = (meetingId: string) => {
     try {
       const meetingData = getMeetingData(meetingId);
+      const deletedItemsKey = `deleted-agenda-items-${meetingId}`;
+      const deletedItems = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
       
       if (meetingData && meetingData.agendaItems) {
-        return meetingData.agendaItems.reduce((total: number, item: any) => {
+        const activeItems = meetingData.agendaItems.filter(item => !deletedItems.includes(item.id));
+        return activeItems.reduce((total: number, item: any) => {
           return total + (item.duration || 0);
         }, 0);
       }
       
-      // Durée par défaut si pas de données
       return 120;
     } catch (error) {
-      return 120; // Durée par défaut
+      return 120;
     }
   };
 
@@ -165,10 +185,11 @@ export default function Dashboard() {
     }
     ];
 
-    // Appliquer les modifications sauvegardées et calculer la durée réelle
+    // Appliquer les modifications sauvegardées et calculer les données réelles
     return baseMeetings.map(meeting => {
       const savedInfo = loadMeetingInfo(meeting.id);
       const realDuration = calculateMeetingDuration(meeting.id);
+      const realAgendaCount = calculateRealAgendaItemsCount(meeting.id);
       
       if (savedInfo) {
         return {
@@ -178,12 +199,14 @@ export default function Dashboard() {
           time: savedInfo.time || meeting.time,
           description: savedInfo.description || meeting.description,
           status: savedInfo.status || meeting.status,
-          totalDuration: realDuration
+          totalDuration: realDuration,
+          agendaItemsCount: realAgendaCount
         };
       }
       return {
         ...meeting,
-        totalDuration: realDuration
+        totalDuration: realDuration,
+        agendaItemsCount: realAgendaCount
       };
     });
   };
