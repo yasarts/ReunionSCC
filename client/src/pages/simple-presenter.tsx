@@ -1922,10 +1922,8 @@ export default function SimpleMeetingPresenter() {
                             </div>
                             
                             {/* Affichage des votes existants pour cette section */}
-                            <VoteSection 
+                            <EnhancedVoteSection 
                               sectionId={currentItem.id} 
-                              sectionTitle={currentItem.title}
-                              isEditMode={true} 
                             />
                           </div>
                         )}
@@ -2011,10 +2009,8 @@ export default function SimpleMeetingPresenter() {
 
                         {/* Section de vote - Affichage conditionnel */}
                         {currentItem.type !== 'break' && (
-                          <VoteSection 
+                          <EnhancedVoteSection 
                             sectionId={currentItem.id} 
-                            sectionTitle={currentItem.title}
-                            isEditMode={false} 
                           />
                         )}
                       </div>
