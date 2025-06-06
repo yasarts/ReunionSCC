@@ -90,17 +90,15 @@ export default function SimpleMeetingPresenter() {
   // Mutation pour sauvegarder le contenu
   const saveContentMutation = useMutation({
     mutationFn: async ({ itemId, content }: { itemId: string; content: string }) => {
-      const numericId = parseInt(itemId);
-      if (Number.isInteger(numericId) && numericId > 0) {
-        await apiRequest("PUT", `/api/agenda/${numericId}/content`, { content });
-        
-        // Mettre à jour l'agenda local immédiatement
-        setAgenda(prev => prev.map(item => 
-          item.id === itemId ? { ...item, content } : item
-        ));
-      }
+      // Convertir l'ID de section en ID numérique pour l'API
+      const agendaItemId = getAgendaItemId(itemId);
+      await apiRequest("PUT", `/api/agenda/${agendaItemId}/content`, { content });
     },
-    onSuccess: () => {
+    onSuccess: (_, { itemId, content }) => {
+      // Mettre à jour l'agenda local après sauvegarde réussie
+      setAgenda(prev => prev.map(item => 
+        item.id === itemId ? { ...item, content } : item
+      ));
       setIsEditingContent(false);
       toast({
         title: "Succès",
@@ -1874,59 +1872,7 @@ export default function SimpleMeetingPresenter() {
                           )}
                         </div>
 
-                        {/* Section de vote - Mode édition avancée uniquement */}
-                        {currentItem.type !== 'break' && (
-                          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
-                            <div className="flex items-center justify-between mb-4">
-                              <h3 className="text-lg font-semibold text-purple-900 flex items-center gap-2">
-                                <Vote className="h-5 w-5" />
-                                Votes et sondages
-                              </h3>
-                              <div className="flex items-center gap-2">
-                                {!isEditingVotes && (
-                                  <Button
-                                    onClick={() => setIsEditingVotes(true)}
-                                    variant="outline"
-                                    size="sm"
-                                    className="text-purple-600 border-purple-300 hover:bg-purple-50"
-                                  >
-                                    <Edit3 className="h-4 w-4 mr-2" />
-                                    Gérer les votes
-                                  </Button>
-                                )}
-                                {isEditingVotes && (
-                                  <>
-                                    <Button
-                                      onClick={() => {
-                                        setSelectedAgendaItemForVote(getAgendaItemId(currentItem.id));
-                                        setShowCreateVoteModal(true);
-                                      }}
-                                      className="bg-purple-600 hover:bg-purple-700 text-white"
-                                      size="sm"
-                                    >
-                                      <Plus className="h-4 w-4 mr-2" />
-                                      Créer un vote
-                                    </Button>
-                                    <Button
-                                      onClick={() => setIsEditingVotes(false)}
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-gray-600 border-gray-300"
-                                    >
-                                      <X className="h-4 w-4 mr-2" />
-                                      Terminer
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                            
-                            {/* Affichage des votes existants pour cette section */}
-                            <EnhancedVoteSection 
-                              sectionId={currentItem.id} 
-                            />
-                          </div>
-                        )}
+
                       </div>
                     )}
                   </CardHeader>
@@ -2094,6 +2040,56 @@ export default function SimpleMeetingPresenter() {
                             </div>
                           )}
                         </div>
+
+                        {/* Section de vote - Mode édition */}
+                        {currentItem.type !== 'break' && (
+                          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-4">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="font-semibold text-purple-900 flex items-center gap-2">
+                                <Vote className="h-4 w-4" />
+                                Votes et sondages
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                {!isEditingVotes && (
+                                  <Button
+                                    onClick={() => setIsEditingVotes(true)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                                  >
+                                    <Edit3 className="h-4 w-4 mr-2" />
+                                    Gérer les votes
+                                  </Button>
+                                )}
+                                {isEditingVotes && (
+                                  <>
+                                    <Button
+                                      onClick={() => {
+                                        setSelectedAgendaItemForVote(getAgendaItemId(currentItem.id));
+                                        setShowCreateVoteModal(true);
+                                      }}
+                                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                                      size="sm"
+                                    >
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      Créer un vote
+                                    </Button>
+                                    <Button
+                                      onClick={() => setIsEditingVotes(false)}
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-gray-600 border-gray-300"
+                                    >
+                                      <X className="h-4 w-4 mr-2" />
+                                      Terminer
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <EnhancedVoteSection sectionId={currentItem.id} />
+                          </div>
+                        )}
 
                         {/* Édition de la durée */}
                         <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
