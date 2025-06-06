@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getMeetingData, type AgendaItem } from '@/data/agenda';
-import { SimpleParticipantsModal } from '@/components/SimpleParticipantsModal';
+import { IntegratedParticipantsManagement } from '@/components/IntegratedParticipantsManagement';
 import { useQuery } from '@tanstack/react-query';
 import { type MeetingType } from '@shared/schema';
 
@@ -108,6 +108,7 @@ export default function SimpleMeetingPresenter() {
   const [editedDuration, setEditedDuration] = useState(0);
   const [showAddItemModal, setShowAddItemModal] = useState(false);
   const [newItemType, setNewItemType] = useState<'section' | 'subsection' | 'break'>('section');
+  const [showParticipantsView, setShowParticipantsView] = useState(false);
   const [selectedParentId, setSelectedParentId] = useState<string>('');
   
   // États pour l'édition avancée
@@ -926,7 +927,7 @@ export default function SimpleMeetingPresenter() {
                 variant="ghost" 
                 size="sm" 
                 className="flex items-center gap-2" 
-                onClick={() => setShowParticipantsModal(true)}
+                onClick={() => setShowParticipantsView(!showParticipantsView)}
               >
                 <Users className="h-4 w-4" />
                 Participants
@@ -2211,13 +2212,24 @@ export default function SimpleMeetingPresenter() {
         </div>
       )}
 
-      {/* Modal de gestion des participants simplifié */}
-      <SimpleParticipantsModal
-        isOpen={showParticipantsModal}
-        onClose={() => setShowParticipantsModal(false)}
-        meetingId={1}
-        meetingTitle={meetingInfo.title}
-      />
+      {/* Interface intégrée de gestion des participants */}
+      {showParticipantsView && (
+        <div className="fixed inset-0 bg-white z-50 overflow-auto">
+          <div className="max-w-6xl mx-auto p-6">
+            <div className="flex items-center justify-between mb-6">
+              <Button
+                variant="outline"
+                onClick={() => setShowParticipantsView(false)}
+                className="flex items-center gap-2"
+              >
+                <Home className="h-4 w-4" />
+                Retour à l'agenda
+              </Button>
+            </div>
+            <IntegratedParticipantsManagement meetingId={1} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

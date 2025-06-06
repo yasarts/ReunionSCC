@@ -41,7 +41,7 @@ export function SimpleParticipantsModal({ isOpen, onClose, meetingId, meetingTit
   const addParticipantMutation = useMutation({
     mutationFn: async ({ userId, status }: { userId: number; status: string }) => {
       console.log(`[SimpleModal] Adding participant: userId=${userId}, status=${status}`);
-      await apiRequest(`/api/meetings/${meetingId}/participants/with-status`, "POST", { userId, status });
+      await apiRequest("POST", `/api/meetings/${meetingId}/participants/with-status`, { userId, status });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/meetings/${meetingId}/participants`] });
