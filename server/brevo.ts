@@ -5,10 +5,8 @@ if (!process.env.BREVO_API_KEY) {
 }
 
 // Configuration de l'API Brevo
-const apiInstance = brevo.createApiInstance();
-apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
-
-const emailsApi = new brevo.TransactionalEmailsApi(apiInstance);
+const emailsApi = new brevo.TransactionalEmailsApi();
+emailsApi.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
 interface MagicLinkEmailParams {
   to: string;
@@ -18,15 +16,14 @@ interface MagicLinkEmailParams {
 
 export async function sendMagicLinkEmail(params: MagicLinkEmailParams): Promise<boolean> {
   try {
-    const sendSmtpEmail = new SendSmtpEmail();
-    
-    sendSmtpEmail.to = [{ email: params.to, name: params.name }];
-    sendSmtpEmail.sender = { 
-      email: 'noreply@scc-cirque.org', 
-      name: 'SCC - Système de Gestion des Réunions' 
-    };
-    sendSmtpEmail.subject = 'Lien de connexion SCC';
-    sendSmtpEmail.htmlContent = `
+    const emailContent = {
+      to: [{ email: params.to, name: params.name }],
+      sender: { 
+        email: 'noreply@scc-cirque.org', 
+        name: 'SCC - Système de Gestion des Réunions' 
+      },
+      subject: 'Lien de connexion SCC',
+      htmlContent: `
       <!DOCTYPE html>
       <html>
       <head>
@@ -60,9 +57,8 @@ export async function sendMagicLinkEmail(params: MagicLinkEmailParams): Promise<
         </div>
       </body>
       </html>
-    `;
-    
-    sendSmtpEmail.textContent = `
+      `,
+      textContent: `
       Bonjour ${params.name},
       
       Vous avez demandé un lien de connexion pour accéder au système de gestion des réunions SCC.
@@ -75,10 +71,11 @@ export async function sendMagicLinkEmail(params: MagicLinkEmailParams): Promise<
       Si vous n'avez pas demandé cette connexion, vous pouvez ignorer cet email en toute sécurité.
       
       © 2025 SCC - Syndicat du Cirque de Création
-    `;
+      `
+    };
 
-    const response = await emailsApi.sendTransacEmail(sendSmtpEmail);
-    console.log('Magic link email sent successfully:', response.messageId);
+    const response = await emailsApi.sendTransacEmail(emailContent);
+    console.log('Magic link email sent successfully');
     return true;
   } catch (error) {
     console.error('Error sending magic link email:', error);

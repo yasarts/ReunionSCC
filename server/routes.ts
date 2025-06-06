@@ -7,6 +7,13 @@ import MemoryStore from "memorystore";
 import { insertCompanySchema, insertUserSchema, insertMeetingSchema, insertAgendaItemSchema, insertVoteSchema, insertVoteResponseSchema } from "@shared/schema";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
+import { 
+  generateMagicLinkToken, 
+  verifyMagicLinkToken, 
+  sendMagicLink, 
+  generateSessionToken, 
+  verifySessionToken 
+} from "./auth";
 
 // Session configuration
 const MemStore = MemoryStore(session);
@@ -155,6 +162,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userWithoutPassword);
     } catch (error) {
       console.error("Get user error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Magic link authentication routes
+  app.post("/api/auth/send-magic-link", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      // Validation basique de l'email
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+      }
+
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+      const success = await sendMagicLink(email, baseUrl);
+
+      // Pour des raisons de sécurité, on retourne toujours un succès
+      // même si l'email n'existe pas dans la base
+      res.json({ 
+        message: "Si cette adresse email est enregistrée, vous recevrez un lien de connexion.", 
+        success: true 
+      });
+    } catch (error) {
+      console.error("Send magic link error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/auth/magic-link", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token || typeof token !== 'string') {
+        return res.status(400).json({ message: "Invalid token" });
+      }
+
+      const { email, valid } = verifyMagicLinkToken(token);
+      
+      if (!valid) {
+        return res.status(401).json({ message: "Invalid or expired token" });
+      }
+
+      // Récupérer l'utilisateur
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Créer la session
+      (req.session as any).userId = user.id;
+      
+      // Rediriger vers le dashboard
+      res.redirect('/dashboard');
+    } catch (error) {
+      console.error("Magic link verification error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
