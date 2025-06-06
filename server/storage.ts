@@ -212,10 +212,17 @@ export class DatabaseStorage implements IStorage {
 
   // Meeting participants
   async addParticipant(meetingId: number, userId: number): Promise<void> {
-    await db
-      .insert(meetingParticipants)
-      .values({ meetingId, userId })
-      .onConflictDoNothing();
+    console.log(`[Storage] Adding participant: meetingId=${meetingId}, userId=${userId}`);
+    try {
+      await db
+        .insert(meetingParticipants)
+        .values({ meetingId, userId })
+        .onConflictDoNothing();
+      console.log(`[Storage] Participant added successfully`);
+    } catch (error) {
+      console.error(`[Storage] Error adding participant:`, error);
+      throw error;
+    }
   }
 
   async removeParticipant(meetingId: number, userId: number): Promise<void> {
@@ -254,19 +261,26 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateParticipantStatus(meetingId: number, userId: number, status: string, proxyCompanyId?: number): Promise<void> {
-    await db
-      .update(meetingParticipants)
-      .set({ 
-        status,
-        proxyCompanyId: proxyCompanyId || null,
-        updatedAt: new Date()
-      })
-      .where(
-        and(
-          eq(meetingParticipants.meetingId, meetingId),
-          eq(meetingParticipants.userId, userId)
-        )
-      );
+    console.log(`[Storage] Updating participant status: meetingId=${meetingId}, userId=${userId}, status=${status}, proxyCompanyId=${proxyCompanyId}`);
+    try {
+      const result = await db
+        .update(meetingParticipants)
+        .set({ 
+          status,
+          proxyCompanyId: proxyCompanyId || null,
+          updatedAt: new Date()
+        })
+        .where(
+          and(
+            eq(meetingParticipants.meetingId, meetingId),
+            eq(meetingParticipants.userId, userId)
+          )
+        );
+      console.log(`[Storage] Participant status updated successfully:`, result);
+    } catch (error) {
+      console.error(`[Storage] Error updating participant status:`, error);
+      throw error;
+    }
   }
 
   // Agenda operations
