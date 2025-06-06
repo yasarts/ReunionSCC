@@ -36,66 +36,58 @@ interface VoteData {
 export function VoteCard({ agendaItemId }: VoteCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [selectedOption, setSelectedOption] = useState<string>("");
 
   // Récupérer les votes pour cet élément d'agenda
   const { data: votes = [], isLoading, error } = useQuery({
     queryKey: ["/api/agenda", agendaItemId, "votes"],
-    queryFn: async () => {
-      const response = await fetch(`/api/agenda/${agendaItemId}/votes`, {
-        credentials: "include"
-      });
-      if (!response.ok) {
-        if (response.status === 404) return [];
-        throw new Error("Erreur lors du chargement des votes");
-      }
-      return response.json();
-    }
+    retry: false,
   });
 
   // Mutation pour voter
   const castVoteMutation = useMutation({
     mutationFn: async ({ voteId, option }: { voteId: number; option: string }) => {
-      const response = await fetch(`/api/votes/${voteId}/cast`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ 
-          option,
-          userId: user?.id 
-        })
+      return await apiRequest("POST", `/api/votes/${voteId}/cast`, { 
+        option,
+        userId: user?.id 
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erreur lors du vote");
-      }
-      
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/agenda", agendaItemId, "votes"] });
       setSelectedOption("");
+      toast({
+        title: "Vote enregistré",
+        description: "Votre vote a été pris en compte",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Erreur lors du vote",
+        variant: "destructive",
+      });
     }
   });
 
   // Mutation pour fermer un vote
   const closeVoteMutation = useMutation({
     mutationFn: async (voteId: number) => {
-      const response = await fetch(`/api/votes/${voteId}/close`, {
-        method: "POST",
-        credentials: "include"
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erreur lors de la fermeture");
-      }
-      
-      return response.json();
+      return await apiRequest("POST", `/api/votes/${voteId}/close`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/agenda", agendaItemId, "votes"] });
+      toast({
+        title: "Vote fermé",
+        description: "Le vote a été fermé avec succès",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Erreur lors de la fermeture",
+        variant: "destructive",
+      });
     }
   });
 
