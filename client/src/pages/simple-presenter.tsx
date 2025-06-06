@@ -675,7 +675,9 @@ export default function SimpleMeetingPresenter() {
           <div className="flex justify-between items-center h-16">
             {/* Left side - Title */}
             <div className="flex-1">
-              <h1 className="text-xl font-semibold text-gray-900">{meetingInfo.title}</h1>
+              <h1 className="text-xl font-semibold text-gray-900">
+                {meetingInfo.title} <span className="text-sm text-gray-600 font-normal">({formatDisplayDate(meetingInfo.date)})</span>
+              </h1>
             </div>
             
             {/* Right side - Action buttons */}
@@ -730,7 +732,7 @@ export default function SimpleMeetingPresenter() {
           <div className="pb-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-600">
-                Progression de la réunion
+                Progression de la réunion • Durée: {getMeetingDuration()}
               </span>
               <span className="text-sm font-medium text-gray-900">
                 {completedItems}/{totalItems} points traités
@@ -826,13 +828,42 @@ export default function SimpleMeetingPresenter() {
           {/* Main content display */}
           <div className="flex-1 overflow-y-auto">
             {currentItemIndex === -1 ? (
-              // Aperçu général interactif avec navigation hiérarchique
+              // Aperçu général interactif avec navigation hiérarchique et gestion complète
               <div className="p-8">
                 <div className="max-w-4xl mx-auto">
                   <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Aperçu général de l'ordre du jour</h1>
-                    <p className="text-gray-600">{meetingInfo.title} - {formatDisplayDate(meetingInfo.date)}</p>
-                    <p className="text-sm text-gray-500 mt-1">Cliquez sur une section pour y accéder directement</p>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Aperçu général de l'ordre du jour</h1>
+                        <p className="text-gray-600">{meetingInfo.title} - {formatDisplayDate(meetingInfo.date)}</p>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {isEditMode ? 'Mode édition activé - Glissez les éléments pour réorganiser' : 'Cliquez sur une section pour y accéder directement'}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setIsEditMode(!isEditMode)}
+                          className="flex items-center gap-1"
+                        >
+                          <Edit3 className="h-3 w-3" />
+                          {isEditMode ? 'Terminer' : 'Modifier'}
+                        </Button>
+                        
+                        {isEditMode && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setShowAddItemModal(true)}
+                            className="flex items-center gap-1"
+                          >
+                            <Plus className="h-3 w-3" />
+                            Ajouter
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-6">
