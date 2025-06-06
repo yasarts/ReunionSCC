@@ -100,11 +100,24 @@ export function VoteCard({ agendaItemId }: VoteCardProps) {
   }
 
   if (error) {
+    // Si l'erreur est liée à l'authentification, afficher un message différent
+    const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+    if (errorMessage.includes('401') || errorMessage.includes('Unauthorized')) {
+      return (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Connectez-vous pour voir les votes
+          </AlertDescription>
+        </Alert>
+      );
+    }
+    
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Erreur lors du chargement des votes
+          Erreur lors du chargement des votes: {errorMessage}
         </AlertDescription>
       </Alert>
     );

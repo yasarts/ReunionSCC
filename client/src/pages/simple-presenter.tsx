@@ -1850,8 +1850,8 @@ export default function SimpleMeetingPresenter() {
                           </div>
                         </div>
 
-                        {/* Section de vote - Uniquement pour les sections et sous-sections, pas les pauses */}
-                        {currentItem.type !== 'break' && (
+                        {/* Section de vote - Uniquement en mode édition avancée et pas pour les pauses */}
+                        {showAdvancedMode && currentItem.type !== 'break' && (
                           <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
                             <div className="flex items-center justify-between mb-4">
                               <h3 className="text-lg font-semibold text-purple-900 flex items-center gap-2">

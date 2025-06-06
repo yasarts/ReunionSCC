@@ -19,16 +19,17 @@ import {
 const MemStore = MemoryStore(session);
 
 const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || "dev-secret-key",
+  secret: process.env.SESSION_SECRET || "dev-secret-key-very-long-and-secure",
   store: new MemStore({
     checkPeriod: 86400000 // prune expired entries every 24h
   }),
   resave: false,
   saveUninitialized: false,
+  rolling: true, // Renouveler la session à chaque requête
   cookie: {
     secure: false, // Permettre les cookies non-sécurisés en développement
     httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
     sameSite: 'lax' // Configurer SameSite pour éviter les problèmes CORS
   }
 });
