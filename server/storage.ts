@@ -67,10 +67,12 @@ export interface IStorage {
   
   // Vote operations
   createVote(vote: InsertVote): Promise<Vote>;
+  getVote(id: number): Promise<Vote | undefined>;
   getVotesByAgendaItem(agendaItemId: number): Promise<Vote[]>;
   castVote(voteResponse: InsertVoteResponse): Promise<void>;
   getVoteResults(voteId: number): Promise<VoteResponse[]>;
   closeVote(voteId: number): Promise<void>;
+  getAgendaItem(id: number): Promise<AgendaItem | undefined>;
   
   // Meeting type operations
   getMeetingTypes(): Promise<MeetingType[]>;
@@ -322,6 +324,11 @@ export class DatabaseStorage implements IStorage {
     return newVote;
   }
 
+  async getVote(id: number): Promise<Vote | undefined> {
+    const [vote] = await db.select().from(votes).where(eq(votes.id, id));
+    return vote;
+  }
+
   async getVotesByAgendaItem(agendaItemId: number): Promise<Vote[]> {
     return await db
       .select()
@@ -333,14 +340,7 @@ export class DatabaseStorage implements IStorage {
   async castVote(voteResponse: InsertVoteResponse): Promise<void> {
     await db
       .insert(voteResponses)
-      .values(voteResponse)
-      .onConflictDoUpdate({
-        target: [voteResponses.voteId, voteResponses.userId],
-        set: { 
-          option: voteResponse.option,
-          createdAt: new Date()
-        }
-      });
+      .values(voteResponse);
   }
 
   async getVoteResults(voteId: number): Promise<VoteResponse[]> {
@@ -355,6 +355,11 @@ export class DatabaseStorage implements IStorage {
       .update(votes)
       .set({ isOpen: false, closedAt: new Date() })
       .where(eq(votes.id, voteId));
+  }
+
+  async getAgendaItem(id: number): Promise<AgendaItem | undefined> {
+    const [item] = await db.select().from(agendaItems).where(eq(agendaItems.id, id));
+    return item;
   }
 
   // Meeting type operations

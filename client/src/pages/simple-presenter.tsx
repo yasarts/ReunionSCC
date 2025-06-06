@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useLocation } from 'wouter';
-import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown, Move, Save, X, FileText, GripVertical, Edit, RotateCcw } from 'lucide-react';
+import { Clock, Users, CheckCircle, Circle, Play, Pause, SkipForward, Plus, Edit3, Trash2, Coffee, Settings, Link2, ChevronDown, ChevronUp, Home, FileDown, Move, Save, X, FileText, GripVertical, Edit, RotateCcw, Vote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getMeetingData, type AgendaItem } from '@/data/agenda';
 import { IntegratedParticipantsManagement } from '@/components/IntegratedParticipantsManagement';
+import { VoteCard } from '@/components/VoteCard';
+import { CreateVoteModal } from '@/components/CreateVoteModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type MeetingType } from '@shared/schema';
 import { apiRequest } from '@/lib/queryClient';
@@ -178,6 +180,8 @@ export default function SimpleMeetingPresenter() {
   const [editedPresenter, setEditedPresenter] = useState('');
   const [showAdvancedMode, setShowAdvancedMode] = useState<boolean>(false);
   const [showParticipantsModal, setShowParticipantsModal] = useState<boolean>(false);
+  const [showCreateVoteModal, setShowCreateVoteModal] = useState<boolean>(false);
+  const [selectedAgendaItemForVote, setSelectedAgendaItemForVote] = useState<number | null>(null);
   
   // État pour la configuration de la réunion
   const [editedMeetingInfo, setEditedMeetingInfo] = useState({
