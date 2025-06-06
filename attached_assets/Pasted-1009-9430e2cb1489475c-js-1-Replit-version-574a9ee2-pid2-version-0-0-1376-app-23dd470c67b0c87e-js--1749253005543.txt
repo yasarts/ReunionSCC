@@ -1,0 +1,260 @@
+1009-9430e2cb1489475c.js:1 Replit version 574a9ee2, pid2 version 0.0.1376
+_app-23dd470c67b0c87e.js:37 
+      /////////////////////
+   ///////////////////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////        Curious and driven?
+  ///////////////@@@@@@@///////        Work with us!
+  ///////////////@@@@@@@///////
+  ///////////////@@@@@@@///////        https://join.replit.com/hack.with.us
+  ////////@@@@@@@//////////////
+  ////////@@@@@@@//////////////
+  ////////@@@@@@#//////////////
+   ///////////////////////////
+      /////////////////////
+      
+cdn.segment.com/next-integrations/integrations/twitter-ads/2.5.2/twitter-ads.dynamic.js.gz:1 
+            
+            
+            Failed to load resource: net::ERR_BLOCKED_BY_CLIENT
+_app-23dd470c67b0c87e.js:37  Twitter Ads Error: Failed to load https://cdn.segment.com/next-integrations/integrations/twitter-ads/2.5.2/twitter-ads.dynamic.js.gz
+    at o.onerror (load-script.ts:53:24)
+(anonymous) @ _app-23dd470c67b0c87e.js:37
+_app-23dd470c67b0c87e.js:37 [LaunchDarkly] LaunchDarkly client initialized
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+Tracking Prevention blocked access to storage for <URL>.
+MeetingPresenter:1 Banner not shown: beforeinstallpromptevent.preventDefault() called. The page must call beforeinstallpromptevent.prompt() to show the banner.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation' is an invalid sandbox flag.
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'ambient-light-sensor'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'battery'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'execution-while-not-rendered'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'execution-while-out-of-viewport'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'layout-animations'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'legacy-image-formats'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'navigation-override'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'oversized-images'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'publickey-credentials'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'speaker-selection'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'unoptimized-images'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'unsized-media'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Unrecognized feature: 'pointer-lock'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Allow attribute will take precedence over 'allowfullscreen'.
+_ @ framework-02bf391e73408bba.js:1
+framework-02bf391e73408bba.js:1  Allow attribute will take precedence over 'allowpaymentrequest'.
+_ @ framework-02bf391e73408bba.js:1
+workspace_iframe.html:32  Unrecognized feature: 'ambient-light-sensor'.
+workspace_iframe.html:32  Unrecognized feature: 'battery'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-not-rendered'.
+workspace_iframe.html:32  Unrecognized feature: 'execution-while-out-of-viewport'.
+workspace_iframe.html:32  Unrecognized feature: 'layout-animations'.
+workspace_iframe.html:32  Unrecognized feature: 'legacy-image-formats'.
+workspace_iframe.html:32  Unrecognized feature: 'navigation-override'.
+workspace_iframe.html:32  Unrecognized feature: 'oversized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'publickey-credentials'.
+workspace_iframe.html:32  Unrecognized feature: 'speaker-selection'.
+workspace_iframe.html:32  Unrecognized feature: 'unoptimized-images'.
+workspace_iframe.html:32  Unrecognized feature: 'unsized-media'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowfullscreen'.
+workspace_iframe.html:32  Allow attribute will take precedence over 'allowpaymentrequest'.
+Network.js:227  WebSocket connection to 'wss://decedf49-9149-4f4b-9500-ba7fb1d03a3c-00-128avppxp5c65.riker.replit.dev/?token=29Co2Uv8LY9n' failed: 
+t @ Network.js:227
+Network.js:227  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=29Co2Uv8LY9n' is invalid.
+decedf49-9149-4f4b-9500-ba7fb1d03a3c-00-128avppxp5c65.riker.replit.dev/api/auth/me:1 
+            
+            
+            Failed to load resource: the server responded with a status of 401 (Unauthorized)
+decedf49-9149-4f4b-9500-ba7fb1d03a3c-00-128avppxp5c65.riker.replit.dev/api/auth/login:1 
+            
+            
+            Failed to load resource: the server responded with a status of 401 (Unauthorized)
+Console.js:61  Login error: Error: Invalid credentials
+Mt.forEach.n.<computed> @ Console.js:61
+Network.js:227  WebSocket connection to 'wss://decedf49-9149-4f4b-9500-ba7fb1d03a3c-00-128avppxp5c65.riker.replit.dev/?token=29Co2Uv8LY9n' failed: 
+t @ Network.js:227
+Network.js:227  Uncaught (in promise) SyntaxError: Failed to construct 'WebSocket': The URL 'wss://localhost:undefined/?token=29Co2Uv8LY9n' is invalid.
+    at new t (Network.js:227:18)
+    at setupWebSocket (client:536:19)
+    at fallback (client:509:16)
+    at WebSocket.<anonymous> (client:555:7)
+Console.js:61 Deleted items loaded: Array(3)
+Console.js:61 Original agenda length: 30
+Console.js:61 Filtering out item: timeline Ordre du jour complet - Timeline de la réunion
+Console.js:61 Filtering out item: 0 0. AGE
+Console.js:61 Filtering out item: 3.4 Coordination FSICPA
+Console.js:61 Filtered agenda: 30 -> 27 items
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: Object
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+Console.js:61 User role: Salarié·es SCC
+Console.js:61 User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+Console.js:61 User role: Salarié·es SCC
+ User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+ User role: Salarié·es SCC
+ User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+ User role: Salarié·es SCC
+ User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+ User role: Salarié·es SCC
+ User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+ User role: Salarié·es SCC
+ User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+ User role: Salarié·es SCC
+ User data: {id: 1, email: 'admin@scc-cirque.org', firstName: 'Admin', lastName: 'SCC', role: 'Salarié·es SCC', …}
+ User role: Salarié·es SCC

@@ -61,9 +61,7 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
   const queryClient = useQueryClient();
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
 
-  // Debug pour vérifier les données utilisateur
-  console.log('User data:', user);
-  console.log('User role:', user?.role);
+
 
   // Récupérer les données de vote améliorées
   const { data: voteData, isLoading } = useQuery<EnhancedVoteData>({
@@ -221,7 +219,7 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
                     Fermé
                   </Badge>
                 )}
-                {user && (user.role === 'salaried' || user.role === 'admin') && (
+                {user && (user.role === 'Salarié·es SCC' || user.role === 'admin') && (
                   <div className="flex space-x-1">
                     {vote.isOpen && (
                       <Button
@@ -317,7 +315,7 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
                                 Voté: {companyVote.votes[0]?.option}
                               </Badge>
                             )}
-                            {isVoted && user && (user.role === 'salaried' || user.role === 'admin') && (
+                            {isVoted && user && (user.role === 'Salarié·es SCC' || user.role === 'admin') && (
                               <Button
                                 onClick={() => deleteCompanyVoteMutation.mutate({ voteId: vote.id, companyId: company.id })}
                                 disabled={deleteCompanyVoteMutation.isPending}
