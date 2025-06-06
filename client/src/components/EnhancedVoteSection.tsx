@@ -234,7 +234,7 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
             </div>
 
             {/* Interface de vote pour salariés */}
-            {voteData.canVoteForCompanies && vote.isOpen && (
+            {(voteData.canVoteForCompanies || voteData.userRole === 'Salarié·es SCC') && vote.isOpen && (
               <div className="border-2 border-purple-200 rounded-lg p-4 bg-purple-50">
                 <h4 className="font-medium text-purple-900 mb-4 flex items-center">
                   <Building2 className="h-4 w-4 mr-2" />

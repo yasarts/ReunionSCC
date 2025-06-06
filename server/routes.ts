@@ -596,7 +596,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentUser = await storage.getUser(currentUserId);
       
       // Logique de vote selon le rôle
-      if (currentUser?.role === 'salaried') {
+      if (currentUser?.role === 'Salarié·es SCC') {
         // Les salariés peuvent voter pour toutes les entreprises présentes et avec mandat
         if (!votingForCompanyId) {
           return res.status(400).json({ message: "Salaried users must specify which company they are voting for" });
@@ -788,7 +788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Pour les salariés, récupérer toutes les entreprises votables
       let votableCompanies = [];
-      if (currentUser?.role === 'salaried') {
+      if (currentUser?.role === 'Salarié·es SCC') {
         // Entreprises présentes
         const presentCompanies = presentParticipants
           .filter(p => p.user.companyId)
@@ -860,7 +860,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         votes: enhancedVotes,
         votableCompanies,
         userRole: currentUser?.role,
-        canVoteForCompanies: currentUser?.role === 'salaried'
+        canVoteForCompanies: currentUser?.role === 'Salarié·es SCC'
       });
     } catch (error) {
       console.error("Get enhanced votes error:", error);
