@@ -61,6 +61,10 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
   const queryClient = useQueryClient();
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
 
+  // Debug pour vérifier les données utilisateur
+  console.log('User data:', user);
+  console.log('User role:', user?.role);
+
   // Récupérer les données de vote améliorées
   const { data: voteData, isLoading } = useQuery<EnhancedVoteData>({
     queryKey: [`/api/sections/${sectionId}/votes/enhanced`],
