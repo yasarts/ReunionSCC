@@ -335,8 +335,16 @@ export function IntegratedParticipantsManagement({ meetingId }: IntegratedPartic
     </Card>
   );
 
+  // Conversion en array pour les statistiques et l'affichage
+  const allParticipations = [
+    ...Array.from(companiesByStatus.present.values()),
+    ...Array.from(companiesByStatus.proxy.values()),
+    ...Array.from(companiesByStatus.excused.values()),
+    ...Array.from(companiesByStatus.absent.values())
+  ];
+
   // Calcul des statistiques
-  const stats = companyParticipations.reduce((acc: {present: number, proxy: number, excused: number, absent: number}, participation: CompanyParticipation) => {
+  const stats = allParticipations.reduce((acc: {present: number, proxy: number, excused: number, absent: number}, participation: CompanyParticipation) => {
     switch (participation.status) {
       case 'present':
         acc.present++;
