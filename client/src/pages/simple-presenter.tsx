@@ -2009,13 +2009,7 @@ export default function SimpleMeetingPresenter() {
           </div>
       </div>
 
-      {/* Modal des participants */}
-      <ParticipantsModal
-        isOpen={showParticipantsModal}
-        onClose={() => setShowParticipantsModal(false)}
-        meetingId={1} // ID fixe pour la démonstration
-        meetingTitle={meetingInfo.title}
-      />
+
 
       {/* Modal d'ajout d'élément */}
       {showAddItemModal && (
