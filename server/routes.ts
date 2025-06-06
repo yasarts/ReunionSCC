@@ -498,7 +498,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/agenda/:id/votes", requireAuth, async (req: any, res: Response) => {
     try {
       const agendaItemId = parseInt(req.params.id);
+      console.log("Getting votes for agenda item:", agendaItemId);
+      
+      if (isNaN(agendaItemId)) {
+        console.log("Invalid agenda item ID, returning empty array");
+        return res.json([]);
+      }
+      
       const votes = await storage.getVotesByAgendaItem(agendaItemId);
+      console.log("Found votes:", votes.length);
       res.json(votes);
     } catch (error) {
       console.error("Get votes error:", error);

@@ -40,7 +40,7 @@ export function VoteCard({ agendaItemId }: VoteCardProps) {
   const [selectedOption, setSelectedOption] = useState<string>("");
 
   // Récupérer les votes pour cet élément d'agenda
-  const { data: votes = [], isLoading, error } = useQuery({
+  const { data: votes = [], isLoading, error } = useQuery<VoteData[]>({
     queryKey: ["/api/agenda", agendaItemId, "votes"],
     retry: false,
   });

@@ -1850,55 +1850,57 @@ export default function SimpleMeetingPresenter() {
                           </div>
                         </div>
 
-                        {/* Section de vote */}
-                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="text-lg font-semibold text-purple-900 flex items-center gap-2">
-                              <Vote className="h-5 w-5" />
-                              Votes et sondages
-                            </h3>
-                            <div className="flex items-center gap-2">
-                              {!isEditingVotes && (
-                                <Button
-                                  onClick={() => setIsEditingVotes(true)}
-                                  variant="outline"
-                                  size="sm"
-                                  className="text-purple-600 border-purple-300 hover:bg-purple-50"
-                                >
-                                  <Edit3 className="h-4 w-4 mr-2" />
-                                  Gérer les votes
-                                </Button>
-                              )}
-                              {isEditingVotes && (
-                                <>
+                        {/* Section de vote - Uniquement pour les sections et sous-sections, pas les pauses */}
+                        {currentItem.type !== 'break' && (
+                          <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
+                            <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-lg font-semibold text-purple-900 flex items-center gap-2">
+                                <Vote className="h-5 w-5" />
+                                Votes et sondages
+                              </h3>
+                              <div className="flex items-center gap-2">
+                                {!isEditingVotes && (
                                   <Button
-                                    onClick={() => {
-                                      setSelectedAgendaItemForVote(parseInt(currentItem.id));
-                                      setShowCreateVoteModal(true);
-                                    }}
-                                    className="bg-purple-600 hover:bg-purple-700 text-white"
-                                    size="sm"
-                                  >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Créer un vote
-                                  </Button>
-                                  <Button
-                                    onClick={() => setIsEditingVotes(false)}
+                                    onClick={() => setIsEditingVotes(true)}
                                     variant="outline"
                                     size="sm"
-                                    className="text-gray-600 border-gray-300"
+                                    className="text-purple-600 border-purple-300 hover:bg-purple-50"
                                   >
-                                    <X className="h-4 w-4 mr-2" />
-                                    Terminer
+                                    <Edit3 className="h-4 w-4 mr-2" />
+                                    Gérer les votes
                                   </Button>
-                                </>
-                              )}
+                                )}
+                                {isEditingVotes && (
+                                  <>
+                                    <Button
+                                      onClick={() => {
+                                        setSelectedAgendaItemForVote(parseInt(currentItem.id));
+                                        setShowCreateVoteModal(true);
+                                      }}
+                                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                                      size="sm"
+                                    >
+                                      <Plus className="h-4 w-4 mr-2" />
+                                      Créer un vote
+                                    </Button>
+                                    <Button
+                                      onClick={() => setIsEditingVotes(false)}
+                                      variant="outline"
+                                      size="sm"
+                                      className="text-gray-600 border-gray-300"
+                                    >
+                                      <X className="h-4 w-4 mr-2" />
+                                      Terminer
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
                             </div>
+                            
+                            {/* Affichage des votes existants pour cette section */}
+                            <VoteCard agendaItemId={parseInt(currentItem.id)} />
                           </div>
-                          
-                          {/* Affichage des votes existants pour cette section */}
-                          <VoteCard agendaItemId={parseInt(currentItem.id)} />
-                        </div>
+                        )}
 
                         {/* Affichage des sous-sections si c'est une section principale */}
                         {currentItem.level === 0 && getSubsections(currentItem.id).length > 0 && (
