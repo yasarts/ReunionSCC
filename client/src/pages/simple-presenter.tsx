@@ -80,18 +80,25 @@ export default function SimpleMeetingPresenter() {
     const storageKey = `meeting-agenda-${meetingId || 'default'}`;
     const deletedItemsKey = `deleted-agenda-items-${meetingId || 'default'}`;
     
+    // Nettoyer les doublons dans les éléments supprimés
     const deletedItems = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
-    console.log('Deleted items loaded:', deletedItems);
+    const uniqueDeletedItems = [...new Set(deletedItems)];
+    if (deletedItems.length !== uniqueDeletedItems.length) {
+      localStorage.setItem(deletedItemsKey, JSON.stringify(uniqueDeletedItems));
+      console.log('Cleaned up duplicates in deleted items:', deletedItems.length, '->', uniqueDeletedItems.length);
+    }
+    
+    console.log('Deleted items loaded:', uniqueDeletedItems);
     
     // Commencer avec l'agenda original
     let currentAgenda = [...meetingData.agendaItems];
     console.log('Original agenda length:', currentAgenda.length);
     
     // Appliquer les suppressions persistées
-    if (deletedItems.length > 0) {
+    if (uniqueDeletedItems.length > 0) {
       const originalLength = currentAgenda.length;
       currentAgenda = currentAgenda.filter(item => {
-        const shouldKeep = !deletedItems.includes(item.id);
+        const shouldKeep = !uniqueDeletedItems.includes(item.id);
         if (!shouldKeep) {
           console.log('Filtering out item:', item.id, item.title);
         }
@@ -212,14 +219,22 @@ export default function SimpleMeetingPresenter() {
   // Fonction de débogage pour réinitialiser les données
   const resetMeetingData = () => {
     const agendaKey = `meeting-agenda-${meetingId || 'default'}`;
+    const deletedItemsKey = `deleted-agenda-items-${meetingId || 'default'}`;
+    
     // Supprimer uniquement les données d'agenda, préserver les infos de configuration
     localStorage.removeItem(agendaKey);
     localStorage.removeItem(`itemStates_${meetingId}`);
     
-    // Recharger les données d'agenda uniquement
+    // Recharger les données d'agenda en appliquant les suppressions persistées
     const freshData = getMeetingData(meetingId || 'conseil-national-2025');
-    setAgenda(freshData.agendaItems);
-    // Ne pas réinitialiser meetingInfo pour préserver les modifications de configuration
+    const deletedItems = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
+    
+    let filteredAgenda = [...freshData.agendaItems];
+    if (deletedItems.length > 0) {
+      filteredAgenda = filteredAgenda.filter(item => !deletedItems.includes(item.id));
+    }
+    
+    setAgenda(filteredAgenda);
     setCurrentItemIndex(-1);
   };
 
@@ -964,11 +979,7 @@ export default function SimpleMeetingPresenter() {
                 Configuration
               </Button>
 
-              {/* Debug Button - Temporary */}
-              <Button variant="outline" size="sm" className="flex items-center gap-2 border-red-200 text-red-600" onClick={resetMeetingData}>
-                <RotateCcw className="h-4 w-4" />
-                Reset
-              </Button>
+              {/* Reset button temporairement désactivé pour tester la persistance */}
 
               {/* Participants Button */}
               <Button 
@@ -1264,11 +1275,13 @@ export default function SimpleMeetingPresenter() {
                                       const newAgenda = agenda.filter(a => a.id !== section.id);
                                       setAgenda(newAgenda);
                                       
-                                      // Sauvegarder la suppression de façon persistante
+                                      // Sauvegarder la suppression de façon persistante (éviter les doublons)
                                       const deletedItemsKey = `deleted-agenda-items-${meetingId || 'default'}`;
                                       const existingDeleted = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
-                                      const updatedDeleted = [...existingDeleted, section.id];
-                                      localStorage.setItem(deletedItemsKey, JSON.stringify(updatedDeleted));
+                                      if (!existingDeleted.includes(section.id)) {
+                                        const updatedDeleted = [...existingDeleted, section.id];
+                                        localStorage.setItem(deletedItemsKey, JSON.stringify(updatedDeleted));
+                                      }
                                       
                                       // Sauvegarder l'agenda modifié
                                       const storageKey = `meeting-agenda-${meetingId || 'default'}`;
@@ -1397,11 +1410,13 @@ export default function SimpleMeetingPresenter() {
                                               const newAgenda = agenda.filter(a => a.id !== subsection.id);
                                               setAgenda(newAgenda);
                                               
-                                              // Sauvegarder la suppression de façon persistante
+                                              // Sauvegarder la suppression de façon persistante (éviter les doublons)
                                               const deletedItemsKey = `deleted-agenda-items-${meetingId || 'default'}`;
                                               const existingDeleted = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
-                                              const updatedDeleted = [...existingDeleted, subsection.id];
-                                              localStorage.setItem(deletedItemsKey, JSON.stringify(updatedDeleted));
+                                              if (!existingDeleted.includes(subsection.id)) {
+                                                const updatedDeleted = [...existingDeleted, subsection.id];
+                                                localStorage.setItem(deletedItemsKey, JSON.stringify(updatedDeleted));
+                                              }
                                               
                                               // Sauvegarder l'agenda modifié
                                               const storageKey = `meeting-agenda-${meetingId || 'default'}`;
