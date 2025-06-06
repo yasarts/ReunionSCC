@@ -656,6 +656,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Nouvelle route pour les votes par section
+  app.get("/api/sections/:sectionId/votes", requireAuth, async (req: any, res: Response) => {
+    try {
+      const sectionId = req.params.sectionId;
+      console.log(`Getting votes for section: ${sectionId}`);
+      
+      // Pour l'instant, retourner un tableau vide pour toutes les sections sauf celle avec des votes existants
+      if (sectionId === "1") {
+        // Rediriger vers l'ancienne route pour la section 1
+        const agendaItemId = 1;
+        const votes = await storage.getVotesByAgendaItem(agendaItemId);
+        
+        const votesWithResults = await Promise.all(votes.map(async (vote) => {
+          const responses = await storage.getVoteResults(vote.id);
+          const totalVotes = responses.length;
+          
+          const results = vote.options.map(option => {
+            const count = responses.filter(r => r.option === option).length;
+            const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+            return { option, count, percentage };
+          });
+
+          const userResponse = responses.find(r => r.userId === req.user.id);
+          const userVote = userResponse ? {
+            option: userResponse.option,
+            votingForCompany: userResponse.votingForCompanyId ? 
+              (await storage.getCompany(userResponse.votingForCompanyId))?.name : undefined
+          } : undefined;
+
+          return {
+            ...vote,
+            results,
+            userVote,
+            totalVotes
+          };
+        }));
+
+        res.json(votesWithResults);
+      } else {
+        // Pour toutes les autres sections, retourner un tableau vide
+        res.json([]);
+      }
+    } catch (error) {
+      console.error("Get section votes error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Participant routes
   app.get("/api/meetings/:id/participants", async (req: any, res: Response) => {
     try {

@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getMeetingData, type AgendaItem } from '@/data/agenda';
 import { IntegratedParticipantsManagement } from '@/components/IntegratedParticipantsManagement';
-import { VoteCard } from '@/components/VoteCard';
+import { VoteSection } from '@/components/VoteSection';
 import { CreateVoteModal } from '@/components/CreateVoteModal';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type MeetingType } from '@shared/schema';
@@ -1994,7 +1994,11 @@ export default function SimpleMeetingPresenter() {
 
                         {/* Section de vote - Affichage conditionnel */}
                         {currentItem.type !== 'break' && (
-                          <VoteCard agendaItemId={parseInt(currentItem.id)} showDeleteButton={false} />
+                          <VoteSection 
+                            sectionId={currentItem.id} 
+                            sectionTitle={currentItem.title}
+                            isEditMode={false} 
+                          />
                         )}
                       </div>
                     ) : (
