@@ -34,6 +34,7 @@ export function IntegratedParticipantsManagement({ meetingId }: IntegratedPartic
   const queryClient = useQueryClient();
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('present');
+  const [selectedProxyCompanyId, setSelectedProxyCompanyId] = useState<number | null>(null);
 
   // Récupérer les données
   const { data: companies } = useQuery<Company[]>({ queryKey: ["/api/companies"] });
@@ -156,7 +157,8 @@ export function IntegratedParticipantsManagement({ meetingId }: IntegratedPartic
     if (companyUsers && companyUsers.length > 0) {
       addParticipantMutation.mutate({
         userId: companyUsers[0].id,
-        status: selectedStatus
+        status: selectedStatus,
+        proxyCompanyId: selectedStatus === 'proxy' && selectedProxyCompanyId ? selectedProxyCompanyId : undefined
       });
     }
   };
@@ -331,13 +333,30 @@ export function IntegratedParticipantsManagement({ meetingId }: IntegratedPartic
                   <SelectItem value="present">Présente</SelectItem>
                   <SelectItem value="absent">Absente</SelectItem>
                   <SelectItem value="excused">Excusée</SelectItem>
-                  <SelectItem value="proxy">Donne pouvoir</SelectItem>
+                  <SelectItem value="proxy">Donne un pouvoir</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {selectedStatus === 'proxy' && (
+              <div className="flex-1">
+                <label className="block text-sm font-medium mb-2">Donner pouvoir à</label>
+                <Select value={selectedProxyCompanyId?.toString() || ""} onValueChange={(value) => setSelectedProxyCompanyId(parseInt(value))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une entreprise..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {presentCompanies.filter(c => c.id !== selectedCompanyId).map((company) => (
+                      <SelectItem key={company.id} value={company.id.toString()}>
+                        {company.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <Button 
               onClick={handleAddCompany}
-              disabled={!selectedCompanyId || addParticipantMutation.isPending}
+              disabled={!selectedCompanyId || addParticipantMutation.isPending || (selectedStatus === 'proxy' && !selectedProxyCompanyId)}
               className="flex items-center gap-2"
             >
               <Plus className="h-4 w-4" />

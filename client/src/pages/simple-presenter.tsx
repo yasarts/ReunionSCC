@@ -2212,24 +2212,7 @@ export default function SimpleMeetingPresenter() {
         </div>
       )}
 
-      {/* Interface intégrée de gestion des participants */}
-      {showParticipantsView && (
-        <div className="fixed inset-0 bg-white z-50 overflow-auto">
-          <div className="max-w-6xl mx-auto p-6">
-            <div className="flex items-center justify-between mb-6">
-              <Button
-                variant="outline"
-                onClick={() => setShowParticipantsView(false)}
-                className="flex items-center gap-2"
-              >
-                <Home className="h-4 w-4" />
-                Retour à l'agenda
-              </Button>
-            </div>
-            <IntegratedParticipantsManagement meetingId={1} />
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }
