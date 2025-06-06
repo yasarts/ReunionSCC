@@ -682,7 +682,7 @@ export default function SimpleMeetingPresenter() {
             
             {/* Right side - Action buttons */}
             <div className="flex items-center space-x-3">
-              {/* Aperçu général Button */}
+              {/* Ordre du jour Button */}
               <Button 
                 variant={currentItemIndex === -1 ? "default" : "ghost"} 
                 size="sm" 
@@ -690,13 +690,7 @@ export default function SimpleMeetingPresenter() {
                 onClick={() => setCurrentItemIndex(-1)}
               >
                 <FileText className="h-4 w-4" />
-                Aperçu général
-              </Button>
-
-              {/* Home Button */}
-              <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => setLocation('/')}>
-                <Home className="h-4 w-4" />
-                Accueil
+                Ordre du jour
               </Button>
 
               {/* Export PDF Button */}
@@ -709,6 +703,12 @@ export default function SimpleMeetingPresenter() {
               <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={openConfigModal}>
                 <Settings className="h-4 w-4" />
                 Configuration
+              </Button>
+
+              {/* Tableau de bord Button - Moved to the right */}
+              <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => setLocation('/')}>
+                <Home className="h-4 w-4" />
+                Tableau de bord
               </Button>
 
               {/* Debug Button - Temporary */}
