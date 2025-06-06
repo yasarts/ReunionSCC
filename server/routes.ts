@@ -662,42 +662,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sectionId = req.params.sectionId;
       console.log(`Getting votes for section: ${sectionId}`);
       
-      // Pour l'instant, retourner un tableau vide pour toutes les sections sauf celle avec des votes existants
-      if (sectionId === "1") {
-        // Rediriger vers l'ancienne route pour la section 1
-        const agendaItemId = 1;
-        const votes = await storage.getVotesByAgendaItem(agendaItemId);
-        
-        const votesWithResults = await Promise.all(votes.map(async (vote) => {
-          const responses = await storage.getVoteResults(vote.id);
-          const totalVotes = responses.length;
-          
-          const results = vote.options.map(option => {
-            const count = responses.filter(r => r.option === option).length;
-            const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
-            return { option, count, percentage };
-          });
-
-          const userResponse = responses.find(r => r.userId === req.user.id);
-          const userVote = userResponse ? {
-            option: userResponse.option,
-            votingForCompany: userResponse.votingForCompanyId ? 
-              (await storage.getCompany(userResponse.votingForCompanyId))?.name : undefined
-          } : undefined;
-
-          return {
-            ...vote,
-            results,
-            userVote,
-            totalVotes
-          };
-        }));
-
-        res.json(votesWithResults);
+      // Convertir l'ID de section en ID d'agenda item
+      // Pour les sections numériques simples comme "1", "2", etc., utiliser directement
+      // Pour les sections avec points comme "1.1", "1.2", extraire le premier chiffre
+      let agendaItemId: number;
+      
+      if (sectionId.includes('.')) {
+        // Section hiérarchique comme "1.1" -> agenda item 1
+        const mainSection = sectionId.split('.')[0];
+        agendaItemId = parseInt(mainSection);
+        console.log(`Hierarchical section: ${sectionId} -> main section: ${mainSection} -> agenda item: ${agendaItemId}`);
       } else {
-        // Pour toutes les autres sections, retourner un tableau vide
-        res.json([]);
+        // Section simple comme "1" -> agenda item 1
+        agendaItemId = parseInt(sectionId);
+        console.log(`Simple section: ${sectionId} -> agenda item: ${agendaItemId}`);
       }
+      
+      if (isNaN(agendaItemId)) {
+        console.log(`Invalid agenda item ID: ${agendaItemId} from section: ${sectionId}`);
+        return res.json([]);
+      }
+      
+      const votes = await storage.getVotesByAgendaItem(agendaItemId);
+      
+      const votesWithResults = await Promise.all(votes.map(async (vote) => {
+        const responses = await storage.getVoteResults(vote.id);
+        const totalVotes = responses.length;
+        
+        const results = vote.options.map(option => {
+          const count = responses.filter(r => r.option === option).length;
+          const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+          return { option, count, percentage };
+        });
+
+        const userResponse = responses.find(r => r.userId === req.user.id);
+        const userVote = userResponse ? {
+          option: userResponse.option,
+          votingForCompany: userResponse.votingForCompanyId ? 
+            (await storage.getCompany(userResponse.votingForCompanyId))?.name : undefined
+        } : undefined;
+
+        return {
+          ...vote,
+          results,
+          userVote,
+          totalVotes
+        };
+      }));
+
+      res.json(votesWithResults);
     } catch (error) {
       console.error("Get section votes error:", error);
       res.status(500).json({ message: "Internal server error" });
