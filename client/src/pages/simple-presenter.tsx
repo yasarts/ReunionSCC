@@ -1374,6 +1374,10 @@ export default function SimpleMeetingPresenter() {
                   </div>
                 </div>
               </div>
+            ) : showParticipantsView ? (
+              <div className="p-8">
+                <IntegratedParticipantsManagement meetingId={1} />
+              </div>
             ) : currentItem ? (
               <div className="p-8">
                 <Card>
