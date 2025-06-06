@@ -874,10 +874,43 @@ export default function SimpleMeetingPresenter() {
                       const isCompleted = itemStates[section.id]?.completed;
 
                       return (
-                        <Card key={section.id} className={`group transition-all hover:shadow-md cursor-pointer ${isCompleted ? 'bg-green-50 border-green-200' : ''}`}>
-                          <CardHeader onClick={() => navigateToItem(section.id)}>
+                        <Card 
+                          key={section.id} 
+                          className={`group transition-all hover:shadow-md ${isEditMode ? 'cursor-move' : 'cursor-pointer'} ${isCompleted ? 'bg-green-50 border-green-200' : ''} ${
+                            draggedItem === section.id ? 'opacity-50' : ''
+                          }`}
+                          draggable={isEditMode}
+                          onDragStart={(e) => {
+                            if (isEditMode) {
+                              setDraggedItem(section.id);
+                              e.dataTransfer.effectAllowed = 'move';
+                            }
+                          }}
+                          onDragOver={(e) => {
+                            if (isEditMode && draggedItem && draggedItem !== section.id) {
+                              e.preventDefault();
+                              e.dataTransfer.dropEffect = 'move';
+                            }
+                          }}
+                          onDrop={(e) => {
+                            if (isEditMode && draggedItem && draggedItem !== section.id) {
+                              e.preventDefault();
+                              const draggedIndex = agenda.findIndex(a => a.id === draggedItem);
+                              const targetIndex = agenda.findIndex(a => a.id === section.id);
+                              if (draggedIndex !== -1 && targetIndex !== -1) {
+                                moveItemWithChildren(draggedIndex, targetIndex);
+                              }
+                              setDraggedItem(null);
+                            }
+                          }}
+                          onDragEnd={() => setDraggedItem(null)}
+                        >
+                          <CardHeader onClick={() => !isEditMode && navigateToItem(section.id)}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
+                                {isEditMode && (
+                                  <GripVertical className="h-5 w-5 text-gray-400 cursor-grab" />
+                                )}
                                 <span className="text-lg font-mono text-gray-500 min-w-[2rem]">{sectionNumber}.</span>
                                 {isCompleted ? (
                                   <CheckCircle className="h-6 w-6 text-green-600" />
@@ -912,6 +945,18 @@ export default function SimpleMeetingPresenter() {
                                       </Badge>
                                     ))}
                                   </div>
+                                )}
+                                {isEditMode && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const newAgenda = agenda.filter(a => a.id !== section.id);
+                                      setAgenda(newAgenda);
+                                    }}
+                                    className="p-1 text-red-500 hover:bg-red-50 rounded ml-2"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
                                 )}
                               </div>
                             </div>
