@@ -95,7 +95,7 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
     }
   });
 
-  // Mutation pour supprimer un vote
+  // Mutation pour supprimer un vote entier
   const deleteVoteMutation = useMutation({
     mutationFn: async (voteId: number) => {
       return await apiRequest("DELETE", `/api/votes/${voteId}`);
@@ -105,6 +105,27 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
       toast({
         title: "Vote supprimé",
         description: "Le vote a été supprimé avec succès",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Erreur lors de la suppression",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation pour supprimer le vote d'une entreprise spécifique
+  const deleteCompanyVoteMutation = useMutation({
+    mutationFn: async ({ voteId, companyId }: { voteId: number; companyId: number }) => {
+      return await apiRequest("DELETE", `/api/votes/${voteId}/company/${companyId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes/enhanced`] });
+      toast({
+        title: "Vote d'entreprise supprimé",
+        description: "L'entreprise peut maintenant voter à nouveau",
       });
     },
     onError: (error) => {
@@ -276,12 +297,25 @@ export function EnhancedVoteSection({ sectionId }: EnhancedVoteSectionProps) {
                               )}
                             </div>
                           </div>
-                          {isVoted && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700">
-                              <CheckCircle className="h-3 w-3 mr-1" />
-                              Voté: {companyVote.votes[0]?.option}
-                            </Badge>
-                          )}
+                          <div className="flex items-center space-x-2">
+                            {isVoted && (
+                              <Badge variant="outline" className="bg-green-50 text-green-700">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Voté: {companyVote.votes[0]?.option}
+                              </Badge>
+                            )}
+                            {isVoted && user && (user.role === 'salaried' || user.role === 'admin') && (
+                              <Button
+                                onClick={() => deleteCompanyVoteMutation.mutate({ voteId: vote.id, companyId: company.id })}
+                                disabled={deleteCompanyVoteMutation.isPending}
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
 
                         {!isVoted && (

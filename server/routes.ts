@@ -4,7 +4,9 @@ import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { insertCompanySchema, insertUserSchema, insertMeetingSchema, insertAgendaItemSchema, insertVoteSchema, insertVoteResponseSchema } from "@shared/schema";
+import { insertCompanySchema, insertUserSchema, insertMeetingSchema, insertAgendaItemSchema, insertVoteSchema, insertVoteResponseSchema, voteResponses } from "@shared/schema";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { WebSocketServer, WebSocket } from "ws";
 import { 
@@ -748,6 +750,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Vote deleted successfully" });
     } catch (error) {
       console.error("Delete vote error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Supprimer le vote d'une entreprise spécifique
+  app.delete("/api/votes/:id/company/:companyId", requireAuth, requirePermission("canManageAgenda"), async (req: any, res: Response) => {
+    try {
+      const voteId = parseInt(req.params.id);
+      const companyId = parseInt(req.params.companyId);
+      
+      // Récupérer tous les résultats de vote
+      const voteResults = await storage.getVoteResults(voteId);
+      
+      // Filtrer et supprimer les votes de cette entreprise
+      const votesToDelete = voteResults.filter(result => 
+        result.votingForCompanyId === companyId || 
+        (result.user?.companyId === companyId && !result.votingForCompanyId)
+      );
+      
+      // Supprimer chaque vote trouvé
+      for (const voteResult of votesToDelete) {
+        await db.delete(voteResponses).where(eq(voteResponses.id, voteResult.id));
+      }
+      
+      res.json({ message: "Company vote deleted successfully" });
+    } catch (error) {
+      console.error("Delete company vote error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
