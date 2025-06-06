@@ -30,7 +30,7 @@ import {
   type InsertMeetingTypeRole,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Company operations
@@ -259,18 +259,31 @@ export class DatabaseStorage implements IStorage {
 
     // Récupérer les entreprises des utilisateurs séparément
     const userIds = results.map(r => r.user.id);
-    const userCompanies = userIds.length > 0 ? await db
-      .select()
-      .from(companies)
-      .where(sql`${companies.id} IN (SELECT company_id FROM users WHERE id IN (${userIds.join(',')}))`) : [];
+    let userCompanies = [];
+    
+    if (userIds.length > 0) {
+      // Récupérer les utilisateurs avec leurs entreprises
+      const usersWithCompanies = await db
+        .select({
+          userId: users.id,
+          company: companies
+        })
+        .from(users)
+        .leftJoin(companies, eq(users.companyId, companies.id))
+        .where(inArray(users.id, userIds));
+      
+      userCompanies = usersWithCompanies
+        .filter(uc => uc.company)
+        .map(uc => ({ userId: uc.userId, company: uc.company }));
+    }
 
-    const companiesMap = new Map(userCompanies.map(c => [c.id, c]));
+    const companiesMap = new Map(userCompanies.map(uc => [uc.userId, uc.company]));
 
     return results.map(result => ({
       ...result,
       user: {
         ...result.user,
-        company: result.user.companyId ? companiesMap.get(result.user.companyId) : undefined
+        company: companiesMap.get(result.user.id) || undefined
       } as User & { company?: Company },
       proxyCompany: result.proxyCompany || undefined
     })) as (MeetingParticipant & { user: User, proxyCompany?: Company })[];
