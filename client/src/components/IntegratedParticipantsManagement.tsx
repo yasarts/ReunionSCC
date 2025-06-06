@@ -150,6 +150,20 @@ export function IntegratedParticipantsManagement({ meetingId }: IntegratedPartic
   // Entreprises présentes (pour les mandats)
   const presentCompanies = Array.from(companiesByStatus.present.values()).map(cp => cp.company);
 
+  // Calculer les mandats reçus par chaque entreprise présente
+  const mandatesReceived = new Map<number, Company[]>();
+  
+  // Parcourir toutes les entreprises donnant mandat
+  Array.from(companiesByStatus.proxy.values()).forEach(proxyParticipation => {
+    if (proxyParticipation.proxyToCompany) {
+      const receivingCompanyId = proxyParticipation.proxyToCompany.id;
+      if (!mandatesReceived.has(receivingCompanyId)) {
+        mandatesReceived.set(receivingCompanyId, []);
+      }
+      mandatesReceived.get(receivingCompanyId)!.push(proxyParticipation.company);
+    }
+  });
+
   const handleAddCompany = () => {
     if (!selectedCompanyId) return;
     
@@ -264,6 +278,20 @@ export function IntegratedParticipantsManagement({ meetingId }: IntegratedPartic
               </div>
             )}
           </div>
+
+          {/* Affichage des mandats reçus - pour les entreprises présentes */}
+          {participation.status === 'present' && mandatesReceived.has(participation.company.id) && (
+            <div className="pt-3 border-t border-gray-200">
+              <h5 className="text-sm font-medium text-gray-700 mb-2">Mandats reçus</h5>
+              <div className="flex flex-wrap gap-2">
+                {mandatesReceived.get(participation.company.id)!.map((delegatingCompany) => (
+                  <Badge key={delegatingCompany.id} variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                    {delegatingCompany.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Gestion des mandats - pour les entreprises donnant mandat */}
           {participation.status === 'proxy' && (
