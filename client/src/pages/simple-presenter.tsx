@@ -1909,7 +1909,11 @@ export default function SimpleMeetingPresenter() {
                             </div>
                             
                             {/* Affichage des votes existants pour cette section */}
-                            <VoteCard agendaItemId={parseInt(currentItem.id)} />
+                            <VoteSection 
+                              sectionId={currentItem.id} 
+                              sectionTitle={currentItem.title}
+                              isEditMode={true} 
+                            />
                           </div>
                         )}
                       </div>

@@ -20,12 +20,13 @@ const createVoteSchema = z.object({
 type CreateVoteFormData = z.infer<typeof createVoteSchema>;
 
 interface CreateVoteModalProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   onClose: () => void;
   agendaItemId: number;
+  onSuccess?: () => void;
 }
 
-export function CreateVoteModal({ isOpen, onClose, agendaItemId }: CreateVoteModalProps) {
+export function CreateVoteModal({ isOpen, onClose, agendaItemId, onSuccess }: CreateVoteModalProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [options, setOptions] = useState<string[]>(["Pour", "Contre", "Abstention"]);
@@ -52,6 +53,10 @@ export function CreateVoteModal({ isOpen, onClose, agendaItemId }: CreateVoteMod
       onClose();
       form.reset();
       setOptions(["Pour", "Contre", "Abstention"]);
+      // Call the optional onSuccess callback
+      if (onSuccess) {
+        onSuccess();
+      }
     },
     onError: (error) => {
       toast({
