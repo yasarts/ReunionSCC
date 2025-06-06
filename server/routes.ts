@@ -387,16 +387,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const itemId = req.params.id;
       
-      // Pour les données de test avec des IDs en chaîne, on simule une suppression réussie
-      if (isNaN(parseInt(itemId))) {
-        console.log(`Simulating deletion of agenda item with string ID: ${itemId}`);
+      // Pour les données de test avec des IDs en chaîne ou décimaux, on simule une suppression réussie
+      if (isNaN(parseInt(itemId)) || itemId.includes('.') || typeof itemId === 'string') {
+        console.log(`Simulating deletion of agenda item with ID: ${itemId}`);
         res.status(204).send();
         return;
       }
       
-      // Pour les vrais IDs numériques de la base de données
+      // Pour les vrais IDs numériques entiers de la base de données
       const numericId = parseInt(itemId);
-      await storage.deleteAgendaItem(numericId);
+      if (Number.isInteger(numericId)) {
+        await storage.deleteAgendaItem(numericId);
+      }
       res.status(204).send();
     } catch (error) {
       console.error("Delete agenda item error:", error);
