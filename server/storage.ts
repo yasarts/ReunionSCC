@@ -257,34 +257,8 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(companies, eq(meetingParticipants.proxyCompanyId, companies.id))
       .where(eq(meetingParticipants.meetingId, meetingId));
 
-    // Récupérer les entreprises des utilisateurs séparément
-    const userIds = results.map(r => r.user.id);
-    let userCompanies = [];
-    
-    if (userIds.length > 0) {
-      // Récupérer les utilisateurs avec leurs entreprises
-      const usersWithCompanies = await db
-        .select({
-          userId: users.id,
-          company: companies
-        })
-        .from(users)
-        .leftJoin(companies, eq(users.companyId, companies.id))
-        .where(inArray(users.id, userIds));
-      
-      userCompanies = usersWithCompanies
-        .filter(uc => uc.company)
-        .map(uc => ({ userId: uc.userId, company: uc.company }));
-    }
-
-    const companiesMap = new Map(userCompanies.map(uc => [uc.userId, uc.company]));
-
     return results.map(result => ({
       ...result,
-      user: {
-        ...result.user,
-        company: companiesMap.get(result.user.id) || undefined
-      } as User & { company?: Company },
       proxyCompany: result.proxyCompany || undefined
     })) as (MeetingParticipant & { user: User, proxyCompany?: Company })[];
   }

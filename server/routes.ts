@@ -789,29 +789,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Pour les salariés, récupérer toutes les entreprises votables
       let votableCompanies = [];
       if (currentUser?.role === 'Salarié·es SCC') {
+        // Récupérer les entreprises des utilisateurs participants
+        const userCompanyIds = presentParticipants
+          .map(p => p.user.companyId)
+          .filter(id => id !== null);
+        
+        const userCompanies = userCompanyIds.length > 0 ? await storage.getCompanies() : [];
+        const companiesMap = new Map(userCompanies.map(c => [c.id, c]));
+
         // Entreprises présentes
         const presentCompanies = presentParticipants
           .filter(p => p.user.companyId)
-          .map(p => ({
-            id: p.user.company?.id,
-            name: p.user.company?.name,
-            type: 'present' as const,
-            representativeId: p.userId,
-            representativeName: `${p.user.firstName} ${p.user.lastName}`
-          }));
+          .map(p => {
+            const company = companiesMap.get(p.user.companyId!);
+            return {
+              id: company?.id,
+              name: company?.name,
+              type: 'present' as const,
+              representativeId: p.userId,
+              representativeName: `${p.user.firstName} ${p.user.lastName}`
+            };
+          })
+          .filter(c => c.id && c.name);
 
         // Entreprises avec mandat (proxy)
         const proxyCompanies = presentParticipants
-          .filter(p => p.proxyCompanyId)
+          .filter(p => p.proxyCompanyId && p.proxyCompany)
           .map(p => ({
             id: p.proxyCompanyId,
             name: p.proxyCompany?.name,
             type: 'proxy' as const,
             representativeId: p.userId,
             representativeName: `${p.user.firstName} ${p.user.lastName}`
-          }));
+          }))
+          .filter(c => c.id && c.name);
 
-        votableCompanies = [...presentCompanies, ...proxyCompanies].filter(c => c.id && c.name);
+        votableCompanies = [...presentCompanies, ...proxyCompanies];
       }
 
       // Enrichir les votes avec les détails des réponses
