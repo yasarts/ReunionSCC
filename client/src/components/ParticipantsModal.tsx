@@ -50,10 +50,10 @@ export function ParticipantsModal({ isOpen, onClose, meetingId, meetingTitle }: 
   const queryClient = useQueryClient();
   const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
 
-  // Récupérer les utilisateurs éligibles pour cette réunion
-  const { data: eligibleUsers } = useQuery<(User & { company?: Company })[]>({
-    queryKey: [`/api/meetings/${meetingId}/eligible-users`],
-    enabled: isOpen && !!meetingId,
+  // Récupérer tous les utilisateurs (temporaire - en attendant la correction de l'authentification)
+  const { data: allUsers } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+    enabled: isOpen,
   });
 
   // Récupérer toutes les entreprises
@@ -165,7 +165,7 @@ export function ParticipantsModal({ isOpen, onClose, meetingId, meetingTitle }: 
 
   // Filtrer les utilisateurs non participants
   const participantUserIds = new Set(participants?.map(p => p.userId) || []);
-  const availableUsers = eligibleUsers?.filter(user => !participantUserIds.has(user.id)) || [];
+  const availableUsers = allUsers?.filter(user => !participantUserIds.has(user.id)) || [];
 
   // Statistiques
   const stats = {
@@ -249,10 +249,12 @@ export function ParticipantsModal({ isOpen, onClose, meetingId, meetingTitle }: 
                             <Badge variant="outline" className="text-xs">
                               {user.role}
                             </Badge>
-                            {user.company && (
+                            {user.companyId && companies && (
                               <div className="flex items-center gap-1">
                                 <Building2 className="h-3 w-3 text-blue-500" />
-                                <span className="text-xs text-blue-600">{user.company.name}</span>
+                                <span className="text-xs text-blue-600">
+                                  {companies.find(c => c.id === user.companyId)?.name || 'Structure inconnue'}
+                                </span>
                               </div>
                             )}
                           </div>

@@ -469,6 +469,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Meeting not found" });
       }
 
+      if (!meeting.meetingTypeId) {
+        // Si pas de type de réunion spécifique, tous les utilisateurs sont éligibles
+        const allUsers = await storage.getAllUsers();
+        return res.json(allUsers.map(user => ({ ...user, company: null })));
+      }
+
       const eligibleUsers = await storage.getEligibleUsersForMeeting(meeting.meetingTypeId);
       res.json(eligibleUsers);
     } catch (error) {
