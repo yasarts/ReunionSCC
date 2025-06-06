@@ -23,10 +23,11 @@ interface CreateVoteModalProps {
   isOpen?: boolean;
   onClose: () => void;
   agendaItemId: number;
+  sectionId?: string; // Ajouter l'ID de section pour l'invalidation du cache
   onSuccess?: () => void;
 }
 
-export function CreateVoteModal({ isOpen, onClose, agendaItemId, onSuccess }: CreateVoteModalProps) {
+export function CreateVoteModal({ isOpen, onClose, agendaItemId, sectionId, onSuccess }: CreateVoteModalProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [options, setOptions] = useState<string[]>(["Pour", "Contre", "Abstention"]);
@@ -45,7 +46,11 @@ export function CreateVoteModal({ isOpen, onClose, agendaItemId, onSuccess }: Cr
     },
     onSuccess: () => {
       // Invalider le cache pour que les votes s'affichent immédiatement
-      queryClient.invalidateQueries({ queryKey: [`/api/agenda/${agendaItemId}/votes`] });
+      if (sectionId) {
+        queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes`] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: [`/api/agenda/${agendaItemId}/votes`] });
+      }
       toast({
         title: "Succès",
         description: "Vote créé avec succès",

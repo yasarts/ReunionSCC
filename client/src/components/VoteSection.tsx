@@ -312,6 +312,7 @@ export function VoteSection({ sectionId, sectionTitle, isEditMode = false }: Vot
       {showCreateModal && (
         <CreateVoteModal
           agendaItemId={agendaItemId}
+          sectionId={sectionId}
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
             setShowCreateModal(false);
