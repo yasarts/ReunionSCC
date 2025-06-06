@@ -993,38 +993,48 @@ export default function SimpleMeetingPresenter() {
                                     <div 
                                       key={subsection.id} 
                                       onClick={() => !isEditMode && navigateToItem(subsection.id)}
-                                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors hover:bg-gray-50 ${isEditMode ? 'cursor-move' : 'cursor-pointer'} ${isSubCompleted ? 'bg-green-50 border-green-200' : 'bg-white'} ${
-                                        draggedItem === subsection.id ? 'opacity-50' : ''
-                                      }`}
-                                      draggable={isEditMode}
-                                      onDragStart={(e) => {
-                                        if (isEditMode) {
-                                          setDraggedItem(subsection.id);
-                                          e.dataTransfer.effectAllowed = 'move';
-                                        }
-                                      }}
-                                      onDragOver={(e) => {
-                                        if (isEditMode && draggedItem && draggedItem !== subsection.id) {
-                                          e.preventDefault();
-                                          e.dataTransfer.dropEffect = 'move';
-                                        }
-                                      }}
-                                      onDrop={(e) => {
-                                        if (isEditMode && draggedItem && draggedItem !== subsection.id) {
-                                          e.preventDefault();
-                                          const draggedIndex = agenda.findIndex(a => a.id === draggedItem);
-                                          const targetIndex = agenda.findIndex(a => a.id === subsection.id);
-                                          if (draggedIndex !== -1 && targetIndex !== -1) {
-                                            moveItemWithChildren(draggedIndex, targetIndex);
-                                          }
-                                          setDraggedItem(null);
-                                        }
-                                      }}
-                                      onDragEnd={() => setDraggedItem(null)}
+                                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors hover:bg-gray-50 ${isEditMode ? 'cursor-default' : 'cursor-pointer'} ${isSubCompleted ? 'bg-green-50 border-green-200' : 'bg-white'}`}
                                     >
                                       <div className="flex items-center gap-3">
                                         {isEditMode && (
-                                          <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />
+                                          <div className="flex flex-col gap-1">
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (subIndex > 0) {
+                                                  const currentIndex = agenda.findIndex(a => a.id === subsection.id);
+                                                  const previousSubsection = subsections[subIndex - 1];
+                                                  const previousIndex = agenda.findIndex(a => a.id === previousSubsection.id);
+                                                  
+                                                  const newAgenda = [...agenda];
+                                                  [newAgenda[currentIndex], newAgenda[previousIndex]] = [newAgenda[previousIndex], newAgenda[currentIndex]];
+                                                  setAgenda(newAgenda);
+                                                }
+                                              }}
+                                              disabled={subIndex === 0}
+                                              className={`p-0.5 rounded ${subIndex === 0 ? 'text-gray-300' : 'text-gray-600 hover:bg-gray-100'}`}
+                                            >
+                                              <ChevronUp className="h-3 w-3" />
+                                            </button>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (subIndex < subsections.length - 1) {
+                                                  const currentIndex = agenda.findIndex(a => a.id === subsection.id);
+                                                  const nextSubsection = subsections[subIndex + 1];
+                                                  const nextIndex = agenda.findIndex(a => a.id === nextSubsection.id);
+                                                  
+                                                  const newAgenda = [...agenda];
+                                                  [newAgenda[currentIndex], newAgenda[nextIndex]] = [newAgenda[nextIndex], newAgenda[currentIndex]];
+                                                  setAgenda(newAgenda);
+                                                }
+                                              }}
+                                              disabled={subIndex === subsections.length - 1}
+                                              className={`p-0.5 rounded ${subIndex === subsections.length - 1 ? 'text-gray-300' : 'text-gray-600 hover:bg-gray-100'}`}
+                                            >
+                                              <ChevronDown className="h-3 w-3" />
+                                            </button>
+                                          </div>
                                         )}
                                         <span className="text-sm font-mono text-gray-500 min-w-[3rem]">{sectionNumber}.{subIndex + 1}</span>
                                         {isSubCompleted ? (
