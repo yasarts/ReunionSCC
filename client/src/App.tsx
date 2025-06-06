@@ -31,6 +31,7 @@ function AppContent() {
   return (
     <Switch>
       <Route path="/" component={Dashboard} />
+      <Route path="/dashboard" component={Dashboard} />
       <Route path="/presenter/:meetingId" component={SimpleMeetingPresenter} />
       <Route path="/simple-presenter/:meetingId" component={SimpleMeetingPresenter} />
       <Route path="/simple-presenter" component={SimpleMeetingPresenter} />

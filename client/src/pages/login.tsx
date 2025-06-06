@@ -1,143 +1,265 @@
-import { useState } from 'react';
-import { useLocation } from 'wouter';
-import { LogIn, Users } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Mail, Lock, CheckCircle, AlertCircle } from "lucide-react";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useLocation } from "wouter";
+
+const loginSchema = z.object({
+  email: z.string().email("Format d'email invalide"),
+  password: z.string().min(1, "Le mot de passe est requis")
+});
+
+const magicLinkSchema = z.object({
+  email: z.string().email("Format d'email invalide")
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+type MagicLinkFormData = z.infer<typeof magicLinkSchema>;
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      // Simulation de connexion avec utilisateurs prédéfinis
-      if (email === 'salarie@scc.fr' && password === 'password') {
-        localStorage.setItem('user', JSON.stringify({
-          id: 1,
-          email: 'salarie@scc.fr',
-          firstName: 'Marie',
-          lastName: 'Dupont',
-          role: 'Salarié·es SCC',
-          permissions: {
-            canEdit: true,
-            canManageAgenda: true,
-            canManageUsers: true,
-            canCreateMeetings: true,
-            canExport: true
-          }
-        }));
-        toast({
-          title: "Connexion réussie",
-          description: "Bienvenue Marie",
-        });
-        // Forcer le rechargement de la page pour actualiser l'état d'authentification
-        window.location.href = '/';
-      } else if (email === 'elu@scc.fr' && password === 'password') {
-        localStorage.setItem('user', JSON.stringify({
-          id: 2,
-          email: 'elu@scc.fr',
-          firstName: 'Jean',
-          lastName: 'Martin',
-          role: 'Elu·es',
-          permissions: {
-            canEdit: false,
-            canManageAgenda: false,
-            canManageUsers: false,
-            canCreateMeetings: false,
-            canExport: false
-          }
-        }));
-        toast({
-          title: "Connexion réussie",
-          description: "Bienvenue Jean",
-        });
-        // Forcer le rechargement de la page pour actualiser l'état d'authentification
-        window.location.href = '/';
-      } else {
-        toast({
-          title: "Erreur de connexion",
-          description: "Email ou mot de passe incorrect",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: "Une erreur est survenue lors de la connexion",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: ""
     }
+  });
+
+  const magicLinkForm = useForm<MagicLinkFormData>({
+    resolver: zodResolver(magicLinkSchema),
+    defaultValues: {
+      email: ""
+    }
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: async (data: LoginFormData) => {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Login failed");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      setLocation("/dashboard");
+    },
+    onError: (error: any) => {
+      console.error("Login error:", error);
+    }
+  });
+
+  const magicLinkMutation = useMutation({
+    mutationFn: async (data: MagicLinkFormData) => {
+      const response = await fetch("/api/auth/send-magic-link", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to send magic link");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      setMagicLinkSent(true);
+    },
+    onError: (error: any) => {
+      console.error("Magic link error:", error);
+    }
+  });
+
+  const onLoginSubmit = (data: LoginFormData) => {
+    loginMutation.mutate(data);
+  };
+
+  const onMagicLinkSubmit = (data: MagicLinkFormData) => {
+    magicLinkMutation.mutate(data);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-            <Users className="w-6 h-6 text-white" />
-          </div>
-          <CardTitle className="text-2xl">Connexion SCC</CardTitle>
-          <p className="text-gray-600">Gestion des réunions du Conseil National</p>
+          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+            SCC - Connexion
+          </CardTitle>
+          <CardDescription className="text-gray-600 dark:text-gray-300">
+            Accédez au système de gestion des réunions
+          </CardDescription>
         </CardHeader>
-        
         <CardContent>
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="votre@email.fr"
-                required
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="password">Mot de passe</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-            
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                "Connexion..."
+          <Tabs defaultValue="password" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="password" className="flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                Mot de passe
+              </TabsTrigger>
+              <TabsTrigger value="magic-link" className="flex items-center gap-2">
+                <Mail className="w-4 h-4" />
+                Lien magique
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="password" className="space-y-4">
+              <Form {...loginForm}>
+                <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                  <FormField
+                    control={loginForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="email" 
+                            placeholder="votre@email.com" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={loginForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mot de passe</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="password" 
+                            placeholder="Votre mot de passe" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {loginMutation.isError && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        {loginMutation.error?.message || "Erreur de connexion. Vérifiez vos identifiants."}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={loginMutation.isPending}
+                  >
+                    {loginMutation.isPending ? "Connexion..." : "Se connecter"}
+                  </Button>
+                </form>
+              </Form>
+            </TabsContent>
+
+            <TabsContent value="magic-link" className="space-y-4">
+              {!magicLinkSent ? (
+                <Form {...magicLinkForm}>
+                  <form onSubmit={magicLinkForm.handleSubmit(onMagicLinkSubmit)} className="space-y-4">
+                    <FormField
+                      control={magicLinkForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="email" 
+                              placeholder="votre@email.com" 
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    {magicLinkMutation.isError && (
+                      <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>
+                          {magicLinkMutation.error?.message || "Erreur lors de l'envoi du lien magique."}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={magicLinkMutation.isPending}
+                    >
+                      {magicLinkMutation.isPending ? "Envoi..." : "Envoyer le lien magique"}
+                    </Button>
+                  </form>
+                </Form>
               ) : (
-                <>
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Se connecter
-                </>
+                <Alert>
+                  <CheckCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <div className="space-y-2">
+                      <p className="font-medium">Lien envoyé !</p>
+                      <p className="text-sm">
+                        Si cette adresse email est enregistrée, vous recevrez un lien de connexion sécurisé.
+                        Vérifiez vos emails et cliquez sur le lien pour vous connecter.
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Le lien est valable pendant 15 minutes.
+                      </p>
+                    </div>
+                  </AlertDescription>
+                </Alert>
               )}
-            </Button>
-          </form>
-          
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h4 className="font-semibold text-sm mb-2">Comptes de démonstration :</h4>
-            <div className="text-sm space-y-1">
-              <p><strong>Salarié·es SCC:</strong> salarie@scc.fr / password</p>
-              <p><strong>Elu·es:</strong> elu@scc.fr / password</p>
+              
+              {magicLinkSent && (
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => {
+                    setMagicLinkSent(false);
+                    magicLinkForm.reset();
+                  }}
+                >
+                  Renvoyer un lien
+                </Button>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Comptes de test disponibles :
+            </p>
+            <div className="mt-2 space-y-1 text-xs text-gray-500">
+              <p>Admin: admin@scc-cirque.org / admin123</p>
+              <p>Membre: christine.nissim@scc-cirque.org / membre123</p>
             </div>
           </div>
         </CardContent>
