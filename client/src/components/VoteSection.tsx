@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { apiRequest } from "@/lib/queryClient";
-import { CreateVoteModal } from "./CreateVoteModal";
+
 
 interface VoteSectionProps {
   sectionId: string;
@@ -41,7 +41,7 @@ export function VoteSection({ sectionId, sectionTitle, isEditMode = false }: Vot
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [selectedOption, setSelectedOption] = useState<string>("");
-  const [showCreateModal, setShowCreateModal] = useState(false);
+
 
   // Créer un hash unique pour chaque section (même logique que le backend)
   const getAgendaItemId = (sectionId: string): number => {
@@ -160,15 +160,6 @@ export function VoteSection({ sectionId, sectionTitle, isEditMode = false }: Vot
           <Vote className="h-5 w-5" />
           Votes et sondages - {sectionTitle}
         </h3>
-        {user && (user.permissions as any)?.canManageAgenda && (
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            size="sm"
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            Créer un vote
-          </Button>
-        )}
       </div>
 
       {(!Array.isArray(votes) || votes.length === 0) ? (
@@ -309,17 +300,7 @@ export function VoteSection({ sectionId, sectionTitle, isEditMode = false }: Vot
         </div>
       )}
 
-      {showCreateModal && (
-        <CreateVoteModal
-          agendaItemId={agendaItemId}
-          sectionId={sectionId}
-          onClose={() => setShowCreateModal(false)}
-          onSuccess={() => {
-            setShowCreateModal(false);
-            queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes`] });
-          }}
-        />
-      )}
+
     </div>
   );
 }
