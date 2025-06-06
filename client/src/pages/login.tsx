@@ -51,6 +51,7 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify(data)
       });
       
@@ -62,7 +63,8 @@ export default function Login() {
       return response.json();
     },
     onSuccess: () => {
-      setLocation("/dashboard");
+      // Rediriger vers le dashboard et recharger la page pour que useAuth récupère les données
+      window.location.href = "/dashboard";
     },
     onError: (error: any) => {
       console.error("Login error:", error);

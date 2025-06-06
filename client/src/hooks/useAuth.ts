@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 
 interface User {
   id: number;
@@ -12,39 +13,48 @@ interface User {
     canManageAgenda: boolean;
     canManageUsers: boolean;
     canCreateMeetings: boolean;
-    canExport: boolean;
+    canExport?: boolean;
+    canVote: boolean;
+    canSeeVoteResults: boolean;
+    canManageParticipants: boolean;
   };
 }
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [, setLocation] = useLocation();
 
-  useEffect(() => {
-    const checkAuth = () => {
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
-          setUser(userData);
-        } catch (error) {
-          localStorage.removeItem('user');
-          setUser(null);
+  const { data: user, isLoading, error } = useQuery({
+    queryKey: ['/api/auth/me'],
+    queryFn: async () => {
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          return null;
         }
-      } else {
-        setUser(null);
+        throw new Error('Failed to fetch user');
       }
-      setIsLoading(false);
-    };
+      
+      return response.json();
+    },
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-    checkAuth();
-  }, []);
-
-  const logout = () => {
-    localStorage.removeItem('user');
-    setUser(null);
-    setLocation('/login');
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include'
+      });
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      setLocation('/login');
+      window.location.reload();
+    }
   };
 
   const requirePermission = (permission: keyof User['permissions']) => {
