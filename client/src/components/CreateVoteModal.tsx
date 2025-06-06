@@ -45,12 +45,14 @@ export function CreateVoteModal({ isOpen, onClose, agendaItemId, sectionId, onSu
       return await apiRequest("POST", `/api/agenda/${agendaItemId}/votes`, data);
     },
     onSuccess: () => {
-      // Invalider le cache pour que les votes s'affichent immédiatement
+      // Invalider tous les caches liés aux votes pour assurer l'affichage immédiat
       if (sectionId) {
         queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes`] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: [`/api/agenda/${agendaItemId}/votes`] });
+        queryClient.invalidateQueries({ queryKey: [`/api/sections/${sectionId}/votes/enhanced`] });
       }
+      queryClient.invalidateQueries({ queryKey: [`/api/agenda/${agendaItemId}/votes`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/votes'] });
+      
       toast({
         title: "Succès",
         description: "Vote créé avec succès",
@@ -58,6 +60,7 @@ export function CreateVoteModal({ isOpen, onClose, agendaItemId, sectionId, onSu
       onClose();
       form.reset();
       setOptions(["Pour", "Contre", "Abstention"]);
+      
       // Call the optional onSuccess callback
       if (onSuccess) {
         onSuccess();
