@@ -70,7 +70,7 @@ export interface IStorage {
   getVote(id: number): Promise<Vote | undefined>;
   getVotesByAgendaItem(agendaItemId: number): Promise<Vote[]>;
   castVote(voteResponse: InsertVoteResponse): Promise<void>;
-  getVoteResults(voteId: number): Promise<VoteResponse[]>;
+  getVoteResults(voteId: number): Promise<(VoteResponse & { user?: User })[]>;
   closeVote(voteId: number): Promise<void>;
   deleteVote(voteId: number): Promise<void>;
   getAgendaItem(id: number): Promise<AgendaItem | undefined>;
@@ -344,11 +344,32 @@ export class DatabaseStorage implements IStorage {
       .values(voteResponse);
   }
 
-  async getVoteResults(voteId: number): Promise<VoteResponse[]> {
-    return await db
-      .select()
+  async getVoteResults(voteId: number): Promise<(VoteResponse & { user?: User })[]> {
+    const results = await db
+      .select({
+        id: voteResponses.id,
+        voteId: voteResponses.voteId,
+        userId: voteResponses.userId,
+        option: voteResponses.option,
+        votingForCompanyId: voteResponses.votingForCompanyId,
+        castByUserId: voteResponses.castByUserId,
+        createdAt: voteResponses.createdAt,
+        user: users
+      })
       .from(voteResponses)
+      .leftJoin(users, eq(voteResponses.userId, users.id))
       .where(eq(voteResponses.voteId, voteId));
+
+    return results.map(result => ({
+      id: result.id,
+      voteId: result.voteId,
+      userId: result.userId,
+      option: result.option,
+      votingForCompanyId: result.votingForCompanyId,
+      castByUserId: result.castByUserId,
+      createdAt: result.createdAt,
+      user: result.user || undefined
+    }));
   }
 
   async closeVote(voteId: number): Promise<void> {

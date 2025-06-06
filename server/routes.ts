@@ -728,7 +728,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const responses = await storage.getVoteResults(vote.id);
         const totalVotes = responses.length;
         
-        const results = vote.options.map(option => {
+        const options = Array.isArray(vote.options) ? vote.options : [];
+        const results = options.map((option: string) => {
           const count = responses.filter(r => r.option === option).length;
           const percentage = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
           return { option, count, percentage };
@@ -847,14 +848,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             companiesVotes.get(companyId).votes.push({
               option: response.option,
-              voterName: `${response.user.firstName} ${response.user.lastName}`,
+              voterName: response.user ? `${response.user.firstName} ${response.user.lastName}` : 'Utilisateur inconnu',
               voterId: response.userId,
               isProxy: !!response.votingForCompanyId
             });
           }
         }
 
-        const results = vote.options.map(option => {
+        const options = Array.isArray(vote.options) ? vote.options : [];
+        const results = options.map((option: string) => {
           const count = responses.filter(r => r.option === option).length;
           const percentage = responses.length > 0 ? Math.round((count / responses.length) * 100) : 0;
           return { option, count, percentage };
