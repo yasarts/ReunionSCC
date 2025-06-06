@@ -383,6 +383,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/agenda/:id", requireAuth, requirePermission("canManageAgenda"), async (req: any, res: Response) => {
+    try {
+      const itemId = parseInt(req.params.id);
+      await storage.deleteAgendaItem(itemId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Delete agenda item error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // Vote routes
   app.post("/api/agenda/:id/votes", requireAuth, requirePermission("canVote"), async (req: any, res: Response) => {
     try {

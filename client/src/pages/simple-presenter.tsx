@@ -12,8 +12,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getMeetingData, type AgendaItem } from '@/data/agenda';
 import { IntegratedParticipantsManagement } from '@/components/IntegratedParticipantsManagement';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type MeetingType } from '@shared/schema';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface MeetingInfo {
   title: string;
@@ -28,10 +30,46 @@ export default function SimpleMeetingPresenter() {
   const params = useParams();
   const [, setLocation] = useLocation();
   const meetingId = params.meetingId;
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   // Récupérer les types de réunions disponibles
   const { data: meetingTypes } = useQuery({
     queryKey: ['/api/meeting-types'],
+  });
+
+  // Mutation pour supprimer un élément d'agenda
+  const deleteAgendaItemMutation = useMutation({
+    mutationFn: async (itemId: string) => {
+      await apiRequest("DELETE", `/api/agenda/${itemId}`);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Succès",
+        description: "Élément d'agenda supprimé avec succès.",
+      });
+    },
+    onError: (error) => {
+      console.error('Error deleting agenda item:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'élément d'agenda.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation pour mettre à jour un élément d'agenda
+  const updateAgendaItemMutation = useMutation({
+    mutationFn: async ({ itemId, updates }: { itemId: string; updates: any }) => {
+      await apiRequest("PUT", `/api/agenda/${itemId}`, updates);
+    },
+    onSuccess: () => {
+      // Pas de toast pour les mises à jour automatiques
+    },
+    onError: (error) => {
+      console.error('Error updating agenda item:', error);
+    },
   });
   
   const [currentItemIndex, setCurrentItemIndex] = useState(-1);
@@ -1212,8 +1250,11 @@ export default function SimpleMeetingPresenter() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      // Supprimer localement d'abord pour une réaction immédiate
                                       const newAgenda = agenda.filter(a => a.id !== section.id);
                                       setAgenda(newAgenda);
+                                      // Puis synchroniser avec la base de données
+                                      deleteAgendaItemMutation.mutate(section.id);
                                     }}
                                     className="p-1 text-red-500 hover:bg-red-50 rounded ml-2"
                                   >
@@ -1331,8 +1372,11 @@ export default function SimpleMeetingPresenter() {
                                           <button
                                             onClick={(e) => {
                                               e.stopPropagation();
+                                              // Supprimer localement d'abord pour une réaction immédiate
                                               const newAgenda = agenda.filter(a => a.id !== subsection.id);
                                               setAgenda(newAgenda);
+                                              // Puis synchroniser avec la base de données
+                                              deleteAgendaItemMutation.mutate(subsection.id);
                                             }}
                                             className="p-1 text-red-500 hover:bg-red-50 rounded ml-2"
                                           >
