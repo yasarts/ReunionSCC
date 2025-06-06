@@ -501,8 +501,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const id = parseInt(req.params.id);
       const { content } = req.body;
       
-      if (!content && content !== '') {
-        return res.status(400).json({ message: "Content is required" });
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid agenda item ID" });
+      }
+
+      // Vérifier si l'élément d'agenda existe
+      const agendaItem = await storage.getAgendaItem(id);
+      if (!agendaItem) {
+        return res.status(404).json({ message: "Agenda item not found" });
       }
 
       await storage.updateAgendaItem(id, { content });

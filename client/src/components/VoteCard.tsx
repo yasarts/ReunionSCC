@@ -40,11 +40,20 @@ export function VoteCard({ agendaItemId, showDeleteButton = false }: VoteCardPro
   const { toast } = useToast();
   const [selectedOption, setSelectedOption] = useState<string>("");
 
+  // Valider l'ID avant de faire la requête
+  const isValidId = agendaItemId && !isNaN(agendaItemId) && agendaItemId > 0;
+
   // Récupérer les votes pour cet élément d'agenda
   const { data: votes = [], isLoading, error } = useQuery<VoteData[]>({
     queryKey: [`/api/agenda/${agendaItemId}/votes`],
+    enabled: !!isValidId, // Ne faire la requête que si l'ID est valide
     retry: false,
   });
+
+  // Ne pas afficher la carte si l'ID n'est pas valide
+  if (!isValidId) {
+    return null;
+  }
 
   // Mutation pour voter
   const castVoteMutation = useMutation({
@@ -145,19 +154,39 @@ export function VoteCard({ agendaItemId, showDeleteButton = false }: VoteCardPro
     );
   }
 
-  if (votes.length === 0) {
+  if (!Array.isArray(votes) || votes.length === 0) {
+    // Ne pas afficher la carte vote s'il n'y a pas de votes et qu'on n'est pas en mode édition
+    if (!showDeleteButton) {
+      return null;
+    }
+    
     return (
-      <div className="text-center py-8">
-        <Vote className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-        <p className="text-sm text-gray-500">Aucun vote créé pour cette section</p>
-        <p className="text-xs text-gray-400 mt-1">Utilisez le bouton "Créer un vote" pour commencer</p>
+      <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-purple-900 flex items-center gap-2">
+            <Vote className="h-5 w-5" />
+            Votes et sondages
+          </h3>
+        </div>
+        <div className="text-center py-8">
+          <Vote className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+          <p className="text-sm text-gray-500">Aucun vote créé pour cette section</p>
+          <p className="text-xs text-gray-400 mt-1">Utilisez le bouton "Créer un vote" pour commencer</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {votes.map((vote: VoteData) => (
+    <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-purple-900 flex items-center gap-2">
+          <Vote className="h-5 w-5" />
+          Votes et sondages
+        </h3>
+      </div>
+      <div className="space-y-4">
+        {votes.map((vote: VoteData) => (
         <Card key={vote.id} className="border-purple-200">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -300,6 +329,7 @@ export function VoteCard({ agendaItemId, showDeleteButton = false }: VoteCardPro
           </CardContent>
         </Card>
       ))}
+      </div>
     </div>
   );
 }
