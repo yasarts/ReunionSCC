@@ -233,8 +233,211 @@ export default function SimpleMeetingPresenter() {
     return `${hours}h${minutes.toString().padStart(2, '0')}`;
   };
 
-  const exportToPDF = () => {
-    window.print();
+  const exportToPDF = async () => {
+    try {
+      const { jsPDF } = await import('jspdf');
+      const doc = new jsPDF();
+      
+      // Configuration de l'encoding pour supporter les caractères français
+      doc.setFont("helvetica");
+      
+      let yPosition = 20;
+      const pageHeight = 297;
+      const margin = 20;
+      const lineHeight = 6;
+      
+      const addPageIfNeeded = (requiredSpace = 20) => {
+        if (yPosition + requiredSpace > pageHeight - margin) {
+          doc.addPage();
+          yPosition = margin;
+        }
+      };
+      
+      const addText = (text: string, fontSize = 10, isBold = false) => {
+        doc.setFontSize(fontSize);
+        if (isBold) doc.setFont("helvetica", "bold");
+        else doc.setFont("helvetica", "normal");
+        
+        // Gérer les textes longs avec retour à la ligne
+        const maxWidth = 170;
+        const lines = doc.splitTextToSize(text, maxWidth);
+        
+        addPageIfNeeded(lines.length * lineHeight + 5);
+        
+        lines.forEach((line: string) => {
+          doc.text(line, margin, yPosition);
+          yPosition += lineHeight;
+        });
+        yPosition += 3; // Espacement supplémentaire
+      };
+      
+      // En-tête du document
+      addText(meetingInfo.title, 18, true);
+      addText(`Date: ${formatDisplayDate(meetingInfo.date)}`, 12);
+      addText(`Heure: ${meetingInfo.time}`, 12);
+      addText(`Participants: ${meetingInfo.participants.join(', ')}`, 12);
+      addText(`Pouvoir: ${meetingInfo.pouvoir}`, 12);
+      
+      yPosition += 10;
+      addText('ORDRE DU JOUR', 16, true);
+      yPosition += 5;
+      
+      // Parcourir tous les éléments de l'agenda
+      const sections = agenda.filter(item => item.level === 0);
+      
+      sections.forEach((section, sectionIndex) => {
+        const sectionNumber = sectionIndex + 1;
+        
+        // Section principale
+        addText(`${sectionNumber}. ${section.title}`, 14, true);
+        
+        if (section.presenter) {
+          addText(`Présenté par: ${section.presenter}`, 10);
+        }
+        
+        addText(`Durée: ${section.duration} minutes`, 10);
+        addText(`Type: ${getTypeLabel(section.type)}`, 10);
+        
+        if (section.content && section.content.trim()) {
+          addText('Contenu:', 10, true);
+          addText(section.content, 10);
+        }
+        
+        if (section.visualLink && section.visualLink.trim()) {
+          addText(`Lien de présentation: ${section.visualLink}`, 10);
+        }
+        
+        // Sous-sections
+        const subsections = getSubsections(section.id);
+        subsections.forEach((subsection, subIndex) => {
+          yPosition += 5;
+          addText(`${sectionNumber}.${subIndex + 1} ${subsection.title}`, 12, true);
+          
+          if (subsection.presenter) {
+            addText(`Présenté par: ${subsection.presenter}`, 10);
+          }
+          
+          addText(`Durée: ${subsection.duration} minutes`, 10);
+          addText(`Type: ${getTypeLabel(subsection.type)}`, 10);
+          
+          if (subsection.content && subsection.content.trim()) {
+            addText('Contenu:', 10, true);
+            addText(subsection.content, 10);
+          }
+          
+          if (subsection.visualLink && subsection.visualLink.trim()) {
+            addText(`Lien de présentation: ${subsection.visualLink}`, 10);
+          }
+        });
+        
+        yPosition += 8; // Espacement entre les sections
+      });
+      
+      // Ajouter les informations de timing
+      addPageIfNeeded(50);
+      yPosition += 10;
+      addText('PLANNING TEMPOREL', 14, true);
+      
+      const totalDuration = agenda.reduce((sum, item) => sum + item.duration, 0);
+      addText(`Durée totale estimée: ${Math.floor(totalDuration / 60)}h ${totalDuration % 60}min`, 12);
+      
+      const startTime = new Date(`2024-01-01 ${meetingInfo.time}`);
+      addText(`Heure de début: ${formatTime(startTime)}`, 10);
+      
+      const endTime = new Date(startTime.getTime() + totalDuration * 60000);
+      addText(`Heure de fin estimée: ${formatTime(endTime)}`, 10);
+      
+      doc.save(`${meetingInfo.title.replace(/\s+/g, '_')}_ordre_du_jour_complet.pdf`);
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Erreur lors de l\'export PDF. Veuillez réessayer.');
+    }
+  };
+
+  const exportToMarkdown = () => {
+    try {
+      let markdown = `# ${meetingInfo.title}\n\n`;
+      markdown += `**Date:** ${formatDisplayDate(meetingInfo.date)}\n`;
+      markdown += `**Heure:** ${meetingInfo.time}\n`;
+      markdown += `**Participants:** ${meetingInfo.participants.join(', ')}\n`;
+      markdown += `**Pouvoir:** ${meetingInfo.pouvoir}\n\n`;
+      
+      markdown += `## Ordre du jour\n\n`;
+      
+      const sections = agenda.filter(item => item.level === 0);
+      
+      sections.forEach((section, sectionIndex) => {
+        const sectionNumber = sectionIndex + 1;
+        
+        // Section principale
+        markdown += `### ${sectionNumber}. ${section.title}\n\n`;
+        
+        if (section.presenter) {
+          markdown += `**Présenté par:** ${section.presenter}\n`;
+        }
+        
+        markdown += `**Durée:** ${section.duration} minutes\n`;
+        markdown += `**Type:** ${getTypeLabel(section.type)}\n\n`;
+        
+        if (section.content && section.content.trim()) {
+          markdown += `**Contenu:**\n${section.content}\n\n`;
+        }
+        
+        if (section.visualLink && section.visualLink.trim()) {
+          markdown += `**Lien de présentation:** ${section.visualLink}\n\n`;
+        }
+        
+        // Sous-sections
+        const subsections = getSubsections(section.id);
+        if (subsections.length > 0) {
+          subsections.forEach((subsection, subIndex) => {
+            markdown += `#### ${sectionNumber}.${subIndex + 1} ${subsection.title}\n\n`;
+            
+            if (subsection.presenter) {
+              markdown += `**Présenté par:** ${subsection.presenter}\n`;
+            }
+            
+            markdown += `**Durée:** ${subsection.duration} minutes\n`;
+            markdown += `**Type:** ${getTypeLabel(subsection.type)}\n\n`;
+            
+            if (subsection.content && subsection.content.trim()) {
+              markdown += `**Contenu:**\n${subsection.content}\n\n`;
+            }
+            
+            if (subsection.visualLink && subsection.visualLink.trim()) {
+              markdown += `**Lien de présentation:** ${subsection.visualLink}\n\n`;
+            }
+          });
+        }
+        
+        markdown += `---\n\n`;
+      });
+      
+      // Informations de timing
+      const totalDuration = agenda.reduce((sum, item) => sum + item.duration, 0);
+      markdown += `## Planning temporel\n\n`;
+      markdown += `**Durée totale estimée:** ${Math.floor(totalDuration / 60)}h ${totalDuration % 60}min\n`;
+      
+      const startTime = new Date(`2024-01-01 ${meetingInfo.time}`);
+      markdown += `**Heure de début:** ${formatTime(startTime)}\n`;
+      
+      const endTime = new Date(startTime.getTime() + totalDuration * 60000);
+      markdown += `**Heure de fin estimée:** ${formatTime(endTime)}\n`;
+      
+      // Créer et télécharger le fichier
+      const blob = new Blob([markdown], { type: 'text/markdown' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${meetingInfo.title.replace(/\s+/g, '_')}_ordre_du_jour.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting Markdown:', error);
+      alert('Erreur lors de l\'export Markdown. Veuillez réessayer.');
+    }
   };
 
   const getTypeColor = (type: AgendaItem['type']) => {
@@ -693,22 +896,22 @@ export default function SimpleMeetingPresenter() {
                 Ordre du jour
               </Button>
 
-              {/* Export PDF Button */}
-              <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={exportToPDF}>
-                <FileText className="h-4 w-4" />
-                Export PDF
-              </Button>
+              {/* Export Buttons */}
+              <div className="flex items-center gap-1">
+                <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={exportToPDF}>
+                  <FileText className="h-4 w-4" />
+                  Export PDF
+                </Button>
+                <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={exportToMarkdown}>
+                  <FileText className="h-4 w-4" />
+                  Export MD
+                </Button>
+              </div>
 
               {/* Configuration Button */}
               <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={openConfigModal}>
                 <Settings className="h-4 w-4" />
                 Configuration
-              </Button>
-
-              {/* Tableau de bord Button - Moved to the right */}
-              <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => setLocation('/')}>
-                <Home className="h-4 w-4" />
-                Tableau de bord
               </Button>
 
               {/* Debug Button - Temporary */}
@@ -725,6 +928,12 @@ export default function SimpleMeetingPresenter() {
                 <Users className="h-5 w-5" />
                 <span className="font-medium">{meetingInfo.participants.length}</span>
               </button>
+
+              {/* Tableau de bord Button - Far right */}
+              <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => setLocation('/')}>
+                <Home className="h-4 w-4" />
+                Tableau de bord
+              </Button>
             </div>
           </div>
           
