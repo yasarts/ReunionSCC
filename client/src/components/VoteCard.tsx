@@ -1,36 +1,266 @@
-import { Vote } from "lucide-react";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Vote, Clock, CheckCircle, Users, Eye, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/hooks/useAuth";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface VoteCardProps {
   agendaItemId: number;
 }
 
+interface VoteData {
+  id: number;
+  question: string;
+  options: string[];
+  isOpen: boolean;
+  createdAt: string;
+  closedAt?: string;
+  results?: {
+    option: string;
+    count: number;
+    percentage: number;
+  }[];
+  userVote?: {
+    option: string;
+    votingForCompany?: string;
+  };
+  totalVotes?: number;
+}
+
 export function VoteCard({ agendaItemId }: VoteCardProps) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedOption, setSelectedOption] = useState<string>("");
+
+  // Récupérer les votes pour cet élément d'agenda
+  const { data: votes = [], isLoading, error } = useQuery({
+    queryKey: ["/api/agenda", agendaItemId, "votes"],
+    queryFn: async () => {
+      const response = await fetch(`/api/agenda/${agendaItemId}/votes`, {
+        credentials: "include"
+      });
+      if (!response.ok) {
+        if (response.status === 404) return [];
+        throw new Error("Erreur lors du chargement des votes");
+      }
+      return response.json();
+    }
+  });
+
+  // Mutation pour voter
+  const castVoteMutation = useMutation({
+    mutationFn: async ({ voteId, option }: { voteId: number; option: string }) => {
+      const response = await fetch(`/api/votes/${voteId}/cast`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ 
+          option,
+          userId: user?.id 
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors du vote");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/agenda", agendaItemId, "votes"] });
+      setSelectedOption("");
+    }
+  });
+
+  // Mutation pour fermer un vote
+  const closeVoteMutation = useMutation({
+    mutationFn: async (voteId: number) => {
+      const response = await fetch(`/api/votes/${voteId}/close`, {
+        method: "POST",
+        credentials: "include"
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Erreur lors de la fermeture");
+      }
+      
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/agenda", agendaItemId, "votes"] });
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="text-sm text-gray-500">Chargement des votes...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Erreur lors du chargement des votes
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  if (votes.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Vote className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+        <p className="text-sm text-gray-500">Aucun vote créé pour cette section</p>
+        <p className="text-xs text-gray-400 mt-1">Utilisez le bouton "Créer un vote" pour commencer</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white border border-purple-200 rounded-lg p-4">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-          <Vote className="h-5 w-5 text-purple-600" />
-        </div>
-        <div>
-          <h4 className="font-medium text-gray-900">Système de vote disponible</h4>
-          <p className="text-sm text-gray-600">Créez des votes pour cette section</p>
-        </div>
-      </div>
-      
-      <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
-        <h5 className="font-medium text-purple-900 mb-2">Fonctionnalités de vote :</h5>
-        <ul className="text-sm text-purple-800 space-y-1">
-          <li>• Votes avec choix multiples personnalisables</li>
-          <li>• Gestion des procurations entre entreprises</li>
-          <li>• Délégation de vote pour les salariés</li>
-          <li>• Résultats en temps réel avec pourcentages</li>
-          <li>• Respect des règles de quorum français</li>
-        </ul>
-      </div>
-      
-      <div className="mt-3 text-xs text-gray-500">
-        Section ID: {agendaItemId} - Utilisez le bouton "Créer un vote" ci-dessus
-      </div>
+    <div className="space-y-4">
+      {votes.map((vote: VoteData) => (
+        <Card key={vote.id} className="border-purple-200">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Vote className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">{vote.question}</CardTitle>
+                  <p className="text-sm text-gray-600">
+                    Créé le {new Date(vote.createdAt).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Badge variant={vote.isOpen ? "default" : "secondary"} className="flex items-center gap-1">
+                  {vote.isOpen ? (
+                    <>
+                      <Clock className="h-3 w-3" />
+                      En cours
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-3 w-3" />
+                      Fermé
+                    </>
+                  )}
+                </Badge>
+                
+                {vote.totalVotes !== undefined && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <Users className="h-3 w-3" />
+                    {vote.totalVotes} vote(s)
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            {/* Interface de vote pour les votes ouverts */}
+            {vote.isOpen && !vote.userVote && user && (
+              <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                <h4 className="font-medium text-gray-900 mb-3">Votre vote</h4>
+                
+                <div className="space-y-2 mb-4">
+                  {vote.options.map(option => (
+                    <label key={option} className="flex items-center space-x-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name={`vote-${vote.id}`}
+                        value={option}
+                        checked={selectedOption === option}
+                        onChange={(e) => setSelectedOption(e.target.value)}
+                        className="text-purple-600"
+                      />
+                      <span className="text-sm text-gray-700">{option}</span>
+                    </label>
+                  ))}
+                </div>
+                
+                <Button 
+                  onClick={() => {
+                    if (selectedOption) {
+                      castVoteMutation.mutate({ voteId: vote.id, option: selectedOption });
+                    }
+                  }}
+                  disabled={!selectedOption || castVoteMutation.isPending}
+                  className="w-full bg-purple-600 hover:bg-purple-700"
+                >
+                  {castVoteMutation.isPending ? "Vote en cours..." : "Voter"}
+                </Button>
+              </div>
+            )}
+
+            {/* Vote existant de l'utilisateur */}
+            {vote.userVote && (
+              <Alert className="border-green-200 bg-green-50">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  Vous avez voté : <strong>{vote.userVote.option}</strong>
+                  {vote.userVote.votingForCompany && (
+                    <span> (pour {vote.userVote.votingForCompany})</span>
+                  )}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Résultats */}
+            {vote.results && vote.results.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-gray-900">Résultats</h4>
+                  <span className="text-sm text-gray-600">
+                    {vote.totalVotes || 0} vote(s) total
+                  </span>
+                </div>
+                
+                {vote.results.map(result => (
+                  <div key={result.option} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-700">{result.option}</span>
+                      <span className="text-sm text-gray-600">
+                        {result.count} vote(s) ({result.percentage.toFixed(1)}%)
+                      </span>
+                    </div>
+                    <Progress value={result.percentage} className="h-2" />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Contrôles admin */}
+            {vote.isOpen && user && (
+              <div className="pt-3 border-t border-gray-200">
+                <Button
+                  onClick={() => closeVoteMutation.mutate(vote.id)}
+                  disabled={closeVoteMutation.isPending}
+                  variant="outline"
+                  size="sm"
+                  className="text-red-600 border-red-300 hover:bg-red-50"
+                >
+                  {closeVoteMutation.isPending ? "Fermeture..." : "Fermer le vote"}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Plus, Trash2, Vote } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 const createVoteSchema = z.object({
   question: z.string().min(1, "La question est requise"),
@@ -25,6 +27,7 @@ interface CreateVoteModalProps {
 
 export function CreateVoteModal({ isOpen, onClose, agendaItemId }: CreateVoteModalProps) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [options, setOptions] = useState<string[]>(["Pour", "Contre", "Abstention"]);
 
   const form = useForm<CreateVoteFormData>({
@@ -37,24 +40,25 @@ export function CreateVoteModal({ isOpen, onClose, agendaItemId }: CreateVoteMod
 
   const createVoteMutation = useMutation({
     mutationFn: async (data: CreateVoteFormData) => {
-      const response = await fetch(`/api/agenda/${agendaItemId}/votes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Erreur lors de la création du vote");
-      }
-      
-      return response.json();
+      return await apiRequest("POST", `/api/agenda/${agendaItemId}/votes`, data);
     },
     onSuccess: () => {
+      // Invalider le cache pour que les votes s'affichent immédiatement
       queryClient.invalidateQueries({ queryKey: ["/api/agenda", agendaItemId, "votes"] });
+      toast({
+        title: "Succès",
+        description: "Vote créé avec succès",
+      });
       onClose();
       form.reset();
       setOptions(["Pour", "Contre", "Abstention"]);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Erreur lors de la création du vote",
+        variant: "destructive",
+      });
     }
   });
 

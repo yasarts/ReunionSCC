@@ -182,6 +182,7 @@ export default function SimpleMeetingPresenter() {
   const [showParticipantsModal, setShowParticipantsModal] = useState<boolean>(false);
   const [showCreateVoteModal, setShowCreateVoteModal] = useState<boolean>(false);
   const [selectedAgendaItemForVote, setSelectedAgendaItemForVote] = useState<number | null>(null);
+  const [isEditingVotes, setIsEditingVotes] = useState<boolean>(false);
   
   // État pour la configuration de la réunion
   const [editedMeetingInfo, setEditedMeetingInfo] = useState({
@@ -1856,17 +1857,43 @@ export default function SimpleMeetingPresenter() {
                               <Vote className="h-5 w-5" />
                               Votes et sondages
                             </h3>
-                            <Button
-                              onClick={() => {
-                                setSelectedAgendaItemForVote(parseInt(currentItem.id));
-                                setShowCreateVoteModal(true);
-                              }}
-                              className="bg-purple-600 hover:bg-purple-700 text-white"
-                              size="sm"
-                            >
-                              <Plus className="h-4 w-4 mr-2" />
-                              Créer un vote
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              {!isEditingVotes && (
+                                <Button
+                                  onClick={() => setIsEditingVotes(true)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-purple-600 border-purple-300 hover:bg-purple-50"
+                                >
+                                  <Edit3 className="h-4 w-4 mr-2" />
+                                  Gérer les votes
+                                </Button>
+                              )}
+                              {isEditingVotes && (
+                                <>
+                                  <Button
+                                    onClick={() => {
+                                      setSelectedAgendaItemForVote(parseInt(currentItem.id));
+                                      setShowCreateVoteModal(true);
+                                    }}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                                    size="sm"
+                                  >
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Créer un vote
+                                  </Button>
+                                  <Button
+                                    onClick={() => setIsEditingVotes(false)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-gray-600 border-gray-300"
+                                  >
+                                    <X className="h-4 w-4 mr-2" />
+                                    Terminer
+                                  </Button>
+                                </>
+                              )}
+                            </div>
                           </div>
                           
                           {/* Affichage des votes existants pour cette section */}
