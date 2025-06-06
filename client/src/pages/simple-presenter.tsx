@@ -34,6 +34,18 @@ export default function SimpleMeetingPresenter() {
   const meetingId = params.meetingId;
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Créer un hash unique pour chaque section (même logique que le backend)
+  const getAgendaItemId = (sectionId: string): number => {
+    let hash = 0;
+    for (let i = 0; i < sectionId.length; i++) {
+      const char = sectionId.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    // Assurer un nombre positif et dans une plage raisonnable
+    return Math.abs(hash) % 10000 + 1000;
+  };
   
   // Récupérer les types de réunions disponibles
   const { data: meetingTypes } = useQuery({
@@ -1885,7 +1897,7 @@ export default function SimpleMeetingPresenter() {
                                   <>
                                     <Button
                                       onClick={() => {
-                                        setSelectedAgendaItemForVote(parseInt(currentItem.id));
+                                        setSelectedAgendaItemForVote(getAgendaItemId(currentItem.id));
                                         setShowCreateVoteModal(true);
                                       }}
                                       className="bg-purple-600 hover:bg-purple-700 text-white"
