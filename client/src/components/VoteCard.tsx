@@ -187,7 +187,7 @@ export function VoteCard({ agendaItemId, showDeleteButton = false }: VoteCardPro
       </div>
       <div className="space-y-4">
         {votes.map((vote: VoteData) => (
-        <Card key={vote.id} className="border-purple-200">
+          <Card key={vote.id} className="border-purple-200">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
