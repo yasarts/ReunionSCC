@@ -157,14 +157,14 @@ export const votes = pgTable("votes", {
 export const voteResponses = pgTable(
   "vote_responses",
   {
+    id: serial("id").primaryKey(),
     voteId: integer("vote_id").references(() => votes.id).notNull(),
     userId: integer("user_id").references(() => users.id).notNull(),
     option: varchar("option", { length: 100 }).notNull(),
+    votingForCompanyId: integer("voting_for_company_id").references(() => companies.id), // entreprise pour laquelle on vote (si procuration)
+    castByUserId: integer("cast_by_user_id").references(() => users.id), // utilisateur qui a effectivement voté (si délégation salarié)
     createdAt: timestamp("created_at").defaultNow().notNull(),
-  },
-  (table) => ({
-    pk: primaryKey({ columns: [table.voteId, table.userId] }),
-  })
+  }
 );
 
 // Relations

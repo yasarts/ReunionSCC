@@ -509,20 +509,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/votes/:id/cast", requireAuth, requirePermission("canVote"), async (req: any, res: Response) => {
     try {
       const voteId = parseInt(req.params.id);
-      const { option } = req.body;
+      const { option, votingForCompanyId, userId } = req.body;
+      const currentUserId = req.session.userId;
 
-      const voteResponse = insertVoteResponseSchema.parse({
+      // Vérifier que le vote existe et est ouvert
+      const vote = await storage.getVote(voteId);
+      if (!vote) {
+        return res.status(404).json({ message: "Vote not found" });
+      }
+      if (!vote.isOpen) {
+        return res.status(400).json({ message: "Vote is closed" });
+      }
+
+      // Récupérer les informations de la réunion et des participants
+      const agendaItem = await storage.getAgendaItem(vote.agendaItemId);
+      if (!agendaItem) {
+        return res.status(404).json({ message: "Agenda item not found" });
+      }
+
+      const meetingParticipants = await storage.getMeetingParticipants(agendaItem.meetingId);
+      const currentUserParticipant = meetingParticipants.find(p => p.userId === currentUserId);
+      
+      if (!currentUserParticipant || currentUserParticipant.status !== 'present') {
+        return res.status(403).json({ message: "Only present participants can vote" });
+      }
+
+      const targetUserId = userId || currentUserId;
+      const targetParticipant = meetingParticipants.find(p => p.userId === targetUserId);
+
+      if (!targetParticipant || targetParticipant.status !== 'present') {
+        return res.status(403).json({ message: "Target user must be present to vote" });
+      }
+
+      // Vérifier les permissions de délégation (salarié peut voter pour quelqu'un d'autre)
+      const currentUser = await storage.getUser(currentUserId);
+      if (targetUserId !== currentUserId && currentUser?.role !== 'salaried') {
+        return res.status(403).json({ message: "Only salaried users can vote on behalf of others" });
+      }
+
+      // Créer la réponse de vote
+      const voteResponse = {
         voteId,
-        userId: req.session.userId,
-        option
-      });
+        userId: targetUserId,
+        option,
+        votingForCompanyId: votingForCompanyId || null,
+        castByUserId: currentUserId !== targetUserId ? currentUserId : null
+      };
 
       await storage.castVote(voteResponse);
       res.json({ message: "Vote cast successfully" });
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Invalid data", errors: error.errors });
-      }
       console.error("Cast vote error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
@@ -535,6 +571,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(results);
     } catch (error) {
       console.error("Get vote results error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/votes/:id/close", requireAuth, requirePermission("canManageAgenda"), async (req: any, res: Response) => {
+    try {
+      const voteId = parseInt(req.params.id);
+      await storage.closeVote(voteId);
+      res.json({ message: "Vote closed successfully" });
+    } catch (error) {
+      console.error("Close vote error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
