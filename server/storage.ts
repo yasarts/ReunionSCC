@@ -90,6 +90,9 @@ export interface IStorage {
   createMeetingTypeRole(role: InsertMeetingTypeRole): Promise<MeetingTypeRole>;
   deleteMeetingTypeRole(id: number): Promise<void>;
   getMeetingTypesByRole(role: string): Promise<MeetingType[]>;
+  
+  // Get eligible users for a meeting type
+  getEligibleUsersForMeeting(meetingTypeId: number): Promise<(User & { company?: Company })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -482,6 +485,94 @@ export class DatabaseStorage implements IStorage {
       );
 
     return roleTypes.map(result => result.meetingType);
+  }
+
+  async getEligibleUsersForMeeting(meetingTypeId: number): Promise<(User & { company?: Company })[]> {
+    // Récupérer les accès autorisés pour ce type de réunion
+    const accessRules = await db
+      .select()
+      .from(meetingTypeAccess)
+      .where(eq(meetingTypeAccess.meetingTypeId, meetingTypeId));
+
+    if (accessRules.length === 0) {
+      // Si aucune règle d'accès, tous les utilisateurs sont éligibles
+      return await db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          role: users.role,
+          companyId: users.companyId,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+          company: companies
+        })
+        .from(users)
+        .leftJoin(companies, eq(users.companyId, companies.id));
+    }
+
+    // Construire la requête en fonction des règles d'accès
+    const userIds = new Set<number>();
+    const companyIds = new Set<number>();
+
+    for (const rule of accessRules) {
+      if (rule.userId) {
+        userIds.add(rule.userId);
+      }
+      if (rule.companyId) {
+        companyIds.add(rule.companyId);
+      }
+    }
+
+    const eligibleUsers: (User & { company?: Company })[] = [];
+
+    // Ajouter les utilisateurs spécifiquement autorisés
+    if (userIds.size > 0) {
+      const specificUsers = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          role: users.role,
+          companyId: users.companyId,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+          company: companies
+        })
+        .from(users)
+        .leftJoin(companies, eq(users.companyId, companies.id))
+        .where(inArray(users.id, Array.from(userIds)));
+      
+      eligibleUsers.push(...specificUsers);
+    }
+
+    // Ajouter les utilisateurs des entreprises autorisées
+    if (companyIds.size > 0) {
+      const companyUsers = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          role: users.role,
+          companyId: users.companyId,
+          createdAt: users.createdAt,
+          updatedAt: users.updatedAt,
+          company: companies
+        })
+        .from(users)
+        .leftJoin(companies, eq(users.companyId, companies.id))
+        .where(inArray(users.companyId, Array.from(companyIds)));
+      
+      // Éviter les doublons
+      const existingUserIds = new Set(eligibleUsers.map(u => u.id));
+      const newUsers = companyUsers.filter(u => !existingUserIds.has(u.id));
+      eligibleUsers.push(...newUsers);
+    }
+
+    return eligibleUsers;
   }
 }
 

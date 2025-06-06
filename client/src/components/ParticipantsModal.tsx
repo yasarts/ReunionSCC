@@ -50,9 +50,10 @@ export function ParticipantsModal({ isOpen, onClose, meetingId, meetingTitle }: 
   const queryClient = useQueryClient();
   const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
 
-  // Récupérer tous les utilisateurs
-  const { data: allUsers } = useQuery<User[]>({
-    queryKey: ["/api/users"],
+  // Récupérer les utilisateurs éligibles pour cette réunion
+  const { data: eligibleUsers } = useQuery<(User & { company?: Company })[]>({
+    queryKey: [`/api/meetings/${meetingId}/eligible-users`],
+    enabled: isOpen && !!meetingId,
   });
 
   // Récupérer toutes les entreprises

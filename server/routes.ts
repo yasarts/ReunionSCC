@@ -460,6 +460,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/meetings/:id/eligible-users", requireAuth, async (req: any, res: Response) => {
+    try {
+      const meetingId = parseInt(req.params.id);
+      const meeting = await storage.getMeeting(meetingId);
+      
+      if (!meeting) {
+        return res.status(404).json({ message: "Meeting not found" });
+      }
+
+      const eligibleUsers = await storage.getEligibleUsersForMeeting(meeting.meetingTypeId);
+      res.json(eligibleUsers);
+    } catch (error) {
+      console.error("Get eligible users error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/meetings/:id/participants", requireAuth, requirePermission("canManageParticipants"), async (req: any, res: Response) => {
     try {
       const meetingId = parseInt(req.params.id);
