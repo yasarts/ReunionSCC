@@ -662,26 +662,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sectionId = req.params.sectionId;
       console.log(`Getting votes for section: ${sectionId}`);
       
-      // Convertir l'ID de section en ID d'agenda item
-      // Pour les sections numériques simples comme "1", "2", etc., utiliser directement
-      // Pour les sections avec points comme "1.1", "1.2", extraire le premier chiffre
-      let agendaItemId: number;
-      
-      if (sectionId.includes('.')) {
-        // Section hiérarchique comme "1.1" -> agenda item 1
-        const mainSection = sectionId.split('.')[0];
-        agendaItemId = parseInt(mainSection);
-        console.log(`Hierarchical section: ${sectionId} -> main section: ${mainSection} -> agenda item: ${agendaItemId}`);
-      } else {
-        // Section simple comme "1" -> agenda item 1
-        agendaItemId = parseInt(sectionId);
-        console.log(`Simple section: ${sectionId} -> agenda item: ${agendaItemId}`);
+      // Créer un hash unique pour chaque section pour séparer les votes
+      function hashSectionId(sectionId: string): number {
+        let hash = 0;
+        for (let i = 0; i < sectionId.length; i++) {
+          const char = sectionId.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash; // Convert to 32-bit integer
+        }
+        // Assurer un nombre positif et dans une plage raisonnable
+        return Math.abs(hash) % 10000 + 1000;
       }
       
-      if (isNaN(agendaItemId)) {
-        console.log(`Invalid agenda item ID: ${agendaItemId} from section: ${sectionId}`);
-        return res.json([]);
-      }
+      const agendaItemId = hashSectionId(sectionId);
+      console.log(`Section: ${sectionId} -> unique agenda item: ${agendaItemId}`);
       
       const votes = await storage.getVotesByAgendaItem(agendaItemId);
       

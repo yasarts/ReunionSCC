@@ -43,6 +43,20 @@ export function VoteSection({ sectionId, sectionTitle, isEditMode = false }: Vot
   const [selectedOption, setSelectedOption] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  // Créer un hash unique pour chaque section (même logique que le backend)
+  const getAgendaItemId = (sectionId: string): number => {
+    let hash = 0;
+    for (let i = 0; i < sectionId.length; i++) {
+      const char = sectionId.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    // Assurer un nombre positif et dans une plage raisonnable
+    return Math.abs(hash) % 10000 + 1000;
+  };
+
+  const agendaItemId = getAgendaItemId(sectionId);
+
   // Récupérer les votes pour cette section spécifique
   const { data: votes = [], isLoading, error } = useQuery<VoteData[]>({
     queryKey: [`/api/sections/${sectionId}/votes`],
@@ -297,7 +311,7 @@ export function VoteSection({ sectionId, sectionTitle, isEditMode = false }: Vot
 
       {showCreateModal && (
         <CreateVoteModal
-          agendaItemId={parseInt(sectionId)}
+          agendaItemId={agendaItemId}
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
             setShowCreateModal(false);
