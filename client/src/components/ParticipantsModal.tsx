@@ -165,7 +165,7 @@ export function ParticipantsModal({ isOpen, onClose, meetingId, meetingTitle }: 
 
   // Filtrer les utilisateurs non participants
   const participantUserIds = new Set(participants?.map(p => p.userId) || []);
-  const availableUsers = allUsers?.filter(user => !participantUserIds.has(user.id)) || [];
+  const availableUsers = eligibleUsers?.filter(user => !participantUserIds.has(user.id)) || [];
 
   // Statistiques
   const stats = {
@@ -245,9 +245,17 @@ export function ParticipantsModal({ isOpen, onClose, meetingId, meetingTitle }: 
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm">{user.firstName} {user.lastName}</p>
                           <p className="text-xs text-gray-500">{user.email}</p>
-                          <Badge variant="outline" className="text-xs">
-                            {user.role}
-                          </Badge>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Badge variant="outline" className="text-xs">
+                              {user.role}
+                            </Badge>
+                            {user.company && (
+                              <div className="flex items-center gap-1">
+                                <Building2 className="h-3 w-3 text-blue-500" />
+                                <span className="text-xs text-blue-600">{user.company.name}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -288,7 +296,20 @@ export function ParticipantsModal({ isOpen, onClose, meetingId, meetingTitle }: 
                                 {statusLabels[participant.status]}
                               </Badge>
                             </div>
-                            <p className="text-xs text-gray-500 mb-2">{participant.user.email}</p>
+                            <p className="text-xs text-gray-500 mb-1">{participant.user.email}</p>
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge variant="outline" className="text-xs">
+                                {participant.user.role}
+                              </Badge>
+                              {participant.user.companyId && companies && (
+                                <div className="flex items-center gap-1">
+                                  <Building2 className="h-3 w-3 text-blue-500" />
+                                  <span className="text-xs text-blue-600">
+                                    {companies.find(c => c.id === participant.user.companyId)?.name || 'Structure inconnue'}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
                             
                             {/* Sélecteur de statut */}
                             <div className="flex items-center gap-2 mb-2">
