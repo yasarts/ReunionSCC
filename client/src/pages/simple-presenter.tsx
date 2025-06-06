@@ -924,9 +924,9 @@ export default function SimpleMeetingPresenter() {
 
               {/* Participants Button */}
               <Button 
-                variant="ghost" 
+                variant={showParticipantsView ? "default" : "ghost"}
                 size="sm" 
-                className="flex items-center gap-2" 
+                className={`flex items-center gap-2 ${showParticipantsView ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}`}
                 onClick={() => {
                   console.log('Participants button clicked, current state:', showParticipantsView);
                   setShowParticipantsView(!showParticipantsView);
