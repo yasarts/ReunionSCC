@@ -1849,6 +1849,30 @@ export default function SimpleMeetingPresenter() {
                           </div>
                         </div>
 
+                        {/* Section de vote */}
+                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold text-purple-900 flex items-center gap-2">
+                              <Vote className="h-5 w-5" />
+                              Votes et sondages
+                            </h3>
+                            <Button
+                              onClick={() => {
+                                setSelectedAgendaItemForVote(parseInt(currentItem.id));
+                                setShowCreateVoteModal(true);
+                              }}
+                              className="bg-purple-600 hover:bg-purple-700 text-white"
+                              size="sm"
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Créer un vote
+                            </Button>
+                          </div>
+                          
+                          {/* Affichage des votes existants pour cette section */}
+                          <VoteCard agendaItemId={parseInt(currentItem.id)} />
+                        </div>
+
                         {/* Affichage des sous-sections si c'est une section principale */}
                         {currentItem.level === 0 && getSubsections(currentItem.id).length > 0 && (
                           <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
@@ -2314,6 +2338,15 @@ export default function SimpleMeetingPresenter() {
         </div>
       )}
 
+      {/* Modale de création de vote */}
+      <CreateVoteModal
+        isOpen={showCreateVoteModal}
+        onClose={() => {
+          setShowCreateVoteModal(false);
+          setSelectedAgendaItemForVote(null);
+        }}
+        agendaItemId={selectedAgendaItemForVote}
+      />
 
     </div>
   );

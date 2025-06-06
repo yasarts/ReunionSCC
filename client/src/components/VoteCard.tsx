@@ -8,42 +8,53 @@ import { Vote, CheckCircle, Clock, Users, Eye } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 
-interface VoteOption {
-  option: string;
-  count: number;
-  percentage: number;
-  voters: string[];
-}
-
-interface VoteData {
-  id: number;
-  question: string;
-  options: string[];
-  isOpen: boolean;
-  createdBy: number;
-  createdAt: string;
-  closedAt?: string;
-  results?: VoteOption[];
-  userVote?: {
-    option: string;
-    votingForCompany?: string;
-  };
-  eligibleVoters: {
-    userId: number;
-    userName: string;
-    companyName: string;
-    canVoteFor: string[]; // companies they can vote for (including proxies)
-  }[];
-}
-
 interface VoteCardProps {
   agendaItemId: number;
-  meetingId: number;
-  vote: VoteData;
-  canManageVotes: boolean;
 }
 
-export function VoteCard({ agendaItemId, meetingId, vote, canManageVotes }: VoteCardProps) {
+export function VoteCard({ agendaItemId }: VoteCardProps) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedOption, setSelectedOption] = useState<string>("");
+  const [votingForCompany, setVotingForCompany] = useState<string>("");
+
+  // Récupérer les votes pour cet élément d'agenda
+  const { data: votes = [], isLoading } = useQuery({
+    queryKey: ["/api/agenda", agendaItemId, "votes"],
+    queryFn: async () => {
+      const response = await fetch(`/api/agenda/${agendaItemId}/votes`, {
+        credentials: "include"
+      });
+      if (!response.ok) {
+        if (response.status === 404) return [];
+        throw new Error("Failed to fetch votes");
+      }
+      return response.json();
+    }
+  });
+
+  if (isLoading) {
+    return <div className="text-sm text-gray-500">Chargement des votes...</div>;
+  }
+
+  if (votes.length === 0) {
+    return (
+      <div className="text-sm text-gray-500 text-center py-4">
+        Aucun vote créé pour cette section
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {votes.map((vote: VoteData) => (
+        <VoteItem key={vote.id} vote={vote} />
+      ))}
+    </div>
+  );
+}
+
+function VoteItem({ vote }: { vote: VoteData }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedOption, setSelectedOption] = useState<string>("");
@@ -58,6 +69,7 @@ export function VoteCard({ agendaItemId, meetingId, vote, canManageVotes }: Vote
       const response = await fetch(`/api/votes/${vote.id}/cast`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ 
           option, 
           votingForCompanyId: companyId,
