@@ -587,13 +587,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const meetingParticipants = await storage.getMeetingParticipants(agendaItem.meetingId);
-      const currentUserParticipant = meetingParticipants.find(p => p.userId === currentUserId);
-      
-      if (!currentUserParticipant || currentUserParticipant.status !== 'present') {
-        return res.status(403).json({ message: "Only present participants can vote" });
-      }
-
       const currentUser = await storage.getUser(currentUserId);
+      
+      // Pour les employés SCC, ils ne sont pas participants mais peuvent voter pour les entreprises
+      if (currentUser?.role !== 'Salarié·es SCC') {
+        const currentUserParticipant = meetingParticipants.find(p => p.userId === currentUserId);
+        if (!currentUserParticipant || currentUserParticipant.status !== 'present') {
+          return res.status(403).json({ message: "Only present participants can vote" });
+        }
+      }
       
       // Logique de vote selon le rôle
       if (currentUser?.role === 'Salarié·es SCC') {
@@ -629,7 +631,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (votingForCompanyId) {
           // Vote pour une entreprise mandatée
-          if (votingForCompanyId !== currentUserParticipant.proxyCompanyId) {
+          const currentUserParticipant = meetingParticipants.find(p => p.userId === currentUserId);
+          if (votingForCompanyId !== currentUserParticipant?.proxyCompanyId) {
             return res.status(403).json({ message: "You can only vote for companies you represent or have proxy for" });
           }
         } else {
@@ -785,7 +788,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Récupérer les participants de la réunion
       const participants = await storage.getMeetingParticipants(agendaItem.meetingId);
-      const presentParticipants = participants.filter(p => p.status === 'present');
+      const presentParticipants = participants.filter(p => p.status === 'present' || p.status === 'proxy');
       
       // Pour les salariés, récupérer toutes les entreprises votables
       let votableCompanies = [];
