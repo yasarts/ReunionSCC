@@ -78,19 +78,28 @@ export default function SimpleMeetingPresenter() {
   
   const [agenda, setAgenda] = useState<AgendaItem[]>(() => {
     const storageKey = `meeting-agenda-${meetingId || 'default'}`;
-    const savedAgenda = localStorage.getItem(storageKey);
+    const deletedItemsKey = `deleted-agenda-items-${meetingId || 'default'}`;
     
-    // Vérifier si les données sauvegardées correspondent à la réunion actuelle
+    const savedAgenda = localStorage.getItem(storageKey);
+    const deletedItems = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
+    
+    // Commencer avec l'agenda original
+    let currentAgenda = meetingData.agendaItems;
+    
+    // Appliquer les suppressions persistées
+    if (deletedItems.length > 0) {
+      currentAgenda = currentAgenda.filter(item => !deletedItems.includes(item.id));
+    }
+    
+    // Vérifier s'il y a des données personnalisées sauvegardées
     if (savedAgenda) {
       const parsedAgenda = JSON.parse(savedAgenda);
-      // Valider que les données correspondent au bon meeting
-      if (parsedAgenda.length > 0 && parsedAgenda.length === meetingData.agendaItems.length) {
+      if (parsedAgenda.length > 0) {
         return parsedAgenda;
       }
     }
     
-    // Retourner l'agenda spécifique à cette réunion
-    return meetingData.agendaItems;
+    return currentAgenda;
   });
   const [meetingInfo, setMeetingInfo] = useState<MeetingInfo>(() => {
     const storageKey = `meeting-info-${meetingId || 'default'}`;
@@ -1253,7 +1262,18 @@ export default function SimpleMeetingPresenter() {
                                       // Supprimer localement d'abord pour une réaction immédiate
                                       const newAgenda = agenda.filter(a => a.id !== section.id);
                                       setAgenda(newAgenda);
-                                      // Puis synchroniser avec la base de données
+                                      
+                                      // Sauvegarder la suppression de façon persistante
+                                      const deletedItemsKey = `deleted-agenda-items-${meetingId || 'default'}`;
+                                      const existingDeleted = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
+                                      const updatedDeleted = [...existingDeleted, section.id];
+                                      localStorage.setItem(deletedItemsKey, JSON.stringify(updatedDeleted));
+                                      
+                                      // Sauvegarder l'agenda modifié
+                                      const storageKey = `meeting-agenda-${meetingId || 'default'}`;
+                                      localStorage.setItem(storageKey, JSON.stringify(newAgenda));
+                                      
+                                      // Synchroniser avec la base de données
                                       deleteAgendaItemMutation.mutate(section.id);
                                     }}
                                     className="p-1 text-red-500 hover:bg-red-50 rounded ml-2"
@@ -1375,7 +1395,18 @@ export default function SimpleMeetingPresenter() {
                                               // Supprimer localement d'abord pour une réaction immédiate
                                               const newAgenda = agenda.filter(a => a.id !== subsection.id);
                                               setAgenda(newAgenda);
-                                              // Puis synchroniser avec la base de données
+                                              
+                                              // Sauvegarder la suppression de façon persistante
+                                              const deletedItemsKey = `deleted-agenda-items-${meetingId || 'default'}`;
+                                              const existingDeleted = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
+                                              const updatedDeleted = [...existingDeleted, subsection.id];
+                                              localStorage.setItem(deletedItemsKey, JSON.stringify(updatedDeleted));
+                                              
+                                              // Sauvegarder l'agenda modifié
+                                              const storageKey = `meeting-agenda-${meetingId || 'default'}`;
+                                              localStorage.setItem(storageKey, JSON.stringify(newAgenda));
+                                              
+                                              // Synchroniser avec la base de données
                                               deleteAgendaItemMutation.mutate(subsection.id);
                                             }}
                                             className="p-1 text-red-500 hover:bg-red-50 rounded ml-2"
