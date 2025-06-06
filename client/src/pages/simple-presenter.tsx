@@ -1882,28 +1882,15 @@ export default function SimpleMeetingPresenter() {
                                   </Button>
                                 )}
                                 {isEditingVotes && (
-                                  <>
-                                    <Button
-                                      onClick={() => {
-                                        setSelectedAgendaItemForVote(parseInt(currentItem.id));
-                                        setShowCreateVoteModal(true);
-                                      }}
-                                      className="bg-purple-600 hover:bg-purple-700 text-white"
-                                      size="sm"
-                                    >
-                                      <Plus className="h-4 w-4 mr-2" />
-                                      Créer un vote
-                                    </Button>
-                                    <Button
-                                      onClick={() => setIsEditingVotes(false)}
-                                      variant="outline"
-                                      size="sm"
-                                      className="text-gray-600 border-gray-300"
-                                    >
-                                      <X className="h-4 w-4 mr-2" />
-                                      Terminer
-                                    </Button>
-                                  </>
+                                  <Button
+                                    onClick={() => setIsEditingVotes(false)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="text-gray-600 border-gray-300"
+                                  >
+                                    <X className="h-4 w-4 mr-2" />
+                                    Terminer
+                                  </Button>
                                 )}
                               </div>
                             </div>
