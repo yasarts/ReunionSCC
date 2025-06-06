@@ -191,6 +191,43 @@ export default function Dashboard() {
   const [meetings, setMeetings] = useState<Meeting[]>(initializeMeetings());
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  // Fonction pour formater la date au format français
+  const formatFrenchDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    };
+    return date.toLocaleDateString('fr-FR', options);
+  };
+
+  // Fonction pour déterminer si une réunion est passée
+  const isPastMeeting = (meeting: Meeting) => {
+    const today = new Date();
+    const meetingDate = new Date(meeting.date);
+    return meetingDate < today;
+  };
+
+  // Fonction pour filtrer les réunions
+  const getFilteredMeetings = (meetings: Meeting[]) => {
+    return meetings.filter(meeting => {
+      // Filtre par type de réunion
+      const typeFilter = selectedMeetingTypeFilter === 'all' || 
+                        meeting.meetingTypeId?.toString() === selectedMeetingTypeFilter;
+      
+      // Filtre par réunions passées/futures
+      const pastFilter = showPastMeetings || !isPastMeeting(meeting);
+      
+      return typeFilter && pastFilter;
+    });
+  };
+
+  // Fonction pour obtenir le type de réunion
+  const getMeetingType = (meetingTypeId?: number): MeetingType | undefined => {
+    return meetingTypes?.find((type: MeetingType) => type.id === meetingTypeId);
+  };
+
   // Fonction pour rafraîchir les données des réunions
   const refreshMeetings = () => {
     setMeetings(initializeMeetings());
@@ -429,52 +466,50 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        {/* Filtres et contrôles */}
+        <div className="mb-8">
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Réunions</p>
-                  <p className="text-2xl font-bold">{meetings.length}</p>
+              <div className="flex flex-wrap gap-4 items-center">
+                {/* Filtre par type de réunion */}
+                <div className="flex items-center gap-2 min-w-[200px]">
+                  <Filter className="w-4 h-4 text-gray-500" />
+                  <Label htmlFor="meeting-type-filter" className="text-sm font-medium">Type de réunion :</Label>
+                  <Select
+                    value={selectedMeetingTypeFilter}
+                    onValueChange={setSelectedMeetingTypeFilter}
+                  >
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Tous les types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tous les types</SelectItem>
+                      {meetingTypes?.map((type: MeetingType) => (
+                        <SelectItem key={type.id} value={type.id.toString()}>
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: type.color }}
+                            />
+                            {type.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Calendar className="w-8 h-8 text-blue-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Planifiées</p>
-                  <p className="text-2xl font-bold">{meetings.filter(m => m.status === 'scheduled').length}</p>
+
+                {/* Toggle réunions passées */}
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="show-past-meetings" className="text-sm font-medium">
+                    Afficher les réunions passées :
+                  </Label>
+                  <Switch
+                    id="show-past-meetings"
+                    checked={showPastMeetings}
+                    onCheckedChange={setShowPastMeetings}
+                  />
                 </div>
-                <Clock className="w-8 h-8 text-orange-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">En Cours</p>
-                  <p className="text-2xl font-bold">{meetings.filter(m => m.status === 'in_progress').length}</p>
-                </div>
-                <Play className="w-8 h-8 text-green-600" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Terminées</p>
-                  <p className="text-2xl font-bold">{meetings.filter(m => m.status === 'completed').length}</p>
-                </div>
-                <Users className="w-8 h-8 text-purple-600" />
               </div>
             </CardContent>
           </Card>
@@ -498,15 +533,29 @@ export default function Dashboard() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {meetings.map((meeting) => (
-            <Card key={meeting.id} className="hover:shadow-lg transition-shadow">
+          {getFilteredMeetings(meetings).map((meeting) => {
+            const meetingType = getMeetingType(meeting.meetingTypeId);
+            return (
+            <Card 
+              key={meeting.id} 
+              className="hover:shadow-lg transition-shadow"
+              style={{ 
+                borderLeft: meetingType ? `4px solid ${meetingType.color}` : '4px solid #e5e7eb'
+              }}
+            >
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <CardTitle className="text-lg mb-2">{meeting.title}</CardTitle>
-                    <Badge className={getStatusColor(meeting.status)}>
-                      {getStatusLabel(meeting.status)}
-                    </Badge>
+                    {meetingType && (
+                      <Badge 
+                        variant="secondary"
+                        className="text-white"
+                        style={{ backgroundColor: meetingType.color }}
+                      >
+                        {meetingType.name}
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </CardHeader>
@@ -514,7 +563,7 @@ export default function Dashboard() {
               <CardContent className="space-y-3">
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Calendar className="w-4 h-4" />
-                  <span>{meeting.date} à {meeting.time}</span>
+                  <span>{formatFrenchDate(meeting.date)} à {meeting.time}</span>
                 </div>
                 
                 <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -537,8 +586,8 @@ export default function Dashboard() {
                     onClick={() => setLocation(`/simple-presenter/${meeting.id}`)}
                     className="flex-1"
                   >
-                    <Play className="w-4 h-4 mr-2" />
-                    Présenter
+                    <Eye className="w-4 h-4 mr-2" />
+                    Voir la réunion
                   </Button>
                   
                   {/* Boutons d'édition - cachés en mode "Voir comme Élu" */}
@@ -564,7 +613,8 @@ export default function Dashboard() {
                 </div>
               </CardContent>
             </Card>
-          ))}
+            );
+          })}
             </div>
           </div>
 
