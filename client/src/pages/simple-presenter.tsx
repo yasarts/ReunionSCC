@@ -98,6 +98,14 @@ export default function SimpleMeetingPresenter() {
     },
     onSuccess: (response, { itemId, content }) => {
       console.log(`[CLIENT] Content saved successfully for itemId: ${itemId}`);
+      
+      // Persister la modification dans le localStorage
+      const contentModificationsKey = `content-modifications-${meetingId || 'default'}`;
+      const existingModifications = JSON.parse(localStorage.getItem(contentModificationsKey) || '{}');
+      existingModifications[itemId] = content;
+      localStorage.setItem(contentModificationsKey, JSON.stringify(existingModifications));
+      console.log(`[CLIENT] Content modification persisted for itemId: ${itemId}`);
+      
       setIsEditingContent(false);
       toast({
         title: "Succès",
@@ -121,6 +129,7 @@ export default function SimpleMeetingPresenter() {
   const [agenda, setAgenda] = useState<AgendaItem[]>(() => {
     const storageKey = `meeting-agenda-${meetingId || 'default'}`;
     const deletedItemsKey = `deleted-agenda-items-${meetingId || 'default'}`;
+    const contentModificationsKey = `content-modifications-${meetingId || 'default'}`;
     
     // Nettoyer les doublons dans les éléments supprimés
     const deletedItems = JSON.parse(localStorage.getItem(deletedItemsKey) || '[]');
@@ -130,11 +139,26 @@ export default function SimpleMeetingPresenter() {
       console.log('Cleaned up duplicates in deleted items:', deletedItems.length, '->', uniqueDeletedItems.length);
     }
     
+    // Charger les modifications de contenu persistées
+    const contentModifications = JSON.parse(localStorage.getItem(contentModificationsKey) || '{}');
+    
     console.log('Deleted items loaded:', uniqueDeletedItems);
+    console.log('Content modifications loaded:', Object.keys(contentModifications).length, 'items');
     
     // Commencer avec l'agenda original
     let currentAgenda = [...meetingData.agendaItems];
     console.log('Original agenda length:', currentAgenda.length);
+    
+    // Appliquer les modifications de contenu persistées
+    if (Object.keys(contentModifications).length > 0) {
+      currentAgenda = currentAgenda.map(item => {
+        if (contentModifications[item.id]) {
+          return { ...item, content: contentModifications[item.id] };
+        }
+        return item;
+      });
+      console.log('Applied content modifications to agenda');
+    }
     
     // Appliquer les suppressions persistées
     if (uniqueDeletedItems.length > 0) {
