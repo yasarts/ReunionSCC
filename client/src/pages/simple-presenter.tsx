@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getMeetingData, type AgendaItem } from '@/data/agenda';
-import { ParticipantsManagement } from '@/components/ParticipantsManagement';
+import { SimpleParticipantsModal } from '@/components/SimpleParticipantsModal';
 import { useQuery } from '@tanstack/react-query';
 import { type MeetingType } from '@shared/schema';
 
@@ -121,6 +121,7 @@ export default function SimpleMeetingPresenter() {
   const [editingPresenter, setEditingPresenter] = useState<string | null>(null);
   const [editedPresenter, setEditedPresenter] = useState('');
   const [showAdvancedMode, setShowAdvancedMode] = useState<boolean>(false);
+  const [showParticipantsModal, setShowParticipantsModal] = useState<boolean>(false);
   
   // État pour la configuration de la réunion
   const [editedMeetingInfo, setEditedMeetingInfo] = useState({
@@ -1038,12 +1039,7 @@ export default function SimpleMeetingPresenter() {
 
           {/* Main content display */}
           <div className="flex-1 overflow-y-auto">
-            {showParticipantsView ? (
-              // Nouvelle interface de gestion des participants
-              <div className="p-8">
-                <ParticipantsManagement meetingId={1} />
-              </div>
-            ) : currentItemIndex === -1 ? (
+            {currentItemIndex === -1 ? (
               // Aperçu général interactif avec navigation hiérarchique et gestion complète
               <div className="p-8">
                 <div className="max-w-4xl mx-auto">
