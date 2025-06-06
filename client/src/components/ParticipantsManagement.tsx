@@ -170,20 +170,37 @@ export function ParticipantsManagement({ meetingId }: ParticipantsManagementProp
     },
   });
 
-  const handleCompanyStatusChange = (companyId: number, newStatus: CompanyParticipation['status']) => {
+  const handleCompanyStatusChange = async (companyId: number, newStatus: CompanyParticipation['status']) => {
     const participation = companyParticipations.get(companyId);
-    if (!participation) return;
+    const company = companies?.find(c => c.id === companyId);
+    if (!company) return;
 
-    // Mettre à jour le statut local
-    const updatedParticipation = { ...participation, status: newStatus };
-    const newMap = new Map(companyParticipations);
-    newMap.set(companyId, updatedParticipation);
-    setCompanyParticipations(newMap);
+    // Si l'entreprise n'a pas encore de participants, ajouter le premier utilisateur de l'entreprise
+    if (!participation || participation.representatives.length === 0) {
+      const companyUsers = allUsers?.filter(user => user.companyId === companyId);
+      if (companyUsers && companyUsers.length > 0) {
+        try {
+          // Ajouter le premier utilisateur comme participant
+          await addParticipantsMutation.mutateAsync([companyUsers[0].id]);
+          // Ensuite mettre à jour le statut
+          updateStatusMutation.mutate({ userId: companyUsers[0].id, status: newStatus });
+        } catch (error) {
+          console.error('Error adding participant:', error);
+          return;
+        }
+      }
+    } else {
+      // Mettre à jour le statut local
+      const updatedParticipation = { ...participation, status: newStatus };
+      const newMap = new Map(companyParticipations);
+      newMap.set(companyId, updatedParticipation);
+      setCompanyParticipations(newMap);
 
-    // Mettre à jour tous les participants de cette entreprise
-    participation.representatives.forEach(user => {
-      updateStatusMutation.mutate({ userId: user.id, status: newStatus });
-    });
+      // Mettre à jour tous les participants de cette entreprise
+      participation.representatives.forEach(user => {
+        updateStatusMutation.mutate({ userId: user.id, status: newStatus });
+      });
+    }
   };
 
   const handleAddRepresentative = (companyId: number, userId: number) => {
