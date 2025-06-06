@@ -742,146 +742,7 @@ export default function SimpleMeetingPresenter() {
       </header>
 
       {/* Main content area */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar - Agenda */}
-        <div className="w-80 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-gray-900">Ordre du jour</h2>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setIsEditMode(!isEditMode)}
-                  className="flex items-center gap-1"
-                >
-                  <Edit3 className="h-3 w-3" />
-                  {isEditMode ? 'Terminer' : 'Modifier'}
-                </Button>
-                
-                {isEditMode && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setShowAddItemModal(true)}
-                    className="flex items-center gap-1"
-                  >
-                    <Plus className="h-3 w-3" />
-                    Ajouter
-                  </Button>
-                )}
-              </div>
-            </div>
-            <div className="mt-2 text-sm text-gray-600">
-              <div>Réunion: {formatDisplayDate(meetingInfo.date)}</div>
-              <div>Heure: {formatTime(currentTime)}</div>
-              <div>Durée: {getMeetingDuration()}</div>
-            </div>
-          </div>
-          
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-2">
-              {agenda.map((item, index) => (
-                <div
-                  key={item.id}
-                  draggable={isEditMode}
-                  onDragStart={() => setDraggedItem(item.id)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => {
-                    if (draggedItem && draggedItem !== item.id) {
-                      const draggedIndex = agenda.findIndex(a => a.id === draggedItem);
-                      const targetIndex = agenda.findIndex(a => a.id === item.id);
-                      moveItemWithChildren(draggedIndex, targetIndex);
-                    }
-                  }}
-                  className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-                    item.level === 1 ? 'ml-4' : ''
-                  } ${
-                    index === currentItemIndex
-                      ? 'bg-blue-50 border-blue-300'
-                      : itemStates[item.id]?.completed
-                      ? 'bg-green-50 border-green-300'
-                      : 'bg-white border-gray-200 hover:bg-gray-50'
-                  } ${
-                    isEditMode ? 'cursor-move' : 'cursor-pointer'
-                  }`}
-                  onClick={() => !isEditMode && setCurrentItemIndex(index)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      {isEditMode && (
-                        <GripVertical className="h-4 w-4 text-gray-400 cursor-grab" />
-                      )}
-                      <span className="text-xs font-mono text-gray-500 min-w-[2rem]">
-                        {getItemNumber(item, index)}
-                      </span>
-                      {itemStates[item.id]?.completed ? (
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      ) : index === currentItemIndex ? (
-                        <Play className="h-4 w-4 text-blue-600" />
-                      ) : (
-                        <Circle className="h-4 w-4 text-gray-400" />
-                      )}
-                      <span className={`font-medium text-sm ${item.level === 1 ? 'text-gray-700' : 'text-gray-900'}`}>
-                        {item.title}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className={getTypeColor(item.type)}>
-                        {getTypeLabel(item.type)}
-                      </Badge>
-                      {isEditMode && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const newAgenda = agenda.filter(a => a.id !== item.id);
-                            setAgenda(newAgenda);
-                          }}
-                          className="p-1 text-red-500 hover:bg-red-50 rounded"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-1 text-xs text-gray-500 flex items-center gap-2">
-                    {isEditMode ? (
-                      <input
-                        type="number"
-                        value={item.duration}
-                        onChange={(e) => {
-                          const newAgenda = [...agenda];
-                          const itemIndex = newAgenda.findIndex(a => a.id === item.id);
-                          if (itemIndex !== -1) {
-                            newAgenda[itemIndex].duration = parseInt(e.target.value) || 0;
-                            setAgenda(newAgenda);
-                          }
-                        }}
-                        className="w-12 px-1 py-0.5 text-xs border rounded"
-                        min="0"
-                      />
-                    ) : (
-                      <span 
-                        className="cursor-pointer hover:bg-gray-100 px-1 rounded"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsEditingDuration(true);
-                          setEditedDuration(item.duration);
-                        }}
-                      >
-                        {item.duration} min
-                      </span>
-                    )}
-                    {item.presenter && ` • ${item.presenter}`}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Main presentation area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
           {/* Secondary header with controls */}
           <div className="bg-white border-b p-4 flex-shrink-0">
             <div className="flex items-center justify-between">
@@ -898,6 +759,11 @@ export default function SimpleMeetingPresenter() {
                 
                 <div className="text-sm font-medium">
                   {currentItemIndex === -1 ? "Aperçu" : `${currentItemIndex + 1} / ${totalItems}`}
+                </div>
+                
+                {/* Affichage de l'heure dans la navigation */}
+                <div className="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-md">
+                  {formatTime(currentTime)}
                 </div>
                 
                 <Button
@@ -1756,7 +1622,6 @@ export default function SimpleMeetingPresenter() {
               </div>
             )}
           </div>
-        </div>
       </div>
 
       {/* Modal des participants */}
