@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Vote, Clock, CheckCircle, Users, Eye, AlertCircle } from "lucide-react";
+import { Vote, Clock, CheckCircle, Users, Eye, AlertCircle, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface VoteCardProps {
   agendaItemId: number;
+  showDeleteButton?: boolean;
 }
 
 interface VoteData {
@@ -33,7 +34,7 @@ interface VoteData {
   totalVotes?: number;
 }
 
-export function VoteCard({ agendaItemId }: VoteCardProps) {
+export function VoteCard({ agendaItemId, showDeleteButton = false }: VoteCardProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -86,6 +87,27 @@ export function VoteCard({ agendaItemId }: VoteCardProps) {
       toast({
         title: "Erreur",
         description: error.message || "Erreur lors de la fermeture",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Mutation pour supprimer un vote
+  const deleteVoteMutation = useMutation({
+    mutationFn: async (voteId: number) => {
+      return await apiRequest("DELETE", `/api/votes/${voteId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/agenda/${agendaItemId}/votes`] });
+      toast({
+        title: "Vote supprimé",
+        description: "Le vote a été supprimé avec succès",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: error.message || "Erreur lors de la suppression",
         variant: "destructive",
       });
     }
@@ -171,6 +193,18 @@ export function VoteCard({ agendaItemId }: VoteCardProps) {
                     <Users className="h-3 w-3" />
                     {vote.totalVotes} vote(s)
                   </Badge>
+                )}
+                
+                {showDeleteButton && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => deleteVoteMutation.mutate(vote.id)}
+                    disabled={deleteVoteMutation.isPending}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 )}
               </div>
             </div>
