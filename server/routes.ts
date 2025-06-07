@@ -8,7 +8,7 @@ import { insertCompanySchema, insertUserSchema, insertMeetingSchema, insertAgend
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { WebSocketServer, WebSocket } from "ws";
+// import { WebSocketServer, WebSocket } from "ws";
 import { 
   generateMagicLinkToken, 
   verifyMagicLinkToken, 
