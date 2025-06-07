@@ -1274,7 +1274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   // WebSocket server for real-time features
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
   const meetingRooms = new Map<number, Set<WebSocket>>();
 
