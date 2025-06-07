@@ -790,11 +790,217 @@ export function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/votes/:id", requireAuth, requirePermission("canVote"), async (req: any, res: Response) => {
-    try {
-      const voteId = parseInt(req.params.id);
-      if (isNaN(voteId)) {
-        return res.status(400).json({ message: "Invalid vote ID" });
-      }
+ // Cette section va à la fin du fichier server/routes.ts après la ligne 800
 
-      await storage.deleteVote(
+ app.delete("/api/votes/:id", requireAuth, requirePermission("canVote"), async (req: any, res: Response) => {
+  try {
+    const voteId = parseInt(req.params.id);
+    if (isNaN(voteId)) {
+      return res.status(400).json({ message: "Invalid vote ID" });
+    }
+
+    await storage.deleteVote(voteId);
+    res.json({ message: "Vote deleted successfully" });
+  } catch (error) {
+    console.error("Delete vote error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// =============================================================================
+// MEETING TYPE ROUTES
+// =============================================================================
+
+app.get("/api/meeting-types", requireAuth, async (req: any, res: Response) => {
+  try {
+    const meetingTypes = await storage.getMeetingTypes();
+    res.json(meetingTypes);
+  } catch (error) {
+    console.error("Get meeting types error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.get("/api/meeting-types/:id", requireAuth, async (req: any, res: Response) => {
+  try {
+    const meetingTypeId = parseInt(req.params.id);
+    if (isNaN(meetingTypeId)) {
+      return res.status(400).json({ message: "Invalid meeting type ID" });
+    }
+
+    const meetingType = await storage.getMeetingType(meetingTypeId);
+    if (!meetingType) {
+      return res.status(404).json({ message: "Meeting type not found" });
+    }
+
+    res.json(meetingType);
+  } catch (error) {
+    console.error("Get meeting type error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.post("/api/meeting-types", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+  try {
+    const result = insertMeetingTypeSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ message: "Invalid meeting type data", errors: result.error.errors });
+    }
+
+    const meetingType = await storage.createMeetingType(result.data);
+    res.status(201).json(meetingType);
+  } catch (error) {
+    console.error("Create meeting type error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.put("/api/meeting-types/:id", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+  try {
+    const meetingTypeId = parseInt(req.params.id);
+    if (isNaN(meetingTypeId)) {
+      return res.status(400).json({ message: "Invalid meeting type ID" });
+    }
+
+    const result = insertMeetingTypeSchema.partial().safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ message: "Invalid meeting type data", errors: result.error.errors });
+    }
+
+    const meetingType = await storage.updateMeetingType(meetingTypeId, result.data);
+    res.json(meetingType);
+  } catch (error) {
+    console.error("Update meeting type error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.delete("/api/meeting-types/:id", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+  try {
+    const meetingTypeId = parseInt(req.params.id);
+    if (isNaN(meetingTypeId)) {
+      return res.status(400).json({ message: "Invalid meeting type ID" });
+    }
+
+    await storage.deleteMeetingType(meetingTypeId);
+    res.json({ message: "Meeting type deleted successfully" });
+  } catch (error) {
+    console.error("Delete meeting type error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// =============================================================================
+// MEETING TYPE ACCESS ROUTES
+// =============================================================================
+
+app.get("/api/meeting-types/:id/access", requireAuth, async (req: any, res: Response) => {
+  try {
+    const meetingTypeId = parseInt(req.params.id);
+    if (isNaN(meetingTypeId)) {
+      return res.status(400).json({ message: "Invalid meeting type ID" });
+    }
+
+    const access = await storage.getMeetingTypeAccess(meetingTypeId);
+    res.json(access);
+  } catch (error) {
+    console.error("Get meeting type access error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.post("/api/meeting-types/:id/access", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+  try {
+    const meetingTypeId = parseInt(req.params.id);
+    if (isNaN(meetingTypeId)) {
+      return res.status(400).json({ message: "Invalid meeting type ID" });
+    }
+
+    const result = insertMeetingTypeAccessSchema.safeParse({
+      ...req.body,
+      meetingTypeId
+    });
+    if (!result.success) {
+      return res.status(400).json({ message: "Invalid access data", errors: result.error.errors });
+    }
+
+    const access = await storage.createMeetingTypeAccess(result.data);
+    res.status(201).json(access);
+  } catch (error) {
+    console.error("Create meeting type access error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+app.delete("/api/meeting-type-access/:id", requireAuth, requirePermission("canManageUsers"), async (req: any, res: Response) => {
+  try {
+    const accessId = parseInt(req.params.id);
+    if (isNaN(accessId)) {
+      return res.status(400).json({ message: "Invalid access ID" });
+    }
+
+    await storage.deleteMeetingTypeAccess(accessId);
+    res.json({ message: "Access deleted successfully" });
+  } catch (error) {
+    console.error("Delete meeting type access error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// =============================================================================
+// USER ACCESSIBLE MEETING TYPES
+// =============================================================================
+
+app.get("/api/users/:id/meeting-types", requireAuth, async (req: any, res: Response) => {
+  try {
+    const userId = parseInt(req.params.id);
+    if (isNaN(userId)) {
+      return res.status(400).json({ message: "Invalid user ID" });
+    }
+
+    const meetingTypes = await storage.getUserAccessibleMeetingTypes(userId);
+    res.json(meetingTypes);
+  } catch (error) {
+    console.error("Get user accessible meeting types error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// =============================================================================
+// COMPATIBILITY ROUTES (for existing components)
+// =============================================================================
+
+// Enhanced votes route for sections (pour compatibilité avec les composants existants)
+app.get("/api/sections/:id/votes/enhanced", requireAuth, async (req: any, res: Response) => {
+  try {
+    const sectionId = req.params.id;
+    
+    // Pour l'instant, retourner une structure vide compatible
+    const enhancedVoteData = {
+      votes: [],
+      votableCompanies: [],
+      userRole: "participant",
+      canVoteForCompanies: false
+    };
+    
+    res.json(enhancedVoteData);
+  } catch (error) {
+    console.error("Get enhanced votes error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// =============================================================================
+// HEALTH CHECK
+// =============================================================================
+
+app.get("/api/health", (req: Request, res: Response) => {
+  res.json({ 
+    status: "healthy", 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development"
+  });
+});
+
+return Promise.resolve(server);
+}
