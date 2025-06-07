@@ -213,6 +213,46 @@ export function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+
+
+
+// Route temporaire pour créer l'admin - À SUPPRIMER après usage
+app.post("/api/setup/create-admin", async (req: Request, res: Response) => {
+  try {
+    const hashedPassword = await bcrypt.hash("admin123", 10);
+    
+    const user = await storage.createUser({
+      email: "admin@scc-cirque.org",
+      password: hashedPassword,
+      firstName: "Admin",
+      lastName: "SCC", 
+      role: "Salarié·es SCC",
+      permissions: {
+        canEdit: true,
+        canManageAgenda: true,
+        canManageUsers: true,
+        canCreateMeetings: true,
+        canExport: true,
+        canVote: true,
+        canSeeVoteResults: true,
+        canManageParticipants: true,
+      }
+    });
+    
+    res.json({ 
+      status: "success", 
+      message: "Admin user created successfully",
+      email: user.email 
+    });
+  } catch (error) {
+    console.error("Create admin error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+
   // =============================================================================
   // COMPANY ROUTES
   // =============================================================================
