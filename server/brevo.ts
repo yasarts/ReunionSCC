@@ -8,12 +8,19 @@ console.log("Variables BREVO:", Object.keys(process.env).filter(k => k.includes(
 console.log("Toutes les variables:", Object.keys(process.env).sort());
 console.log("========================");
 
+// Interface pour les paramètres d'email
+interface MagicLinkEmailParams {
+  to: string;
+  name: string;
+  magicLink: string;
+}
+
 if (!process.env.BREVO_API_KEY) {
   console.error("ERREUR: Variable d'environnement BREVO_API_KEY manquante");
   console.warn("⚠️  Application démarrée sans Brevo - les emails ne fonctionneront pas");
   
   // Export des fonctions désactivées pour éviter le crash
-  export async function sendMagicLinkEmail(params: {to: string, name: string, magicLink: string}): Promise<boolean> {
+  export async function sendMagicLinkEmail(params: MagicLinkEmailParams): Promise<boolean> {
     console.warn("Tentative d'envoi d'email ignorée - Brevo non configuré");
     console.log(`Email aurait été envoyé à: ${params.to}`);
     console.log(`Lien magique: ${params.magicLink}`);
@@ -39,12 +46,6 @@ if (!process.env.BREVO_API_KEY) {
   emailsApi.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
   
   console.log("Configuration Brevo initialisée avec succès");
-  
-  interface MagicLinkEmailParams {
-    to: string;
-    name: string;
-    magicLink: string;
-  }
   
   export async function sendMagicLinkEmail(params: MagicLinkEmailParams): Promise<boolean> {
     try {
@@ -107,11 +108,11 @@ if (!process.env.BREVO_API_KEY) {
         © 2025 SCC - Syndicat du Cirque de Création
         `
       };
-  
+
       const response = await emailsApi.sendTransacEmail(emailContent);
       console.log(`Email envoyé avec succès. ID: ${response.messageId}`);
       return true;
-  
+
     } catch (error: any) {
       console.error("Erreur lors de l'envoi de l'email:", error);
       
