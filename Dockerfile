@@ -2,10 +2,13 @@ FROM node:18-alpine
 
 WORKDIR /app
 
+# Casser le cache Docker
+ARG CACHE_BUST=1
+
 # Copier les fichiers de dépendances
 COPY package*.json ./
 
-# Installer les dépendances (avec npm install pour regénérer le lock)
+# Installer TOUTES les dépendances
 RUN npm install
 
 # Copier le code source
