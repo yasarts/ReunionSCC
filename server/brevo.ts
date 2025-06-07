@@ -1,12 +1,23 @@
 import * as brevo from '@getbrevo/brevo';
 
+// Debug des variables d'environnement
+console.log("=== DEBUG BREVO CONFIG ===");
+console.log("BREVO_API_KEY:", process.env.BREVO_API_KEY ? "présente" : "manquante");
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("Variables BREVO:", Object.keys(process.env).filter(k => k.includes('BREVO')));
+console.log("========================");
+
 if (!process.env.BREVO_API_KEY) {
+  console.error("ERREUR: Variable d'environnement BREVO_API_KEY manquante");
+  console.error("Variables disponibles:", Object.keys(process.env).sort());
   throw new Error("BREVO_API_KEY environment variable must be set");
 }
 
 // Configuration de l'API Brevo
 const emailsApi = new brevo.TransactionalEmailsApi();
 emailsApi.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+
+console.log("Configuration Brevo initialisée avec succès");
 
 interface MagicLinkEmailParams {
   to: string;
@@ -16,6 +27,8 @@ interface MagicLinkEmailParams {
 
 export async function sendMagicLinkEmail(params: MagicLinkEmailParams): Promise<boolean> {
   try {
+    console.log(`Envoi d'email de connexion à: ${params.to}`);
+    
     const emailContent = {
       to: [{ email: params.to, name: params.name }],
       sender: { 
@@ -75,10 +88,44 @@ export async function sendMagicLinkEmail(params: MagicLinkEmailParams): Promise<
     };
 
     const response = await emailsApi.sendTransacEmail(emailContent);
-    console.log('Magic link email sent successfully');
+    console.log(`Email envoyé avec succès. ID: ${response.messageId}`);
     return true;
-  } catch (error) {
-    console.error('Error sending magic link email:', error);
+
+  } catch (error: any) {
+    console.error("Erreur lors de l'envoi de l'email:", error);
+    
+    // Log détaillé de l'erreur Brevo
+    if (error.response) {
+      console.error("Réponse Brevo:", {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+    }
+    
+    // Ne pas faire échouer l'application, juste loguer l'erreur
     return false;
   }
 }
+
+// Fonction de test optionnelle pour vérifier la configuration
+export async function testBrevoConnection(): Promise<boolean> {
+  try {
+    console.log("Test de connexion Brevo...");
+    
+    // Test simple avec l'API Account
+    const accountApi = new brevo.AccountApi();
+    accountApi.setApiKey(brevo.AccountApiApiKeys.apiKey, process.env.BREVO_API_KEY!);
+    
+    const account = await accountApi.getAccount();
+    console.log(`Connexion Brevo réussie. Compte: ${account.email}`);
+    return true;
+    
+  } catch (error: any) {
+    console.error("Échec du test de connexion Brevo:", error.message);
+    return false;
+  }
+}
+
+// Export de l'API configurée pour usage externe si nécessaire
+export { emailsApi };
