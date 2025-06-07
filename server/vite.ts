@@ -26,95 +26,136 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
+  console.log("Configuration Vite en mode développement...");
+  
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
     allowedHosts: true,
   };
 
-  const vite = await createViteServer({
-    ...viteConfig,
-    configFile: false,
-    customLogger: {
-      ...viteLogger,
-      error: (msg, options) => {
-        viteLogger.error(msg, options);
-        process.exit(1);
+  try {
+    const vite = await createViteServer({
+      ...viteConfig,
+      configFile: false,
+      customLogger: {
+        ...viteLogger,
+        error: (msg, options) => {
+          viteLogger.error(msg, options);
+          // Ne pas faire exit en production
+          if (process.env.NODE_ENV !== "production") {
+            process.exit(1);
+          }
+        },
       },
-    },
-    server: serverOptions,
-    appType: "custom",
-  });
+      server: serverOptions,
+      appType: "custom",
+    });
 
-  app.use(vite.middlewares);
-  app.use("*", async (req, res, next) => {
-    const url = req.originalUrl;
+    app.use(vite.middlewares);
+    
+    app.use("*", async (req, res, next) => {
+      const url = req.originalUrl;
 
-    try {
-      // Utilisation de __dirname sécurisé
-      const clientTemplate = path.resolve(
-        __dirname,
-        "..",
-        "client",
-        "index.html",
-      );
+      try {
+        const clientTemplate = path.resolve(__dirname, "..", "client", "index.html");
+        
+        console.log("Recherche du template:", clientTemplate);
+        
+        if (!fs.existsSync(clientTemplate)) {
+          console.error(`Template non trouvé: ${clientTemplate}`);
+          // Essayer d'autres emplacements
+          const altTemplates = [
+            path.resolve(__dirname, "client", "index.html"),
+            path.resolve(__dirname, "..", "..", "client", "index.html"),
+            path.resolve(process.cwd(), "client", "index.html")
+          ];
+          
+          let foundTemplate = null;
+          for (const altTemplate of altTemplates) {
+            if (fs.existsSync(altTemplate)) {
+              foundTemplate = altTemplate;
+              console.log(`Template trouvé à: ${altTemplate}`);
+              break;
+            }
+          }
+          
+          if (!foundTemplate) {
+            throw new Error(`Aucun template HTML trouvé. Vérifiez la structure des dossiers.`);
+          }
+          
+          const template = await fs.promises.readFile(foundTemplate, "utf-8");
+          const transformedTemplate = template.replace(
+            `src="/src/main.tsx"`,
+            `src="/src/main.tsx?v=${nanoid()}"`,
+          );
+          const page = await vite.transformIndexHtml(url, transformedTemplate);
+          res.status(200).set({ "Content-Type": "text/html" }).end(page);
+          return;
+        }
 
-      // Debug pour vérifier le chemin
-      console.log("Template path:", clientTemplate);
-      console.log("Template exists:", fs.existsSync(clientTemplate));
-
-      // Vérifier que le fichier existe avant de le lire
-      if (!fs.existsSync(clientTemplate)) {
-        throw new Error(`Template file not found: ${clientTemplate}`);
+        let template = await fs.promises.readFile(clientTemplate, "utf-8");
+        template = template.replace(
+          `src="/src/main.tsx"`,
+          `src="/src/main.tsx?v=${nanoid()}"`,
+        );
+        const page = await vite.transformIndexHtml(url, template);
+        res.status(200).set({ "Content-Type": "text/html" }).end(page);
+        
+      } catch (e) {
+        console.error("Erreur Vite:", e);
+        vite.ssrFixStacktrace(e as Error);
+        next(e);
       }
-
-      // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
-      );
-      const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
-    } catch (e) {
-      console.error("Vite setup error:", e);
-      vite.ssrFixStacktrace(e as Error);
-      next(e);
-    }
-  });
+    });
+    
+    console.log("Configuration Vite terminée avec succès");
+    
+  } catch (error) {
+    console.error("Erreur lors de la configuration Vite:", error);
+    throw error;
+  }
 }
 
 export function serveStatic(app: Express) {
-  // Utilisation de __dirname sécurisé
-  const distPath = path.resolve(__dirname, "public");
-
-  console.log("Checking dist path:", distPath);
-  console.log("Dist path exists:", fs.existsSync(distPath));
-
-  if (!fs.existsSync(distPath)) {
-    // Essayer un chemin alternatif
-    const altDistPath = path.resolve(__dirname, "..", "dist", "public");
-    console.log("Trying alternative path:", altDistPath);
-    
-    if (fs.existsSync(altDistPath)) {
-      console.log("Using alternative dist path:", altDistPath);
-      app.use(express.static(altDistPath));
-      
-      app.use("*", (_req, res) => {
-        res.sendFile(path.resolve(altDistPath, "index.html"));
-      });
-      return;
+  console.log("Configuration en mode production (fichiers statiques)");
+  
+  // Essayer plusieurs emplacements pour les fichiers de build
+  const possibleDistPaths = [
+    path.resolve(__dirname, "public"),
+    path.resolve(__dirname, "..", "dist", "public"),
+    path.resolve(process.cwd(), "dist", "public"),
+  ];
+  
+  let distPath = null;
+  for (const possiblePath of possibleDistPaths) {
+    console.log(`Vérification du chemin: ${possiblePath}`);
+    if (fs.existsSync(possiblePath)) {
+      distPath = possiblePath;
+      console.log(`Dossier de build trouvé: ${distPath}`);
+      break;
     }
-    
+  }
+
+  if (!distPath) {
+    console.error("Aucun dossier de build trouvé. Chemins vérifiés:");
+    possibleDistPaths.forEach(p => console.error(`  - ${p}`));
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory. Make sure to build the client first with 'npm run build'`
     );
   }
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
+  // Fallback vers index.html pour les routes SPA
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    const indexPath = path.resolve(distPath!, "index.html");
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send("Application not found. Please build the client first.");
+    }
   });
+  
+  console.log("Configuration des fichiers statiques terminée");
 }

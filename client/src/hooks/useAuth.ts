@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
-interface User {
+export interface User {
   id: number;
   email: string;
   firstName: string;
   lastName: string;
   role: string;
+  companyId?: number;
   permissions: {
     canEdit: boolean;
     canManageAgenda: boolean;
@@ -22,10 +22,11 @@ interface User {
 
 export function useAuth() {
   const [, setLocation] = useLocation();
+  const queryClient = useQueryClient();
 
   const { data: user, isLoading, error } = useQuery({
     queryKey: ['/api/auth/me'],
-    queryFn: async () => {
+    queryFn: async (): Promise<User | null> => {
       const response = await fetch('/api/auth/me', {
         credentials: 'include'
       });
@@ -43,6 +44,29 @@ export function useAuth() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  const login = async (credentials: { email: string; password: string }) => {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(credentials),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Login failed');
+    }
+
+    const userData = await response.json();
+    
+    // Invalider les requêtes d'auth pour refetch
+    queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+    
+    return userData;
+  };
+
   const logout = async () => {
     try {
       await fetch('/api/auth/logout', {
@@ -52,6 +76,8 @@ export function useAuth() {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Invalider toutes les requêtes et rediriger
+      queryClient.clear();
       setLocation('/login');
       window.location.reload();
     }
@@ -65,6 +91,7 @@ export function useAuth() {
     user,
     isLoading,
     isAuthenticated: !!user,
+    login,
     logout,
     requirePermission
   };

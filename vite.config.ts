@@ -8,41 +8,39 @@ import { dirname } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Fonction pour charger les plugins Replit conditionnellement
-async function getReplitPlugins() {
-  if (process.env.NODE_ENV === "production" || process.env.REPL_ID === undefined) {
-    return [];
+// Fonction pour charger conditionnellement les plugins Replit
+async function getOptionalPlugins() {
+  const plugins = [];
+  
+  // Seulement en environnement Replit
+  if (process.env.REPL_ID) {
+    try {
+      const runtimeErrorOverlay = await import("@replit/vite-plugin-runtime-error-modal").catch(() => null);
+      if (runtimeErrorOverlay) {
+        plugins.push(runtimeErrorOverlay.default());
+      }
+      
+      if (process.env.NODE_ENV !== "production") {
+        const cartographer = await import("@replit/vite-plugin-cartographer").catch(() => null);
+        if (cartographer) {
+          plugins.push(cartographer.cartographer());
+        }
+      }
+    } catch (error) {
+      console.warn("Plugins Replit non disponibles, continuons sans eux");
+    }
   }
   
-  try {
-    // Essayer de charger les plugins Replit seulement s'ils sont disponibles
-    const [runtimeErrorOverlay, cartographer] = await Promise.all([
-      import("@replit/vite-plugin-runtime-error-modal").catch(() => null),
-      import("@replit/vite-plugin-cartographer").catch(() => null)
-    ]);
-    
-    const plugins = [];
-    if (runtimeErrorOverlay) {
-      plugins.push(runtimeErrorOverlay.default());
-    }
-    if (cartographer) {
-      plugins.push(cartographer.cartographer());
-    }
-    
-    return plugins;
-  } catch (error) {
-    console.warn("Replit plugins not available, continuing without them");
-    return [];
-  }
+  return plugins;
 }
 
 export default defineConfig(async () => {
-  const replitPlugins = await getReplitPlugins();
+  const optionalPlugins = await getOptionalPlugins();
   
   return {
     plugins: [
       react(),
-      ...replitPlugins,
+      ...optionalPlugins,
     ],
     resolve: {
       alias: {
