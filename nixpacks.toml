@@ -10,8 +10,5 @@ cmd = 'npm run build'
 [phases.start]
 cmd = 'npm start'
 
-[providers]
-node = "18"
-
 [variables]
 NODE_ENV = "production"
