@@ -17,18 +17,32 @@ await build({
     '@neondatabase/serverless',
     'pg',
     'pg-native',
+    'pg-cloudflare',
+    // Drizzle ORM
+    'drizzle-orm',
+    'drizzle-kit',
     // Other native modules
     'fsevents',
     'sharp',
+    // Session store
+    'memorystore',
+    // Express and related
+    'express',
+    'express-session',
+    // Crypto and auth
+    'bcrypt',
+    'jsonwebtoken',
+    // Email
+    '@getbrevo/brevo',
+    // Other utilities
+    'nanoid',
+    'zod'
   ],
-  banner: {
-    js: `
-import { createRequire } from 'module';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-const require = createRequire(import.meta.url);
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-`
-  }
+  define: {
+    'global': 'globalThis'
+  },
+  // Supprimer le banner qui cause le conflit
+  // banner: { ... }
 });
+
+console.log('✅ Server build completed successfully');
