@@ -5,8 +5,8 @@ WORKDIR /app
 # Copier les fichiers de dépendances
 COPY package*.json ./
 
-# Installer TOUTES les dépendances (dev incluses pour le build)
-RUN npm ci
+# Installer les dépendances (avec npm install pour regénérer le lock)
+RUN npm install
 
 # Copier le code source
 COPY . .
@@ -15,7 +15,7 @@ COPY . .
 RUN npm run build
 
 # Nettoyer les dev dependencies après le build
-RUN npm ci --only=production && npm cache clean --force
+RUN npm prune --production
 
 # Exposer le port
 EXPOSE 5000
