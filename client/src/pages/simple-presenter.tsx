@@ -36,16 +36,23 @@ export default function SimpleMeetingPresenter() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Créer un hash unique pour chaque section (même logique que le backend)
-  const getAgendaItemId = (sectionId: string): number => {
-    let hash = 0;
-    for (let i = 0; i < sectionId.length; i++) {
-      const char = sectionId.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash; // Convert to 32-bit integer
+  // Utiliser directement l'ID réel de l'élément d'agenda
+  const getAgendaItemId = (itemId: string): number => {
+    // Si c'est déjà un nombre, le retourner directement
+    const numericId = parseInt(itemId);
+    if (!isNaN(numericId)) {
+      return numericId;
     }
-    // Assurer un nombre positif et dans une plage raisonnable
-    return Math.abs(hash) % 10000 + 1000;
+    
+    // Sinon, essayer de trouver l'élément correspondant dans l'agenda
+    const agendaItem = agenda?.find((item: any) => item.id?.toString() === itemId);
+    if (agendaItem) {
+      return agendaItem.id;
+    }
+    
+    // Si aucun élément trouvé, retourner -1 pour indiquer une erreur
+    console.error(`No agenda item found for ID: ${itemId}`);
+    return -1;
   };
   
   // Récupérer les types de réunions disponibles
@@ -92,6 +99,9 @@ export default function SimpleMeetingPresenter() {
     mutationFn: async ({ itemId, content }: { itemId: string; content: string }) => {
       // Convertir l'ID de section en ID numérique pour l'API
       const agendaItemId = getAgendaItemId(itemId);
+      if (agendaItemId === -1) {
+        throw new Error(`Invalid agenda item ID: ${itemId}`);
+      }
       console.log(`[CLIENT] Saving content for itemId: ${itemId}, agendaItemId: ${agendaItemId}, content length: ${content.length}`);
       const response = await apiRequest("PUT", `/api/agenda/${agendaItemId}/content`, { content });
       return response;
