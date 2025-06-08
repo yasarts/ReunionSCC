@@ -211,7 +211,7 @@ export default function SimpleMeetingPresenter() {
     if (isDemoMeeting) return;
 
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const wsUrl = `${protocol}//${window.location.host}/api/ws`;
     const socket = new WebSocket(wsUrl);
 
     socket.onopen = () => {

@@ -1,65 +1,77 @@
-// Re-export des types du schéma partagé pour faciliter les imports
-export type {
-  User,
-  Company,
-  Meeting,
-  AgendaItem,
-  Vote,
-  VoteResponse,
-  MeetingParticipant,
-  MeetingType,
-  MeetingTypeAccess,
-  MeetingTypeRole,
-  InsertUser,
-  InsertCompany,
-  InsertMeeting,
-  InsertAgendaItem,
-  InsertVote,
-  InsertVoteResponse,
-  InsertMeetingParticipant,
-  InsertMeetingType,
-  InsertMeetingTypeAccess,
-  InsertMeetingTypeRole,
-} from '@shared/schema';
-
-// Types spécifiques au client
-export interface ApiError {
-  message: string;
-  code?: string;
-  details?: any;
+export interface User {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  permissions: {
+    canView: boolean;
+    canEdit: boolean;
+    canManageAgenda: boolean;
+    canManageParticipants: boolean;
+    canCreateMeetings: boolean;
+    canManageUsers: boolean;
+    canVote: boolean;
+    canSeeVoteResults: boolean;
+  };
+  profileImageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export interface Toast {
-  id: string;
-  title?: string;
+export interface Meeting {
+  id: number;
+  title: string;
   description?: string;
-  variant?: 'default' | 'destructive';
+  date: string;
+  createdBy: number;
+  status: 'draft' | 'scheduled' | 'in_progress' | 'completed';
+  createdAt: string;
+  updatedAt: string;
+  agendaItems?: AgendaItem[];
+  participants?: MeetingParticipant[];
 }
 
-// Types pour les composants de vote
-export interface VoteOption {
-  value: string;
-  label: string;
+export interface AgendaItem {
+  id: number;
+  meetingId: number;
+  parentId?: number;
+  title: string;
+  description?: string;
+  content?: string;
+  duration: number;
+  type: 'procedural' | 'presentation' | 'discussion';
+  visualLink?: string;
+  orderIndex: number;
+  status: 'pending' | 'in_progress' | 'completed';
+  startedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface VoteResults {
+export interface Vote {
+  id: number;
+  agendaItemId: number;
+  question: string;
+  options: string[];
+  isOpen: boolean;
+  createdBy: number;
+  createdAt: string;
+  closedAt?: string;
+}
+
+export interface VoteResponse {
+  voteId: number;
+  userId: number;
   option: string;
-  count: number;
-  percentage: number;
+  createdAt: string;
 }
 
-// Types pour les participants
-export interface ParticipantWithUser extends MeetingParticipant {
+export interface MeetingParticipant {
+  meetingId: number;
+  userId: number;
+  isPresent: boolean;
+  joinedAt?: string;
   user: User;
-  proxyCompany?: Company;
 }
-
-// Types pour l'authentification - réexport du hook
-export type { User as AuthUser } from '@/hooks/useAuth';

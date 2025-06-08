@@ -333,6 +333,26 @@ export default function AdminPanel() {
     },
   });
 
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return await apiRequest('DELETE', `/api/users/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: "Succès",
+        description: "Utilisateur supprimé avec succès",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Erreur",
+        description: "Impossible de supprimer l'utilisateur",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Mutations pour créer/modifier/supprimer des types de réunions
   const createMeetingTypeMutation = useMutation({
     mutationFn: async (data: z.infer<typeof createMeetingTypeFormSchema>) => {
@@ -796,13 +816,23 @@ export default function AdminPanel() {
                             </Badge>
                           </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingUser(userData)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setEditingUser(userData)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => deleteUserMutation.mutate(userData.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>

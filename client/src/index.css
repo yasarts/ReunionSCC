@@ -55,4 +55,11 @@
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+  
+  /* Centrer l'application quand la largeur du navigateur dépasse la largeur max */
+  .app-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+  }
 }

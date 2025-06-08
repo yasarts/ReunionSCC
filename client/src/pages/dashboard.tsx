@@ -12,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { MiniCalendar } from '@/components/MiniCalendar';
 import { getMeetingData } from '@/data/agenda';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { type MeetingType } from '@shared/schema';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface Meeting {
   id: string;
@@ -36,10 +38,18 @@ export default function Dashboard() {
   const [viewAsElu, setViewAsElu] = useState(false);
   const [selectedMeetingTypeFilter, setSelectedMeetingTypeFilter] = useState<string>('all');
   const [showPastMeetings, setShowPastMeetings] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
   
   // Récupérer les types de réunions disponibles
   const { data: meetingTypes } = useQuery({
     queryKey: ['/api/meeting-types'],
+  });
+
+  // Récupérer les réunions depuis la base de données
+  const { data: databaseMeetings = [], isLoading: meetingsLoading, refetch: refetchMeetings } = useQuery({
+    queryKey: ['/api/meetings'],
+    retry: false,
   });
   
   // Fonction pour charger les informations de réunion depuis localStorage
@@ -86,132 +96,25 @@ export default function Dashboard() {
     }
   };
 
-  // Fonction pour initialiser les réunions avec les données sauvegardées
-  const initializeMeetings = () => {
-    const baseMeetings = [
-    {
-      id: 'conseil-national-2025',
-      title: 'Conseil National SCC 2025-06-05',
-      date: '2025-06-05',
-      time: '14:00',
-      description: 'Assemblée Générale Extraordinaire du Conseil National',
-      participants: [
-        'Président du Conseil',
-        'Vice-Président',
-        'Secrétaire Général',
-        'Trésorier',
-        'Responsable Pôle Formation',
-        'Responsable Pôle Production'
-      ],
-      pouvoir: 'Pouvoir donné par Mme Martin à M. Dupont pour représentation aux votes',
-      status: 'scheduled' as const,
-      agendaItemsCount: 12,
-      totalDuration: 180,
-      createdAt: '2024-12-01',
-      meetingTypeId: 1
-    },
-    {
-      id: 'reunion-budget-2025',
-      title: 'Réunion Budget 2025',
-      date: '2025-06-08',
-      time: '09:30',
-      description: 'Révision du budget annuel et allocation des ressources',
-      participants: [
-        'Directeur Financier',
-        'Responsable Comptabilité',
-        'Chef de Projet'
-      ],
+  // Transformer les données de la base en format local
+  const transformDatabaseMeetings = (dbMeetings: any[]): Meeting[] => {
+    return dbMeetings.map(meeting => ({
+      id: meeting.id.toString(),
+      title: meeting.title,
+      date: new Date(meeting.date).toISOString().split('T')[0],
+      time: new Date(meeting.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
+      description: meeting.description || '',
+      participants: [], // Les participants seront chargés séparément si nécessaire
       pouvoir: '',
-      status: 'scheduled',
-      agendaItemsCount: 8,
-      totalDuration: 120,
-      createdAt: '2024-12-02',
-      meetingTypeId: 2
-    },
-    {
-      id: 'comite-direction-juin',
-      title: 'Comité de Direction Juin',
-      date: '2025-06-12',
-      time: '15:00',
-      description: 'Réunion mensuelle du comité de direction',
-      participants: [
-        'Directeur Général',
-        'Directeur Opérationnel',
-        'Directeur RH',
-        'Directeur Commercial'
-      ],
-      pouvoir: '',
-      status: 'draft',
-      agendaItemsCount: 6,
-      totalDuration: 90,
-      createdAt: '2024-12-03',
-      meetingTypeId: 1
-    },
-    {
-      id: 'formation-nouveaux-employes',
-      title: 'Formation Nouveaux Employés',
-      date: '2025-06-15',
-      time: '10:00',
-      description: 'Session de formation pour les nouveaux collaborateurs',
-      participants: [
-        'Responsable Formation',
-        'Responsable RH',
-        'Nouveaux employés'
-      ],
-      pouvoir: '',
-      status: 'scheduled',
-      agendaItemsCount: 4,
-      totalDuration: 240,
-      createdAt: '2024-12-04',
-      meetingTypeId: 2
-    },
-    {
-      id: 'reunion-projet-tech',
-      title: 'Réunion Projet Technologique',
-      date: '2025-06-18',
-      time: '14:30',
-      description: 'Point d\'avancement sur les projets technologiques en cours',
-      participants: [
-        'Chef de Projet Tech',
-        'Développeur Senior',
-        'Architecte Système'
-      ],
-      pouvoir: '',
-      status: 'completed',
-      agendaItemsCount: 10,
-      totalDuration: 150,
-      createdAt: '2024-11-28',
-      meetingTypeId: 1
-    }
-    ];
-
-    // Appliquer les modifications sauvegardées et calculer les données réelles
-    return baseMeetings.map(meeting => {
-      const savedInfo = loadMeetingInfo(meeting.id);
-      const realDuration = calculateMeetingDuration(meeting.id);
-      const realAgendaCount = calculateRealAgendaItemsCount(meeting.id);
-      
-      if (savedInfo) {
-        return {
-          ...meeting,
-          title: savedInfo.title || meeting.title,
-          date: savedInfo.date || meeting.date,
-          time: savedInfo.time || meeting.time,
-          description: savedInfo.description || meeting.description,
-          status: savedInfo.status || meeting.status,
-          totalDuration: realDuration,
-          agendaItemsCount: realAgendaCount
-        };
-      }
-      return {
-        ...meeting,
-        totalDuration: realDuration,
-        agendaItemsCount: realAgendaCount
-      };
-    });
+      status: meeting.status as 'draft' | 'scheduled' | 'in_progress' | 'completed',
+      agendaItemsCount: 0, // Sera calculé à partir des items d'agenda
+      totalDuration: 0,
+      createdAt: new Date(meeting.createdAt).toISOString().split('T')[0],
+      meetingTypeId: meeting.meetingTypeId
+    }));
   };
 
-  const [meetings, setMeetings] = useState<Meeting[]>(initializeMeetings());
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Fonction pour formater la date au format français
@@ -248,45 +151,27 @@ export default function Dashboard() {
 
   // Fonction pour obtenir le type de réunion
   const getMeetingType = (meetingTypeId?: number): MeetingType | undefined => {
-    return meetingTypes?.find((type: MeetingType) => type.id === meetingTypeId);
+    return Array.isArray(meetingTypes) ? meetingTypes.find((type: MeetingType) => type.id === meetingTypeId) : undefined;
   };
+
+  // Utiliser directement les données de la base de données
+  useEffect(() => {
+    if (Array.isArray(databaseMeetings) && databaseMeetings.length > 0) {
+      const transformedMeetings = transformDatabaseMeetings(databaseMeetings);
+      setMeetings(transformedMeetings);
+    } else {
+      setMeetings([]);
+    }
+  }, [databaseMeetings]);
 
   // Fonction pour rafraîchir les données des réunions
   const refreshMeetings = () => {
-    setMeetings(initializeMeetings());
+    refetchMeetings();
   };
 
-  // Écouter les changements dans localStorage pour synchroniser les modifications
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key && e.key.startsWith('meetingInfo_')) {
-        refreshMeetings();
-      }
-    };
 
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Écouter également les événements personnalisés pour les changements locaux
-    const handleMeetingUpdate = () => {
-      refreshMeetings();
-    };
-    
-    window.addEventListener('meetingInfoUpdated', handleMeetingUpdate);
 
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('meetingInfoUpdated', handleMeetingUpdate);
-    };
-  }, []);
-
-  // Rafraîchir périodiquement pour s'assurer de la synchronisation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refreshMeetings();
-    }, 2000); // Vérifier toutes les 2 secondes
-
-    return () => clearInterval(interval);
-  }, []);
+  // Supprimer le rafraîchissement automatique qui cause la boucle infinie
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedMeeting, setSelectedMeeting] = useState<Meeting | null>(null);
   const [newMeeting, setNewMeeting] = useState<Partial<Meeting>>({
@@ -328,8 +213,49 @@ export default function Dashboard() {
     });
   };
 
+  // Mutation pour supprimer une réunion
+  const deleteMeetingMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // Convertir l'ID string en number pour l'API
+      const numericId = parseInt(id);
+      if (isNaN(numericId)) {
+        throw new Error("ID de réunion invalide");
+      }
+      return await apiRequest('DELETE', `/api/meetings/${numericId}`);
+    },
+    onSuccess: () => {
+      // Invalider les caches liés aux réunions
+      queryClient.invalidateQueries({ queryKey: ['/api/meetings'] });
+      toast({
+        title: "Succès",
+        description: "Réunion supprimée avec succès",
+      });
+      // Rafraîchir la liste locale
+      refreshMeetings();
+    },
+    onError: (error: any) => {
+      console.error('Erreur lors de la suppression:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Impossible de supprimer la réunion",
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteMeeting = (id: string) => {
-    setMeetings(meetings.filter(m => m.id !== id));
+    // Pour les réunions de démonstration (avec des IDs string non-numériques)
+    if (isNaN(parseInt(id))) {
+      // Suppression locale uniquement pour les réunions de démo
+      setMeetings(meetings.filter(m => m.id !== id));
+      toast({
+        title: "Succès",
+        description: "Réunion de démonstration supprimée",
+      });
+    } else {
+      // Suppression via API pour les vraies réunions
+      deleteMeetingMutation.mutate(id);
+    }
   };
 
   // Gestionnaires pour le calendrier
@@ -507,12 +433,12 @@ export default function Dashboard() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Tous les types</SelectItem>
-                      {meetingTypes?.map((type: MeetingType) => (
+                      {Array.isArray(meetingTypes) && meetingTypes.map((type: MeetingType) => (
                         <SelectItem key={type.id} value={type.id.toString()}>
                           <div className="flex items-center gap-2">
                             <div 
                               className="w-3 h-3 rounded-full"
-                              style={{ backgroundColor: type.color }}
+                              style={{ backgroundColor: type.color || '#gray' }}
                             />
                             {type.name}
                           </div>
@@ -574,7 +500,7 @@ export default function Dashboard() {
                       <Badge 
                         variant="secondary"
                         className="text-white"
-                        style={{ backgroundColor: meetingType.color }}
+                        style={{ backgroundColor: meetingType.color || '#6b7280' }}
                       >
                         {meetingType.name}
                       </Badge>

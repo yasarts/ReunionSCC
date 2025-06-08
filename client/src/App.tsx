@@ -4,8 +4,9 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
-import Dashboard from "@/pages/dashboard";
+import Dashboard from "@/pages/dashboard-fixed";
 import SimpleMeetingPresenter from "@/pages/simple-presenter";
+import MeetingPage from "@/pages/meeting";
 import Login from "@/pages/login";
 import AdminPanel from "@/pages/admin";
 import NotFound from "@/pages/not-found";
@@ -29,16 +30,19 @@ function AppContent() {
   }
 
   return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/dashboard" component={Dashboard} />
-      <Route path="/presenter/:meetingId" component={SimpleMeetingPresenter} />
-      <Route path="/simple-presenter/:meetingId" component={SimpleMeetingPresenter} />
-      <Route path="/simple-presenter" component={SimpleMeetingPresenter} />
-      <Route path="/admin" component={AdminPanel} />
-      <Route path="/login" component={Login} />
-      <Route component={NotFound} />
-    </Switch>
+    <div className="app-container">
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/dashboard" component={Dashboard} />
+        <Route path="/meeting/:meetingId" component={MeetingPage} />
+        <Route path="/presenter/:meetingId" component={SimpleMeetingPresenter} />
+        <Route path="/simple-presenter/:meetingId" component={SimpleMeetingPresenter} />
+        <Route path="/simple-presenter" component={SimpleMeetingPresenter} />
+        <Route path="/admin" component={AdminPanel} />
+        <Route path="/login" component={Login} />
+        <Route component={NotFound} />
+      </Switch>
+    </div>
   );
 }
 
