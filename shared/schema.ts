@@ -134,6 +134,8 @@ export const agendaItems = pgTable("agenda_items", {
   type: varchar("type", { length: 50 }).notNull(), // 'procedural' | 'presentation' | 'discussion'
   visualLink: text("visual_link"),
   orderIndex: integer("order_index").notNull(),
+  level: integer("level").notNull().default(1), // 1 = section principale, 2 = sous-section, etc.
+  sectionType: varchar("section_type", { length: 50 }).notNull().default("main"), // 'main' | 'subsection' | 'discussion' | 'procedural'
   status: varchar("status", { length: 50 }).notNull().default("pending"), // 'pending' | 'in_progress' | 'completed'
   startedAt: timestamp("started_at"),
   completedAt: timestamp("completed_at"),
